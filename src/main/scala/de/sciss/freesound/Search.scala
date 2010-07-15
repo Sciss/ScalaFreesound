@@ -1,5 +1,5 @@
 /*
- *  FreesoundQuery.scala
+ *  Search.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010 Hanns Holger Rutz. All rights reserved.
@@ -23,21 +23,12 @@
 package de.sciss.freesound
 
 import collection.immutable.{ IndexedSeq => IIdxSeq }
+import actors.Future
 
-object FreesoundQuery {
-   case class Options(
-      keyword: String,
-      descriptions : Boolean = true,
-      tags : Boolean = true,
-      fileNames : Boolean = false,
-      userNames : Boolean = false,
-      minDuration : Int = 1,
-      maxDuration : Int = 20,
-      order : Int = 1,
-      offset : Int = 0,
-      maxItems : Int = 100
-   )
-
+/**
+ *    @version 0.10, 15-Jul-10
+ */
+object Search {
    case object LoginBegin
    case object LoginDone
    sealed abstract class LoginFailed
@@ -46,13 +37,16 @@ object FreesoundQuery {
    case object LoginFailedTimeout extends LoginFailed
 
    case object SearchBegin
-   case class SearchDone( ids: IIdxSeq[ Long ])
+   case class SearchDone( ids: IIdxSeq[ Sample ])
    sealed abstract class SearchFailed
    case object SearchFailedCurl extends SearchFailed
    case object SearchFailedTimeout extends SearchFailed
    case class SearchFailedParse( e: Throwable ) extends SearchFailed
 }
 
-trait FreesoundQuery extends Model {
+trait Search extends Model {
    def begin : Unit
+   def options : SearchOptions
+   def results : Option[ IIdxSeq[ Sample ]]
+   def queryResults : Future[ Option[ IIdxSeq[ Sample ]]]
 }

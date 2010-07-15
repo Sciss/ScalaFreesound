@@ -25,13 +25,21 @@ package de.sciss.freesound
 import xml.XML
 import collection.breakOut
 import collection.immutable.{ IndexedSeq => IIdxSeq, Set => ISet }
-import actors.DaemonActor
 import java.io.{File, BufferedReader, InputStreamReader}
+import actors.{OutputChannel, Future, DaemonActor}
+import java.util.{Locale, Date}
+import java.text.SimpleDateFormat
 
 /**
  *    @version 0.10, 15-Jul-10
  */
 object Freesound {
+   val name          = "ScalaFreesound"
+   val version       = 0.10
+   val copyright     = "(C)opyright 2010 Hanns Holger Rutz"
+
+   def versionString = (version + 0.001).toString.substring( 0, 4 )
+
    var verbose       = true
    var curlPath      = "curl"
    var tmpPath       = System.getProperty( "java.io.tmpdir" )
@@ -41,28 +49,23 @@ object Freesound {
    var infoURL       = "http://www.freesound.org/samplesViewSingleXML.php"
    var downloadURL   = "http://www.freesound.org/samplesDownload.php"
 
-//   var loginTimeout  = 20000  // milliseconds
+   def search( options: SearchOptions, credentials: (String, String) ) : Search =
+      new SearchImpl( options, credentials )
 
-//   private val sync = new AnyRef
-//   private var uniqueID = 0
-//   private var aliveInstances = Set.empty[ FreesoundQuery ]
+   def main( args: Array[ String ]) {
+      printInfo
+      System.exit( 1 )
+   }
 
-   def query( options: FreesoundQuery.Options, credentials: (String, String) ) : FreesoundQuery =
-      new QueryImpl( options, credentials )
+   def printInfo {
+      println( "\n" + name + " v" + versionString + "\n" + copyright +
+         ". All rights reserved.\n\nThis is a library which cannot be executed directly.\n" )
+   }
 
-//   private def createUniqueID = sync.synchronized {
-//      val res = uniqueID
-//      uniqueID += 1
-//      res
-//   }
-
-
-//   private def add( fs: FreesoundQuery ) = sync.synchronized {
-//      aliveInstances += fs
-//   }
+   private val dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss", Locale.US )
 
    private def unixCmd( cmd: String* )( fun: (Int, String) => Unit ) {
-      if( verbose ) println( cmd.mkString( " " ))
+//      if( verbose ) println( cmd.mkString( " " ))
       
       val pb         = new ProcessBuilder( cmd: _* )
       val p          = pb.start
@@ -116,33 +119,57 @@ object Freesound {
       processActor.start
    }
 
-   private case object ILoginDone
-   private case object ILoginTimeout
-   private case class  ILoginFailed( code: Int )
+   private def err( text: String ) {
+      println( "ERROR: " + text )
+   }
 
-   private case class  ISearchDone( ids: IIdxSeq[ Long ])
-   private case object ISearchTimeout
-   private case class  ISearchFailed( code: Int )
-   private case class  ISearchException( cause: Throwable )
+   private def inform( text: String ) {
+      println( text )
+   }
 
-   private class QueryImpl( options: FreesoundQuery.Options, credentials: (String, String) )
-   extends DaemonActor with FreesoundQuery {
-      query =>
+   private object SearchImpl {
+      private case object ILoginDone
+      private case object ILoginTimeout
+      private case class  ILoginFailed( code: Int )
 
-      import FreesoundQuery._
+      private case class  ISearchDone( ids: IIdxSeq[ Long ])
+      private case object ISearchTimeout
+      private case class  ISearchFailed( code: Int )
+      private case class  ISearchException( cause: Throwable )
+      private case object IGetResults
+   }
 
-      private val cookiePath  = {
-         val f = File.createTempFile( "cookie", "txt", new File( tmpPath ))
+   private class SearchImpl( val options: SearchOptions, credentials: (String, String) )
+   extends DaemonActor with Search {
+      search =>
+
+      import SearchImpl._
+      import Search._
+
+      val cookiePath  = {
+         val f = File.createTempFile( "cookie", ".txt", new File( tmpPath ))
          f.deleteOnExit()
          f.getCanonicalPath()
       }
 
-   //   var <>keyword, credentials, searchDescriptions, searchTags, searchFileNames, searchUserNames,
-   //   durationMin, durationMax, order, startFrom, limit, <>verbose, >callbackFunc, <uniqueID, sampleIDBucket, numSamples;
-//      private val uniqueID       = createUniqueID
-//      private var sampleIDBucket = Vector.empty[ Int ]
+      @volatile var results: Option[ IIdxSeq[ Sample ]] = None
 
+      override def toString = "Search(" + options + " --> " + results + ")"
+
+      // we can't use start as name because that
+      // returns an actor... which is opaque in
+      // the implementation
       def begin { start }
+
+      def queryResults : Future[ Option[ IIdxSeq[ Sample ]]] = search !!( IGetResults, {
+         case SearchDone( samples ) => Some( samples )
+         case _ => None
+      })
+
+      private def replyLoop( res: AnyRef ) {
+         dispatch( res )
+         loop { react { case _ => reply( res )}}
+      }
 
       def act {
          login
@@ -157,51 +184,45 @@ object Freesound {
                   if( verbose ) err( "Login failed, check your username and password." )
                   LoginFailedCredentials
                }
-               dispatch( failure )
+               replyLoop( failure )
             }
             case ILoginTimeout => {
                if( verbose ) err( "Timeout while trying to log in." )
-               dispatch( LoginFailedTimeout )
+               replyLoop( LoginFailedTimeout )
             }
             case ILoginDone => {
                if( verbose ) println( "Login was successful." )
                dispatch( LoginDone )
 
-               search
+               retrieveResults
                if( verbose ) println( "Performing search..." )
                dispatch( SearchBegin )
                react {
                   case ISearchTimeout => {
                      if( verbose ) err( "Timeout while performing search." )
-                     dispatch( SearchFailedTimeout )
+                     replyLoop( SearchFailedTimeout )
                   }
                   case ISearchFailed( code ) => {
                      if( verbose ) err( "There was an error during the search (" + code + ")." )
-                     dispatch( SearchFailedCurl )
+                     replyLoop( SearchFailedCurl )
                   }
                   case ISearchException( cause ) => {
                      if( verbose ) err( "The search results could not be parsed (" +
                         cause.getClass().getName() + " : " + cause.getMessage() + ")." )
-                     dispatch( SearchFailedParse( cause ))
+                     replyLoop( SearchFailedParse( cause ))
                   }
                   case ISearchDone( ids ) => {
                      if( verbose ) {
                         val sz = ids.size
                         println( "Search was successful (" + sz + " sample" + (if( sz < 2 ) "" else "s") + " found)." )
                      }
-                     dispatch( SearchDone( ids ))
+                     val samples = ids.map( new SampleImpl( _, this ))
+                     results  = Some( samples )
+                     replyLoop( SearchDone( samples ))
                   }
                }
             }
          }
-      }
-
-      private def err( text: String ) {
-         println( "ERROR: " + text )
-      }
-
-      private def inform( text: String ) {
-         println( text )
       }
 
       private def login {
@@ -209,23 +230,24 @@ object Freesound {
             "&password=" + credentials._2 + "&redirect=../index.php&login=login&autologin=0",
             loginURL ) { (code, response) =>
             if( code != 0 ) {
-               query ! ILoginFailed( code )
+               search ! ILoginFailed( code )
             } else {
                unixCmd( curlPath, "-b", cookiePath, "-I", searchURL ) {
                   (code, response) =>
                   if( code != 0 ) {
-                     query ! ILoginFailed( code )
+                     search ! ILoginFailed( code )
                   } else if( response.indexOf( "text/xml" ) >= 0 ) {
-                     query ! ILoginDone
+                     search ! ILoginDone
                   } else {
-                     query ! ILoginFailed( 0 ) // 0 indicates unexpected result
+                     search ! ILoginFailed( 0 ) // 0 indicates unexpected result
                   }
+                  
                }
             }
          }
       }
 
-      private def search {
+      private def retrieveResults {
          unixCmd( curlPath, "-b", cookiePath, "-d", "search=" + options.keyword +
             "&start=" + options.offset + "&searchDescriptions=" + (if( options.descriptions ) 1 else 0) +
             "&searchTags=" + (if( options.tags ) 1 else 0) + "&searchFilenames=" + (if( options.fileNames ) 1 else 0) +
@@ -234,15 +256,15 @@ object Freesound {
             searchURL ) { (code, response) =>
 
             if( code != 0 ) {
-               query ! ISearchFailed( code )
+               search ! ISearchFailed( code )
             } else {
                try {
                   val elems                  = XML.loadString( response ) \ "sample"
                   val ids: IIdxSeq[ Long ]   = elems.map( e => (e \ "@id").text.toLong )( breakOut )
-                  query ! ISearchDone( ids )
+                  search ! ISearchDone( ids )
                }
                catch { case e =>
-                  query ! ISearchException( e )
+                  search ! ISearchException( e )
                }
             }
          }
@@ -250,41 +272,6 @@ object Freesound {
 
 //      def numSamples = sampleIDBucket.size
 
-//      def getSampleInfo( index: Int ) {
-//         if( index >= numSamples ) {
-//            println( "ERROR: Sample index out of range." )
-//   //         callbackFunc.value(this, -5)
-//         } else {
-//            if( verbose ) println( "Getting sample info #" + index + "..." )
-//            val id         = sampleIDBucket( index )
-//            val infoPath   = "/tmp/scsampleinfo"+id+"_"+uniqueID
-//            unixCmd( curlPath, "-b", cookiePath, "-d", "id=" + id,
-//               infoURL ) { (code, response) =>
-//
-//               if( code != 0 ) {
-//                  if( verbose ) println( "ERROR: There was an error in getting sample info." )
-//   //               callbackFunc.value(this, -5)
-//               } else {
-//                  val dom = XML.loadString( response )
-//                  val info = FreesoundInfo(
-//                     (dom \ "statistics" \ "downloads").text.toInt,  // numDownloads
-//                     (dom \ "extension").text,                       // extension
-//                     (dom \ "samplerate").text.toDouble,             // sampleRate
-//                     (dom \ "bitrate").text.toInt,                   // bitRate
-//                     (dom \ "bitdepth").text.toInt,                  // bitDepth
-//                     (dom \ "channels").text.toInt,                  // numChannels
-//                     (dom \ "duration").text.toDouble,               // duration
-//                     (dom \ "filesize").text.toLong,                 // fileSize
-//                     (dom \ "sample" \\ "@id").text.toLong,          // id
-//                     (dom \ "user" \ "@id").text.toLong,             // userID
-//                     (dom \ "username").text,                        // userName
-//                     index
-//                  )
-//   //            callbackFunc.value(this, 5, info)
-//               }
-//            }
-//         }
-//      }
 //
 //      def downloadSample( index: Int, path: String = tmpDir ) {
 //         if( verbose ) println( "Getting sample location..." )
@@ -320,5 +307,197 @@ object Freesound {
 //            }
 //         }
 //      }
+   }
+
+   private object SampleImpl {
+      private case object IGetInfo
+      private case object IFlushInfo
+
+      private case class  IInfoDone( i: SampleInfo )
+      private case object IInfoTimeout
+      private case class  IInfoFailed( code: Int )
+      private case class  IInfoException( cause: Throwable )
+   }
+
+   private class SampleImpl( val id: Long, search: SearchImpl )
+   extends DaemonActor with Sample {
+      sample =>
+
+      import SampleImpl._
+      import Sample._
+
+      start
+
+      override def toString = "Sample(" + infoVar.getOrElse( id ) + ")"
+
+      @volatile var infoVar: Option[ SampleInfo ] = None
+      def info : Option[ SampleInfo ] = infoVar
+      def flushInfo { sample ! IFlushInfo }
+
+      def act {
+         loop {
+            react {
+               case IFlushInfo => {
+                  infoVar = None
+                  dispatch( InfoFlushed )
+               }
+               case IGetInfo => {
+                  val who = sender
+                  if( info.isDefined ) {
+                     who ! info
+                  } else {
+                     retrieveInfo
+                     if( verbose ) println( "Getting info for sample #" + id + "..." )
+                     dispatch( InfoBegin )
+                     react {
+                        case IInfoTimeout => {
+                           if( verbose ) err( "Timeout while getting sample info #" + id + "." )
+                           dispatch( InfoFailedTimeout )
+                           who ! None
+                        }
+                        case IInfoFailed( code ) => {
+                           if( verbose ) err( "Error (" + code + ") while getting sample info #" + id + "." )
+                           dispatch( InfoFailedCurl )
+                           who ! None
+                        }
+                        case IInfoException( cause ) => {
+                           if( verbose ) err( "The query results for sample #" + id + " could not be parsed (" +
+                              cause.getClass().getName() + " : " + cause.getMessage() + ")." )
+                           dispatch( InfoFailedParse( cause ))
+                           who ! None
+                        }
+                        case IInfoDone( i ) => {
+                           if( verbose ) println( "Info for sample #" + id + " retrieved." )
+                           infoVar = Some( i )
+                           dispatch( InfoDone( i ))
+                           who ! i
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      def queryInfo : Future[ Option[ SampleInfo ]] = sample !!( IGetInfo, {
+         case i: SampleInfo => Some( i )
+         case _ => None
+      })
+
+      private def retrieveInfo {
+//         unixCmd( curlPath, "-b", search.cookiePath, "-d", "id=" + id,
+//            infoURL ) { (code, response) => }
+
+         unixCmd( curlPath, "-b", search.cookiePath, infoURL + "?id=" + id ) { (code, response) =>
+            if( code != 0 ) {
+               sample ! IInfoFailed( code )
+            } else {
+               try {
+                  val dom        = XML.loadString( response )
+                  val elemSmp    = (dom \ "sample").head
+
+                  val user       = {
+                     val elemUser = (elemSmp \ "user" ).head
+                     UserImpl( (elemUser \ "@id").text.toLong )( (elemUser \ "name").text )
+                  }
+//println( "user" )
+                  val date       = dateFormat.parse( (elemSmp \ "date").text )
+//println( "date" )
+                  val fileName   = (elemSmp \ "originalFilename").text
+                  val statistics = {
+                     val elemStat   = (elemSmp \ "statistics").head
+                     val elemRating = (elemStat \ "rating").head
+                     StatisticsImpl( (elemStat \ "downloads").text.toInt, (elemRating \ "@count").text.toInt,
+                        elemRating.text.toInt )
+                  }
+//println( "stats" )
+                  val imageURL   = (elemSmp \ "image").text
+                  val previewURL = (elemSmp \ "preview").text
+                  val colorsURL  = (elemSmp \ "colors").text
+                  // descriptors
+//                  val descriptors = DummyDescriptors
+                  // parent
+                  // geotag
+                  val extension  = (elemSmp \ "extension").text
+                  val sampleRate = (elemSmp \ "samplerate").text.toDouble
+//println( "sampleRate" )
+                  val bitRate    = (elemSmp \ "bitrate").text.toInt
+                  val bitDepth   = (elemSmp \ "bitdepth").text.toInt
+                  val numChannels= (elemSmp \ "channels").text.toInt
+//println( "numChannels" )
+                  val duration   = (elemSmp \ "duration").text.toDouble
+                  val fileSize   = (elemSmp \ "filesize").text.toLong
+//println( "filesize" )
+                  val descriptions: IIdxSeq[ Description ] =
+                     (elemSmp \ "descriptions" \ "description").map( elemDescr => {
+                     val elemUser   = (elemDescr \ "user" ).head
+                     val user       = UserImpl( (elemUser \ "@id").text.toLong )( (elemUser \ "username").text )
+                     val text       = (elemDescr \ "text").text
+                     DescriptionImpl( user, text )
+                  })( breakOut )
+//println( "descr" )
+                  val tags: ISet[ String ] = (elemSmp \ "tags" \ "tag").map( _.text )( breakOut )
+                  val comments: IIdxSeq[ Comment ] = (elemSmp \ "comments" \ "comment").map( elemComment => {
+                     val elemUser   = (elemComment \ "user" ).head
+                     val user       = UserImpl( (elemUser \ "@id").text.toLong )( (elemUser \ "username").text )
+                     val text       = (elemComment \ "text").text
+                     CommentImpl( user, date, text )
+                  })( breakOut )
+//println( "comm" )
+
+                  val i = SampleInfoImpl( id )(
+                     user, date, fileName, statistics, imageURL, previewURL, colorsURL,
+                     extension, sampleRate, bitRate, bitDepth, numChannels, duration,
+                     fileSize, descriptions, tags, comments
+                  )
+                  sample ! IInfoDone( i )
+               }
+               catch { case e =>
+//println( ">>>>>>>>>>>>>>>>>>>>" )
+//println( response )
+//println( "<<<<<<<<<<<<<<<<<<<<" )
+                  sample ! IInfoException( e )
+               }
+            }
+         }
+      }
+   }
+
+   private case class UserImpl( id: Long )( val name: String ) extends User {
+      override def toString = "User(" + id + ", " + name + ")"
+   }
+
+   private case class DescriptionImpl( user: User, text: String ) extends Description {
+      override def toString = "Description(" + user + ", " + text + ")"
+   }
+
+   private case class CommentImpl( user: User, date: Date, text: String ) extends Comment {
+      override def toString = "Comment(" + user + ", " + date + ", " + text + ")"
+   }
+
+   private case class StatisticsImpl( numDownloads: Int, numRatings: Int, rating: Int ) extends Statistics {
+      override def toString = "Statistics(numDownloads = " + numDownloads + ", rating = " + rating + ")"
+   }
+
+   private case class SampleInfoImpl( id: Long )(
+      val user : User,
+      val date : Date,
+      val fileName : String,
+      val statistics : Statistics,
+      val imageURL : String,
+      val previewURL : String,
+      val colorsURL : String,
+      val extension : String,
+      val sampleRate : Double,
+      val bitRate : Int,
+      val bitDepth : Int,
+      val numChannels : Int,
+      val duration : Double,
+      val fileSize : Long,
+      val descriptions : IIdxSeq[ Description ],
+      val tags : ISet[ String ],
+      val comments : IIdxSeq[ Comment ]
+   ) extends SampleInfo {
+      override def toString = "SampleInfo(" + id + ", " + fileName + ")"
    }
 }

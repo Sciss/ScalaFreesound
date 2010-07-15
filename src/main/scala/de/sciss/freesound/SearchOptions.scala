@@ -1,5 +1,5 @@
 /*
- *  FreesoundInfo.scala
+ *  SearchOptions.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010 Hanns Holger Rutz. All rights reserved.
@@ -22,17 +22,20 @@
 
 package de.sciss.freesound
 
-case class FreesoundInfo(
-   numDownloads: Int,
-   extension: String,
-   sampleRate: Double,
-   bitRate: Int,
-   bitDepth: Int,
-   numChannels: Int,
-   duration: Double,
-   fileSize: Long,
-   id: Long,
-   userID: Long,
-   userName: String,
-   index: Int
-)
+case class SearchOptions(
+   keyword: String,
+   descriptions : Boolean = true,
+   tags : Boolean = true,
+   fileNames : Boolean = false,
+   userNames : Boolean = false,
+   minDuration : Int = 1,
+   maxDuration : Int = 20,
+   order : Int = 1,
+   offset : Int = 0,
+   maxItems : Int = 100
+) {
+   override def toString = "SearchOptions(keyword = \"" + keyword + "\", descriptions = " + descriptions +
+      ", tags = " + tags + ", fileNames = " + fileNames + ", userNames = " + userNames +
+      ", minDuration = " + minDuration + ", maxDuration = " + maxDuration + ", order = " + order +
+      ", maxItems = " + maxItems + ")"
+}

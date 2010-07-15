@@ -5,3 +5,5 @@ h3. statement
 ScalaFreesound is a library to query the Freesound audio database ("freesound.org":http://freesound.org). As the Mootcher API is currently discontinued, this takes an approach based on the FreeSound quark for SuperCollider by Batuhan Bozkurt ("www.batuhanbozkurt.com/news/freesound-class-for-supercollider-released-as-a-quark":http://www.batuhanbozkurt.com/news/freesound-class-for-supercollider-released-as-a-quark). Big thanks to Batuhan!
 
 ScalaFreesound is (C)opyright 2010 by Hanns Holger Rutz. All rights reserved. It is released under the "GNU Lesser General Public License":http://github.com/Sciss/ScalaFreesound/blob/master/licenses/ScalaFreesound-License.txt and comes with absolutely no warranties. To contact the author, send an email to @contact at sciss.de@
+
+ScalaFreesound requires Scala 2.8 and Java 1.6 to compile, as well as the Curl unix command to execute queries.

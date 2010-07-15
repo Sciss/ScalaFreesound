@@ -1,0 +1,49 @@
+<freesound>
+<sample id="int">
+  <user id="int"><name>text</name></user>
+  <date>text-dateformat</date>
+  <originalFilename>text</originalFilename>
+  <statistics>
+    <downloads>int</downloads>
+    <rating count="int">int</rating>
+  </statistics>
+  <image>png-url</image>
+  <preview>mp3-url</preview>
+  <colors>dat-url</colors>
+  <descriptors>
+    <pca3>int</pca3>
+    <default>int</default>
+    <all>int</all>
+  </descriptors>
+  <parent />
+  <geotag />
+  <extension>text</extension>
+  <samplerate>int</samplerate>
+  <bitrate>int</bitrate>
+  <bitdepth>int</bitdepth>
+  <channels>int</channels>
+  <duration>float</duration>
+  <filesize>int</filesize>
+  <descriptions>
+    <description>
+      <user id="int"><username>text</username></user>
+      <text>text</text>
+    </description>
+    ...
+  </descriptions>
+  <tags>
+    <tag>text</tag>
+    ...
+  </tags>
+  <comments>
+    <comment>
+      <user id="int"><username>text</username></user>
+      <date>text-dateformat</date>
+      <text>text</text>
+    </comment>
+  ...
+  </comments>
+</sample>
+</freesound>
+
+dateformat: yyyy-mm-dd hh:mm:ss
