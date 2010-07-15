@@ -2,6 +2,8 @@ package de.sciss.freesound
 
 import xml.XML
 import collection.breakOut
+import java.io.{BufferedReader, InputStreamReader}
+import actors.DaemonActor
 
 object Freesound {
    var verbose = true 
@@ -21,7 +23,58 @@ object Freesound {
    }
 
    private def unixCmd( cmd: String* )( fun: (Int, String) => Unit ) {
-      error( "NOT YET IMPLEMENTED" )
+      if( verbose ) println( cmd.mkString( " " ))
+      
+      val pb         = new ProcessBuilder( cmd: _* )
+      val p          = pb.start
+      val inReader   = new BufferedReader( new InputStreamReader( p.getInputStream() ))
+
+      val funActor = new DaemonActor {
+         def act {
+            react {
+               case code: Int => react {
+                  case response: String => {
+//                     if( verbose ) {
+//                        println( "Result: " + code )
+//                        println( "Response >>>>>>>>" )
+//                        println( response )
+//                        println( "<<<<<<<< Response" )
+//                     }
+                     fun( code, response )
+                  }
+               }
+            }
+         }
+      }
+      val postActor = new DaemonActor {
+         def act {
+            var isOpen  = true
+            val cBuf    = new Array[ Char ]( 256 )
+            val sb      = new StringBuilder( 256 )
+            loopWhile( isOpen ) {
+               val num  = inReader.read( cBuf )
+               isOpen   = num >= 0
+               if( isOpen ) {
+                  sb.appendAll( cBuf, 0, num )
+               } else {
+                  funActor ! sb.toString()
+               }
+            }
+         }
+      }
+      val processActor = new DaemonActor {
+         def act = try {
+            p.waitFor()
+         } catch { case e: InterruptedException =>
+            p.destroy()
+         } finally {
+            funActor ! p.exitValue
+         }
+      }
+
+      funActor.start
+      postActor.start
+      processActor.start
    }
 }
 
@@ -59,7 +112,7 @@ class Freesound( options: FreesoundOptions, credentials: (String, String), callb
       def loginCheck() {
          unixCmd( "curl", "-b", "/tmp/cookies"+uniqueID+".txt", "-I", "http://www.freesound.org/searchTextXML.php" ) {
             (code, response) =>
-            if( code == 1 ) {
+            if( code != 0 ) {
                if( verbose ) println( "ERROR: There was an error logging in." )
 //               callbackFunc.value(this, -2)
             } else if( response.indexOf( "text/xml" ) >= 0 ) {
@@ -74,10 +127,10 @@ class Freesound( options: FreesoundOptions, credentials: (String, String), callb
          }
       }
 
-      unixCmd( "curl", "-c", "/tmp/cookies"+uniqueID+".txt", "-d", "\"username=" + credentials._1 +
-         "&password=" + credentials._2 + "&redirect=../index.php&login=login&autologin=0\"",
+      unixCmd( "curl", "-c", "/tmp/cookies"+uniqueID+".txt", "-d", "username=" + credentials._1 +
+         "&password=" + credentials._2 + "&redirect=../index.php&login=login&autologin=0",
          "http://www.freesound.org/forum/login.php" ) { (code, response) =>
-         if( code == 1 ) {
+         if( code != 0 ) {
             if( verbose ) println( "ERROR: There was an error logging in." )
 //            callbackFunc.value( this, -2)
          } else {
@@ -89,15 +142,15 @@ class Freesound( options: FreesoundOptions, credentials: (String, String), callb
    private def performSearch {
       if( verbose ) println( "Performing search..." )
 //      callbackFunc.value( this, 3 )
-      unixCmd( "curl", "-b", "/tmp/cookies"+uniqueID+".txt", "-d", "\"search=" + options.keyword +
+      unixCmd( "curl", "-b", "/tmp/cookies"+uniqueID+".txt", "-d", "search=" + options.keyword +
          "&start=" + options.offset + "&searchDescriptions=" + (if( options.descriptions ) 1 else 0) +
          "&searchTags=" + (if( options.tags ) 1 else 0) + "&searchFilenames=" + (if( options.fileNames ) 1 else 0) +
          "&searchUsernames=" + (if( options.userNames ) 1 else 0) + "&durationMin=" + options.minDuration +
-         "&durationMax=" + options.maxDuration + "&order=" + options.order + "&limit=" + options.maxItems + "\"",
+         "&durationMax=" + options.maxDuration + "&order=" + options.order + "&limit=" + options.maxItems,
          "http://www.freesound.org/searchTextXML.php" ) { (code, response) =>
 
          val elems = XML.loadString( response ) \ "sample"
-         if( code == 1 ) {
+         if( code != 0 ) {
             if( verbose ) println( "ERROR: There was an error in search." )
 //            callbackFunc.value(this, -4)
          } else if( elems.isEmpty ) {
@@ -124,7 +177,7 @@ class Freesound( options: FreesoundOptions, credentials: (String, String), callb
          unixCmd( "curl", "-b", "/tmp/cookies"+uniqueID+".txt",
             "http://www.freesound.org/samplesViewSingleXML.php?id=" + id ) { (code, response) =>
 
-            if( code == 1 ) {
+            if( code != 0 ) {
                if( verbose ) println( "ERROR: There was an error in getting sample info." )
 //               callbackFunc.value(this, -5)
             } else {
@@ -157,7 +210,7 @@ class Freesound( options: FreesoundOptions, credentials: (String, String), callb
       def download( header: String, fileName: String ) {
          if( verbose ) println( "Downloading file..." )
          unixCmd( "curl", "-b", "/tmp/cookies"+uniqueID+".txt", header, ">", path + fileName ) { (code, response) =>
-            if( code == 1 ) {
+            if( code != 0 ) {
                if( verbose ) println( "ERROR: There was an error while trying to download file." )
 //               callbackFunc.value(this, -6)
             } else {
@@ -172,7 +225,7 @@ class Freesound( options: FreesoundOptions, credentials: (String, String), callb
       unixCmd( "curl", "-b", "/tmp/cookies"+uniqueID+".txt", "-I",
          "http://www.freesound.org/samplesDownload.php?id=" + id ) { (code, response) =>
 
-         if( code == 1 ) {
+         if( code != 0 ) {
             if( verbose ) println( "ERROR: There was an error while trying to download file." )
 //            callbackFunc.value(this, -6)
          } else {
