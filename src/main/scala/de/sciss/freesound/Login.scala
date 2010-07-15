@@ -1,5 +1,5 @@
 /*
- *  Description.scala
+ *  Login.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010 Hanns Holger Rutz. All rights reserved.
@@ -22,7 +22,8 @@
 
 package de.sciss.freesound
 
-trait Description {
-   def user: User
-   def text: String
+trait Login {
+   def username : String
+   def search( options: SearchOptions ) : Search
+   def sample( id: Long ) : Sample
 }

@@ -26,9 +26,9 @@ import xml.XML
 import collection.breakOut
 import collection.immutable.{ IndexedSeq => IIdxSeq, Set => ISet }
 import java.io.{File, BufferedReader, InputStreamReader}
-import actors.{OutputChannel, Future, DaemonActor}
 import java.util.{Locale, Date}
 import java.text.SimpleDateFormat
+import actors.{Actor, OutputChannel, Future, DaemonActor}
 
 /**
  *    @version 0.10, 15-Jul-10
@@ -49,8 +49,7 @@ object Freesound {
    var infoURL       = "http://www.freesound.org/samplesViewSingleXML.php"
    var downloadURL   = "http://www.freesound.org/samplesDownload.php"
 
-   def search( options: SearchOptions, credentials: (String, String) ) : Search =
-      new SearchImpl( options, credentials )
+   private val dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss", Locale.US )
 
    def main( args: Array[ String ]) {
       printInfo
@@ -62,7 +61,8 @@ object Freesound {
          ". All rights reserved.\n\nThis is a library which cannot be executed directly.\n" )
    }
 
-   private val dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss", Locale.US )
+   def login( userName: String, password: String ) : LoginProcess =
+      new LoginProcessImpl( userName, password )
 
    private def unixCmd( cmd: String* )( fun: (Int, String) => Unit ) {
 //      if( verbose ) println( cmd.mkString( " " ))
@@ -127,24 +127,19 @@ object Freesound {
       println( text )
    }
 
-   private object SearchImpl {
+   private object LoginProcessImpl {
       private case object ILoginDone
       private case object ILoginTimeout
       private case class  ILoginFailed( code: Int )
 
-      private case class  ISearchDone( ids: IIdxSeq[ Long ])
-      private case object ISearchTimeout
-      private case class  ISearchFailed( code: Int )
-      private case class  ISearchException( cause: Throwable )
-      private case object IGetResults
+      private case object IPerform
+      private case object IGetResult
    }
 
-   private class SearchImpl( val options: SearchOptions, credentials: (String, String) )
-   extends DaemonActor with Search {
-      search =>
-
-      import SearchImpl._
-      import Search._
+   private class LoginProcessImpl( val username: String, password: String )
+   extends DaemonActor with LoginProcess {
+      import LoginProcessImpl._
+      import LoginProcess._
 
       val cookiePath  = {
          val f = File.createTempFile( "cookie", ".txt", new File( tmpPath ))
@@ -152,27 +147,32 @@ object Freesound {
          f.getCanonicalPath()
       }
 
-      @volatile var results: Option[ IIdxSeq[ Sample ]] = None
+      private lazy val loginActor : Actor = {
+         start
+         this
+      }
 
-      override def toString = "Search(" + options + " --> " + results + ")"
+      @volatile var result: Option[ LoginResult ] = None
+
+      override def toString = "LoginProcess(" + username + ")"
 
       // we can't use start as name because that
       // returns an actor... which is opaque in
       // the implementation
-      def begin { start }
+      def perform { loginActor ! IPerform }
 
-      def queryResults : Future[ Option[ IIdxSeq[ Sample ]]] = search !!( IGetResults, {
-         case SearchDone( samples ) => Some( samples )
-         case _ => None
+      def queryResult : Future[ LoginResult ] = loginActor !!( IGetResult, {
+         case r => r.asInstanceOf[ LoginResult ]
       })
 
-      private def replyLoop( res: AnyRef ) {
+      private def loopResult( res: LoginResult ) {
+         result = Some( res )
          dispatch( res )
          loop { react { case _ => reply( res )}}
       }
 
-      def act {
-         login
+      def act { react { case IPerform =>
+         execLogin
          if( verbose ) inform( "Trying to log in..." )
          dispatch( LoginBegin )
          react {
@@ -184,71 +184,119 @@ object Freesound {
                   if( verbose ) err( "Login failed, check your username and password." )
                   LoginFailedCredentials
                }
-               replyLoop( failure )
+               loopResult( failure )
             }
             case ILoginTimeout => {
                if( verbose ) err( "Timeout while trying to log in." )
-               replyLoop( LoginFailedTimeout )
+               loopResult( LoginFailedTimeout )
             }
             case ILoginDone => {
                if( verbose ) println( "Login was successful." )
-               dispatch( LoginDone )
-
-               retrieveResults
-               if( verbose ) println( "Performing search..." )
-               dispatch( SearchBegin )
-               react {
-                  case ISearchTimeout => {
-                     if( verbose ) err( "Timeout while performing search." )
-                     replyLoop( SearchFailedTimeout )
-                  }
-                  case ISearchFailed( code ) => {
-                     if( verbose ) err( "There was an error during the search (" + code + ")." )
-                     replyLoop( SearchFailedCurl )
-                  }
-                  case ISearchException( cause ) => {
-                     if( verbose ) err( "The search results could not be parsed (" +
-                        cause.getClass().getName() + " : " + cause.getMessage() + ")." )
-                     replyLoop( SearchFailedParse( cause ))
-                  }
-                  case ISearchDone( ids ) => {
-                     if( verbose ) {
-                        val sz = ids.size
-                        println( "Search was successful (" + sz + " sample" + (if( sz < 2 ) "" else "s") + " found)." )
-                     }
-                     val samples = ids.map( new SampleImpl( _, this ))
-                     results  = Some( samples )
-                     replyLoop( SearchDone( samples ))
-                  }
-               }
+               loopResult( LoginDone( new LoginImpl( cookiePath, username )))
             }
          }
-      }
+      }}
 
-      private def login {
-         unixCmd( curlPath, "-c", cookiePath, "-d", "username=" + credentials._1 +
-            "&password=" + credentials._2 + "&redirect=../index.php&login=login&autologin=0",
+      private def execLogin {
+         unixCmd( curlPath, "-c", cookiePath, "-d", "username=" + username +
+            "&password=" + password + "&redirect=../index.php&login=login&autologin=0",
             loginURL ) { (code, response) =>
             if( code != 0 ) {
-               search ! ILoginFailed( code )
+               loginActor ! ILoginFailed( code )
             } else {
                unixCmd( curlPath, "-b", cookiePath, "-I", searchURL ) {
                   (code, response) =>
                   if( code != 0 ) {
-                     search ! ILoginFailed( code )
+                     loginActor ! ILoginFailed( code )
                   } else if( response.indexOf( "text/xml" ) >= 0 ) {
-                     search ! ILoginDone
+                     loginActor ! ILoginDone
                   } else {
-                     search ! ILoginFailed( 0 ) // 0 indicates unexpected result
+                     loginActor ! ILoginFailed( 0 ) // 0 indicates unexpected result
                   }
-                  
                }
             }
          }
       }
+   }
 
-      private def retrieveResults {
-         unixCmd( curlPath, "-b", cookiePath, "-d", "search=" + options.keyword +
+   private class LoginImpl( val cookiePath: String, val username: String ) extends Login {
+      login =>
+      def search( options: SearchOptions ) : Search = new SearchImpl( options, login )
+      def sample( id: Long ) : Sample = new SampleImpl( id, login )
+
+      override def toString = "Login(" + username + ")"
+   }
+
+   private object SearchImpl {
+      private case class  ISearchDone( ids: IIdxSeq[ Long ])
+      private case object ISearchTimeout
+      private case class  ISearchFailed( code: Int )
+      private case class  ISearchException( cause: Throwable )
+
+      private case object IPerform
+      private case object IGetResult
+   }
+
+   private class SearchImpl( val options: SearchOptions, val login: LoginImpl )
+   extends DaemonActor with Search {
+      import SearchImpl._
+      import Search._
+
+      @volatile var result: Option[ SearchResult ] = None
+
+      private lazy val searchActor : Actor = {
+         start
+         this
+      }
+
+      override def toString = "Search(" + options + ")"
+
+      // we can't use start as name because that
+      // returns an actor... which is opaque in
+      // the implementation
+      def perform { searchActor ! IPerform }
+
+      def queryResult : Future[ SearchResult ] = searchActor !!( IGetResult, {
+         case r: SearchResult => r
+      })
+
+      private def loopResult( res: SearchResult ) {
+         result = Some( res )
+         dispatch( res )
+         loop { react { case _ => reply( res )}}
+      }
+
+      def act { react { case IPerform =>
+         execSearch
+         if( verbose ) println( "Performing search..." )
+         dispatch( SearchBegin )
+         react {
+            case ISearchTimeout => {
+               if( verbose ) err( "Timeout while performing search." )
+               loopResult( SearchFailedTimeout )
+            }
+            case ISearchFailed( code ) => {
+               if( verbose ) err( "There was an error during the search (" + code + ")." )
+               loopResult( SearchFailedCurl )
+            }
+            case ISearchException( cause ) => {
+               if( verbose ) err( "The search results could not be parsed (" +
+                  cause.getClass().getName() + " : " + cause.getMessage() + ")." )
+               loopResult( SearchFailedParse( cause ))
+            }
+            case ISearchDone( ids ) => {
+               if( verbose ) {
+                  val sz = ids.size
+                  println( "Search was successful (" + sz + " sample" + (if( sz < 2 ) "" else "s") + " found)." )
+               }
+               val samples = ids.map( new SampleImpl( _, login ))
+               loopResult( SearchDone( samples ))
+            }
+         }
+      }}
+
+      private def execSearch {
+         unixCmd( curlPath, "-b", login.cookiePath, "-d", "search=" + options.keyword +
             "&start=" + options.offset + "&searchDescriptions=" + (if( options.descriptions ) 1 else 0) +
             "&searchTags=" + (if( options.tags ) 1 else 0) + "&searchFilenames=" + (if( options.fileNames ) 1 else 0) +
             "&searchUsernames=" + (if( options.userNames ) 1 else 0) + "&durationMin=" + options.minDuration +
@@ -256,23 +304,20 @@ object Freesound {
             searchURL ) { (code, response) =>
 
             if( code != 0 ) {
-               search ! ISearchFailed( code )
+               searchActor ! ISearchFailed( code )
             } else {
                try {
                   val elems                  = XML.loadString( response ) \ "sample"
                   val ids: IIdxSeq[ Long ]   = elems.map( e => (e \ "@id").text.toLong )( breakOut )
-                  search ! ISearchDone( ids )
+                  searchActor ! ISearchDone( ids )
                }
                catch { case e =>
-                  search ! ISearchException( e )
+                  searchActor ! ISearchException( e )
                }
             }
          }
       }
 
-//      def numSamples = sampleIDBucket.size
-
-//
 //      def downloadSample( index: Int, path: String = tmpDir ) {
 //         if( verbose ) println( "Getting sample location..." )
 //
@@ -310,8 +355,8 @@ object Freesound {
    }
 
    private object SampleImpl {
-      private case object IGetInfo
-      private case object IFlushInfo
+      private case object IGetResult
+      private case object IPerform
 
       private case class  IInfoDone( i: SampleInfo )
       private case object IInfoTimeout
@@ -319,78 +364,82 @@ object Freesound {
       private case class  IInfoException( cause: Throwable )
    }
 
-   private class SampleImpl( val id: Long, search: SearchImpl )
-   extends DaemonActor with Sample {
+   private class SampleImpl( val id: Long, login: LoginImpl )
+   extends Sample {
       sample =>
 
       import SampleImpl._
       import Sample._
 
-      start
+      @volatile var infoResult: Option[ InfoResult ] = None
+      
+      private lazy val infoActor = {
+         val res = new DaemonActor {
+            private def loopResult( res: InfoResult ) {
+               infoResult = Some( res )
+               dispatch( res )
+               loop { react { case _ => reply( res )}}
+            }
 
-      override def toString = "Sample(" + infoVar.getOrElse( id ) + ")"
-
-      @volatile var infoVar: Option[ SampleInfo ] = None
-      def info : Option[ SampleInfo ] = infoVar
-      def flushInfo { sample ! IFlushInfo }
-
-      def act {
-         loop {
-            react {
-               case IFlushInfo => {
-                  infoVar = None
-                  dispatch( InfoFlushed )
-               }
-               case IGetInfo => {
-                  val who = sender
-                  if( info.isDefined ) {
-                     who ! info
-                  } else {
-                     retrieveInfo
-                     if( verbose ) println( "Getting info for sample #" + id + "..." )
-                     dispatch( InfoBegin )
-                     react {
-                        case IInfoTimeout => {
-                           if( verbose ) err( "Timeout while getting sample info #" + id + "." )
-                           dispatch( InfoFailedTimeout )
-                           who ! None
-                        }
-                        case IInfoFailed( code ) => {
-                           if( verbose ) err( "Error (" + code + ") while getting sample info #" + id + "." )
-                           dispatch( InfoFailedCurl )
-                           who ! None
-                        }
-                        case IInfoException( cause ) => {
-                           if( verbose ) err( "The query results for sample #" + id + " could not be parsed (" +
-                              cause.getClass().getName() + " : " + cause.getMessage() + ")." )
-                           dispatch( InfoFailedParse( cause ))
-                           who ! None
-                        }
-                        case IInfoDone( i ) => {
-                           if( verbose ) println( "Info for sample #" + id + " retrieved." )
-                           infoVar = Some( i )
-                           dispatch( InfoDone( i ))
-                           who ! i
-                        }
-                     }
+            def act { react { case IPerform =>
+               performQueryInfo
+               if( verbose ) println( "Getting info for sample #" + id + "..." )
+               dispatch( InfoBegin )
+               react {
+                  case IInfoTimeout => {
+                     if( verbose ) err( "Timeout while getting sample info #" + id + "." )
+                     loopResult( InfoFailedTimeout )
+                  }
+                  case IInfoFailed( code ) => {
+                     if( verbose ) err( "Error (" + code + ") while getting sample info #" + id + "." )
+                     loopResult( InfoFailedCurl )
+                  }
+                  case IInfoException( cause ) => {
+                     if( verbose ) err( "The query results for sample #" + id + " could not be parsed (" +
+                        cause.getClass().getName() + " : " + cause.getMessage() + ")." )
+                     loopResult( InfoFailedParse( cause ))
+                  }
+                  case IInfoDone( i ) => {
+                     if( verbose ) println( "Info for sample #" + id + " retrieved." )
+                     loopResult( InfoDone( i ))
                   }
                }
-            }
+            }}
          }
+         res.start
+         res
       }
 
-      def queryInfo : Future[ Option[ SampleInfo ]] = sample !!( IGetInfo, {
-         case i: SampleInfo => Some( i )
-         case _ => None
+      override def toString = "Sample(" + id + ")"
+
+//      @volatile var infoVar: Option[ SampleInfo ] = None
+//      def info : Option[ SampleInfo ] = infoVar
+//      def flushInfo { sample ! IFlushInfo }
+
+      def flushInfo {
+         // XXX abort ongoing info query?
+         infoResult = None
+         dispatch( InfoFlushed )
+      }
+
+      def performInfo { infoActor ! IPerform }
+
+      def queryInfoResult : Future[ InfoResult ] = infoActor !!( IGetResult, {
+         case r => r.asInstanceOf[ InfoResult ]
       })
 
-      private def retrieveInfo {
+//      def queryInfo : Future[ Option[ SampleInfo ]] = sample !!( IGetInfo, {
+//         case i: SampleInfo => Some( i )
+//         case _ => None
+//      })
+
+      private def performQueryInfo {
 //         unixCmd( curlPath, "-b", search.cookiePath, "-d", "id=" + id,
 //            infoURL ) { (code, response) => }
 
-         unixCmd( curlPath, "-b", search.cookiePath, infoURL + "?id=" + id ) { (code, response) =>
+         unixCmd( curlPath, "-b", login.cookiePath, infoURL + "?id=" + id ) { (code, response) =>
             if( code != 0 ) {
-               sample ! IInfoFailed( code )
+               infoActor ! IInfoFailed( code )
             } else {
                try {
                   val dom        = XML.loadString( response )
@@ -450,13 +499,13 @@ object Freesound {
                      extension, sampleRate, bitRate, bitDepth, numChannels, duration,
                      fileSize, descriptions, tags, comments
                   )
-                  sample ! IInfoDone( i )
+                  infoActor ! IInfoDone( i )
                }
                catch { case e =>
 //println( ">>>>>>>>>>>>>>>>>>>>" )
 //println( response )
 //println( "<<<<<<<<<<<<<<<<<<<<" )
-                  sample ! IInfoException( e )
+                  infoActor ! IInfoException( e )
                }
             }
          }

@@ -1,5 +1,5 @@
 /*
- *  Sample.scala
+ *  LoginProcess.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010 Hanns Holger Rutz. All rights reserved.
@@ -24,31 +24,28 @@ package de.sciss.freesound
 
 import actors.Future
 
-/**
- *    @version 0.10, 15-Jul-10
- */
-object Sample {
-   case object InfoBegin
-   sealed abstract class InfoResult
-   case class InfoDone( i: SampleInfo ) extends InfoResult
-   sealed abstract class InfoFailed extends InfoResult
-   case object InfoFailedCurl extends InfoFailed
-   case object InfoFailedTimeout extends InfoFailed
-   case class InfoFailedParse( e: Throwable ) extends InfoFailed
-   case object InfoFlushed
+object LoginProcess {
+   case object LoginBegin
+   sealed abstract class LoginResult
+   case class LoginDone( login: Login ) extends LoginResult
+   sealed abstract class LoginFailed extends LoginResult
+   case object LoginFailedCurl extends LoginFailed
+   case object LoginFailedCredentials extends LoginFailed
+   case object LoginFailedTimeout extends LoginFailed
 }
 
-trait Sample extends Model {
-   import Sample._
+trait LoginProcess extends Model {
+   import LoginProcess._
    
-   def id : Long
-   def info : Option[ SampleInfo ] = infoResult.flatMap( _ match {
-      case InfoDone( i ) => Some( i )
+   def perform : Unit
+   def login : Option[ Login ] = result.flatMap( _ match {
+      case LoginDone( l ) => Some( l )
       case _ => None
    })
-   def infoResult : Option[ InfoResult ]
-   def flushInfo : Unit
-//   def queryInfo : Future[ Option[ SampleInfo ]]
-   def performInfo : Unit
-   def queryInfoResult : Future[ InfoResult ]
+   def result : Option[ LoginResult ]
+   def queryResult: Future[ LoginResult ]
+//   def queryLogin: Future[ Option[ Login ]]
+
+   def username : String
+//   def password : String
 }

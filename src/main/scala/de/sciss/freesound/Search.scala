@@ -29,24 +29,24 @@ import actors.Future
  *    @version 0.10, 15-Jul-10
  */
 object Search {
-   case object LoginBegin
-   case object LoginDone
-   sealed abstract class LoginFailed
-   case object LoginFailedCurl extends LoginFailed
-   case object LoginFailedCredentials extends LoginFailed
-   case object LoginFailedTimeout extends LoginFailed
-
    case object SearchBegin
-   case class SearchDone( ids: IIdxSeq[ Sample ])
-   sealed abstract class SearchFailed
+   sealed abstract class SearchResult
+   case class SearchDone( ids: IIdxSeq[ Sample ]) extends SearchResult
+   sealed abstract class SearchFailed extends SearchResult
    case object SearchFailedCurl extends SearchFailed
    case object SearchFailedTimeout extends SearchFailed
    case class SearchFailedParse( e: Throwable ) extends SearchFailed
 }
 
 trait Search extends Model {
-   def begin : Unit
+   import Search._
+
+   def perform: Unit
    def options : SearchOptions
-   def results : Option[ IIdxSeq[ Sample ]]
-   def queryResults : Future[ Option[ IIdxSeq[ Sample ]]]
+   def samples : Option[ IIdxSeq[ Sample ]] = result.flatMap( _ match {
+      case SearchDone( smps ) => Some( smps )
+      case _ => None
+   })
+   def result : Option[ SearchResult ]
+   def queryResult : Future[ SearchResult ]
 }
