@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat
 import actors.{Actor, OutputChannel, Future, DaemonActor}
 
 /**
- *    @version 0.10, 15-Jul-10
+ *    @version 0.10, 16-Jul-10
  */
 object Freesound {
    val name          = "ScalaFreesound"
@@ -65,11 +65,19 @@ object Freesound {
       new LoginProcessImpl( userName, password )
 
    private def unixCmd( cmd: String* )( fun: (Int, String) => Unit ) {
+      new UnixCmd( cmd, fun, None )
+   }
+
+   private def unixCmdProg( prog: Int => Unit, cmd: String* )( fun: (Int, String) => Unit ) {
+      new UnixCmd( cmd, fun, Some( prog ))
+   }
+
+   private class UnixCmd( cmd: Seq[ String ], fun: (Int, String) => Unit, prog: Option[ Int => Unit ]) {
 //      if( verbose ) println( cmd.mkString( " " ))
-      
+
       val pb         = new ProcessBuilder( cmd: _* )
+      if( prog.isDefined ) pb.redirectErrorStream( true )
       val p          = pb.start
-      val inReader   = new BufferedReader( new InputStreamReader( p.getInputStream() ))
 
       val funActor = new DaemonActor {
          def act {
@@ -88,22 +96,53 @@ object Freesound {
             }
          }
       }
-      val postActor = new DaemonActor {
-         def act {
-            var isOpen  = true
-            val cBuf    = new Array[ Char ]( 256 )
-            val sb      = new StringBuilder( 256 )
-            loopWhile( isOpen ) {
-               val num  = inReader.read( cBuf )
-               isOpen   = num >= 0
-               if( isOpen ) {
-                  sb.appendAll( cBuf, 0, num )
-               } else {
-                  funActor ! sb.toString()
+      val postActor = if( prog.isDefined ) {
+         val progFun = prog.get
+         new DaemonActor {
+            def act {
+               var isOpen  = true
+               val is      = p.getInputStream()
+               var bars    = 0
+               var inBars  = false
+               var lastBars = -1
+               loopWhile( isOpen ) {
+                  is.read() match {
+                     case -1 => { isOpen = false; funActor ! "" }
+                     case 13 => { bars = 0; inBars = true }  // cr
+                     case 35 => bars += 1   // '#'
+                     case 32 => if( inBars ) {    // ' '
+                        inBars =  false
+                        if( bars != lastBars ) {
+                           lastBars = bars
+                           val perc = (bars * 100) / 72
+                           progFun( perc )
+                        }
+                     }
+                     case _ =>
+                  }
+               }
+            }
+         }
+      } else {
+         new DaemonActor {
+            def act {
+               val inReader   = new BufferedReader( new InputStreamReader( p.getInputStream() ))
+               var isOpen     = true
+               val cBuf       = new Array[ Char ]( 256 )
+               val sb         = new StringBuilder( 256 )
+               loopWhile( isOpen ) {
+                  val num  = inReader.read( cBuf )
+                  isOpen   = num >= 0
+                  if( isOpen ) {
+                     sb.appendAll( cBuf, 0, num )
+                  } else {
+                     funActor ! sb.toString()
+                  }
                }
             }
          }
       }
+
       val processActor = new DaemonActor {
          def act = try {
             p.waitFor()
@@ -127,13 +166,14 @@ object Freesound {
       println( text )
    }
 
+   private case object ITimeout
+   private case class  IFailed( code: Int )
+   private case class  IException( cause: Throwable )
+   private case object IPerform
+   private case object IGetResult
+
    private object LoginProcessImpl {
       private case object ILoginDone
-      private case object ILoginTimeout
-      private case class  ILoginFailed( code: Int )
-
-      private case object IPerform
-      private case object IGetResult
    }
 
    private class LoginProcessImpl( val username: String, password: String )
@@ -176,7 +216,7 @@ object Freesound {
          if( verbose ) inform( "Trying to log in..." )
          dispatch( LoginBegin )
          react {
-            case ILoginFailed( code ) => {
+            case IFailed( code ) => {
                val failure = if( code != 0 ) {
                   if( verbose ) err( "There was an error logging in (" + code + ")." )
                   LoginFailedCurl
@@ -186,7 +226,7 @@ object Freesound {
                }
                loopResult( failure )
             }
-            case ILoginTimeout => {
+            case ITimeout => {
                if( verbose ) err( "Timeout while trying to log in." )
                loopResult( LoginFailedTimeout )
             }
@@ -202,16 +242,16 @@ object Freesound {
             "&password=" + password + "&redirect=../index.php&login=login&autologin=0",
             loginURL ) { (code, response) =>
             if( code != 0 ) {
-               loginActor ! ILoginFailed( code )
+               loginActor ! IFailed( code )
             } else {
                unixCmd( curlPath, "-b", cookiePath, "-I", searchURL ) {
                   (code, response) =>
                   if( code != 0 ) {
-                     loginActor ! ILoginFailed( code )
+                     loginActor ! IFailed( code )
                   } else if( response.indexOf( "text/xml" ) >= 0 ) {
                      loginActor ! ILoginDone
                   } else {
-                     loginActor ! ILoginFailed( 0 ) // 0 indicates unexpected result
+                     loginActor ! IFailed( 0 ) // 0 indicates unexpected result
                   }
                }
             }
@@ -229,12 +269,6 @@ object Freesound {
 
    private object SearchImpl {
       private case class  ISearchDone( ids: IIdxSeq[ Long ])
-      private case object ISearchTimeout
-      private case class  ISearchFailed( code: Int )
-      private case class  ISearchException( cause: Throwable )
-
-      private case object IPerform
-      private case object IGetResult
    }
 
    private class SearchImpl( val options: SearchOptions, val login: LoginImpl )
@@ -271,15 +305,15 @@ object Freesound {
          if( verbose ) println( "Performing search..." )
          dispatch( SearchBegin )
          react {
-            case ISearchTimeout => {
+            case ITimeout => {
                if( verbose ) err( "Timeout while performing search." )
                loopResult( SearchFailedTimeout )
             }
-            case ISearchFailed( code ) => {
+            case IFailed( code ) => {
                if( verbose ) err( "There was an error during the search (" + code + ")." )
                loopResult( SearchFailedCurl )
             }
-            case ISearchException( cause ) => {
+            case IException( cause ) => {
                if( verbose ) err( "The search results could not be parsed (" +
                   cause.getClass().getName() + " : " + cause.getMessage() + ")." )
                loopResult( SearchFailedParse( cause ))
@@ -304,7 +338,7 @@ object Freesound {
             searchURL ) { (code, response) =>
 
             if( code != 0 ) {
-               searchActor ! ISearchFailed( code )
+               searchActor ! IFailed( code )
             } else {
                try {
                   val elems                  = XML.loadString( response ) \ "sample"
@@ -312,56 +346,17 @@ object Freesound {
                   searchActor ! ISearchDone( ids )
                }
                catch { case e =>
-                  searchActor ! ISearchException( e )
+                  searchActor ! IException( e )
                }
             }
          }
       }
-
-//      def downloadSample( index: Int, path: String = tmpDir ) {
-//         if( verbose ) println( "Getting sample location..." )
-//
-//   //      if(argPath[argPath.size-1].asSymbol != '/', { argPath = argPath + "/" });
-//
-//         def download( header: String, fileName: String ) {
-//            if( verbose ) println( "Downloading file..." )
-//            unixCmd( curlPath, "-b", cookiePath, header, ">", path + fileName ) { (code, response) =>
-//               if( code != 0 ) {
-//                  if( verbose ) println( "ERROR: There was an error while trying to download file." )
-//   //               callbackFunc.value(this, -6)
-//               } else {
-//                  if( verbose ) println( "File "+fileName+" downloaded..." )
-//   //             callbackFunc.value(this, 6, argPath+fileName)
-//               }
-//            }
-//         }
-//
-//         val id = sampleIDBucket( index )
-//         unixCmd( curlPath, "-b", cookiePath, "-I", "-d", "id=" + id,
-//            downloadURL ) { (code, response) =>
-//
-//            if( code != 0 ) {
-//               if( verbose ) println( "ERROR: There was an error while trying to download file." )
-//   //            callbackFunc.value(this, -6)
-//            } else {
-//               val header     = response.replace( " ", "" ).replace( "\n", "" )
-//               val clean      = header.substring( header.indexOf( "Location:" ), header.indexOf( "Vary:" ))
-                  /* .replace( "\u000D", "" ) */
-//               val fileName   = clean.substring( clean.lastIndexOf( "/" ) + 1 )
-//               download( clean, fileName )
-//            }
-//         }
-//      }
    }
 
    private object SampleImpl {
-      private case object IGetResult
-      private case object IPerform
-
-      private case class  IInfoDone( i: SampleInfo )
-      private case object IInfoTimeout
-      private case class  IInfoFailed( code: Int )
-      private case class  IInfoException( cause: Throwable )
+      private case class IInfoDone( i: SampleInfo )
+      private case class IDownloadDone( path: String )
+      private case class IPerformDownload( path: Option[ String ])
    }
 
    private class SampleImpl( val id: Long, login: LoginImpl )
@@ -370,6 +365,8 @@ object Freesound {
 
       import SampleImpl._
       import Sample._
+
+      override def toString = "Sample(" + id + ")"
 
       @volatile var infoResult: Option[ InfoResult ] = None
       
@@ -382,19 +379,19 @@ object Freesound {
             }
 
             def act { react { case IPerform =>
-               performQueryInfo
+               execInfo
                if( verbose ) println( "Getting info for sample #" + id + "..." )
                dispatch( InfoBegin )
                react {
-                  case IInfoTimeout => {
+                  case ITimeout => {
                      if( verbose ) err( "Timeout while getting sample info #" + id + "." )
                      loopResult( InfoFailedTimeout )
                   }
-                  case IInfoFailed( code ) => {
+                  case IFailed( code ) => {
                      if( verbose ) err( "Error (" + code + ") while getting sample info #" + id + "." )
                      loopResult( InfoFailedCurl )
                   }
-                  case IInfoException( cause ) => {
+                  case IException( cause ) => {
                      if( verbose ) err( "The query results for sample #" + id + " could not be parsed (" +
                         cause.getClass().getName() + " : " + cause.getMessage() + ")." )
                      loopResult( InfoFailedParse( cause ))
@@ -410,12 +407,6 @@ object Freesound {
          res
       }
 
-      override def toString = "Sample(" + id + ")"
-
-//      @volatile var infoVar: Option[ SampleInfo ] = None
-//      def info : Option[ SampleInfo ] = infoVar
-//      def flushInfo { sample ! IFlushInfo }
-
       def flushInfo {
          // XXX abort ongoing info query?
          infoResult = None
@@ -428,18 +419,13 @@ object Freesound {
          case r => r.asInstanceOf[ InfoResult ]
       })
 
-//      def queryInfo : Future[ Option[ SampleInfo ]] = sample !!( IGetInfo, {
-//         case i: SampleInfo => Some( i )
-//         case _ => None
-//      })
-
-      private def performQueryInfo {
+      private def execInfo {
 //         unixCmd( curlPath, "-b", search.cookiePath, "-d", "id=" + id,
 //            infoURL ) { (code, response) => }
 
          unixCmd( curlPath, "-b", login.cookiePath, infoURL + "?id=" + id ) { (code, response) =>
             if( code != 0 ) {
-               infoActor ! IInfoFailed( code )
+               infoActor ! IFailed( code )
             } else {
                try {
                   val dom        = XML.loadString( response )
@@ -505,7 +491,93 @@ object Freesound {
 //println( ">>>>>>>>>>>>>>>>>>>>" )
 //println( response )
 //println( "<<<<<<<<<<<<<<<<<<<<" )
-                  infoActor ! IInfoException( e )
+                  infoActor ! IException( e )
+               }
+            }
+         }
+      }
+
+      @volatile var downloadResult: Option[ DownloadResult ] = None
+
+      private lazy val downloadActor = {
+         val res = new DaemonActor {
+            private def loopResult( res: DownloadResult ) {
+               downloadResult = Some( res )
+               dispatch( res )
+               loop { react { case _ => reply( res )}}
+            }
+
+            def act { react { case IPerformDownload( pathOption ) =>
+               execDownload( pathOption )
+               if( verbose ) println( "Downloading sample #" + id + "..." )
+               dispatch( DownloadBegin )
+               react {
+                  case ITimeout => {
+                     if( verbose ) err( "Timeout while downloading sample #" + id + "." )
+                     loopResult( DownloadFailedTimeout )
+                  }
+                  case IFailed( code ) => {
+                     if( verbose ) err( "Error (" + code + ") while downloading sample #" + id + "." )
+                     loopResult( DownloadFailedCurl )
+                  }
+                  case IDownloadDone( path ) => {
+                     if( verbose ) println( "Sample #" + id + " downloaded (" + path + ")." )
+                     loopResult( DownloadDone( path ))
+                  }
+               }
+            }}
+         }
+         res.start
+         res
+      }
+
+      def flushDownload {
+         // XXX abort ongoing download?
+         downloadResult = None
+         dispatch( DownloadFlushed )
+      }
+
+//      private def infoGet : SampleInfo = info.getOrElse( error( "Requires info to be ready" ))
+
+      def performDownload {
+         downloadActor ! IPerformDownload( None )
+      }
+
+      def performDownload( path: String ) {
+         downloadActor ! IPerformDownload( Some( path ))
+      }
+
+      def queryDownloadResult : Future[ DownloadResult ] = downloadActor !!( IGetResult, {
+         case r => r.asInstanceOf[ DownloadResult ]
+      })
+
+      def execDownload( pathOption: Option[ String ]) {
+         unixCmd( curlPath, "-b", login.cookiePath, "-I", downloadURL + "?id=" + id ) { (code, response) =>
+            if( code != 0 ) {
+               downloadActor ! IFailed( code )
+            } else {
+//println( ">>>>>>>>>>>>>>" )
+//println( response )
+//println( "<<<<<<<<<<<<<<" )
+               response.split( "\n" ).find( _.startsWith( "Location:" )) map { locLine =>
+                  val loc     = locLine.substring( 9 ).trim
+                  val path    = pathOption getOrElse {
+                     val fileName   = loc.substring( loc.lastIndexOf( "/" ) + 1 )
+                     new File( tmpPath, fileName ).getCanonicalPath()
+                  }
+                  unixCmdProg( perc => dispatch( DownloadProgress( perc )),
+                     curlPath, "-b", login.cookiePath, loc, "-#", "-o", path ) { (code, _) =>
+                     if( code != 0 ) {
+                        downloadActor ! IFailed( code )
+                     } else {
+//         println( ">>>>>>>>>>>>>>" )
+//         println( response )
+//         println( "<<<<<<<<<<<<<<" )
+                        downloadActor ! IDownloadDone( path )
+                     }
+                  }
+               } getOrElse { // couldn't parse header location
+                  downloadActor ! IFailed( 0 )
                }
             }
          }

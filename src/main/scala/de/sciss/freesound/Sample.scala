@@ -23,9 +23,10 @@
 package de.sciss.freesound
 
 import actors.Future
+import java.io.File
 
 /**
- *    @version 0.10, 15-Jul-10
+ *    @version 0.10, 16-Jul-10
  */
 object Sample {
    case object InfoBegin
@@ -36,6 +37,16 @@ object Sample {
    case object InfoFailedTimeout extends InfoFailed
    case class InfoFailedParse( e: Throwable ) extends InfoFailed
    case object InfoFlushed
+
+   case object DownloadBegin
+   case class DownloadProgress( p: Int )
+   sealed abstract class DownloadResult
+   case class DownloadDone( path: String ) extends DownloadResult
+   sealed abstract class DownloadFailed extends DownloadResult
+   case object DownloadFailedCurl extends DownloadResult
+   case object DownloadFailedTimeout extends DownloadResult
+//   case class InfoFailedParse( e: Throwable ) extends InfoFailed
+   case object DownloadFlushed
 }
 
 trait Sample extends Model {
@@ -48,7 +59,16 @@ trait Sample extends Model {
    })
    def infoResult : Option[ InfoResult ]
    def flushInfo : Unit
-//   def queryInfo : Future[ Option[ SampleInfo ]]
    def performInfo : Unit
    def queryInfoResult : Future[ InfoResult ]
+
+   def download : Option[ String ] = downloadResult.flatMap( _ match {
+      case DownloadDone( path ) => Some( path )
+      case _ => None
+   })
+   def downloadResult : Option[ DownloadResult ]
+   def flushDownload : Unit
+   def performDownload : Unit
+   def performDownload( path: String ) : Unit
+   def queryDownloadResult : Future[ DownloadResult ]
 }
