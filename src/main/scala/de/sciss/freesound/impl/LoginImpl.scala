@@ -24,10 +24,13 @@ package de.sciss.freesound.impl
 
 import de.sciss.freesound.{Sample, Search, SearchOptions, Login}
 
+/**
+ *    @version 0.11, 17-Jul-10
+ */
 class LoginImpl( val cookiePath: String, val username: String ) extends Login {
    login =>
    def search( options: SearchOptions ) : Search = new SearchImpl( options, login )
-   def sample( id: Long ) : Sample = new SampleImpl( id, login )
+//   def sample( id: Long ) : Sample = new SampleImpl( id, login )
 
    override def toString = "Login(" + username + ")"
 }

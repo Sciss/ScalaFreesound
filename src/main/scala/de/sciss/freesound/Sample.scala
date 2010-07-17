@@ -23,10 +23,11 @@
 package de.sciss.freesound
 
 import actors.Future
+import impl.SampleImpl
 import java.io.File
 
 /**
- *    @version 0.10, 16-Jul-10
+ *    @version 0.11, 17-Jul-10
  */
 object Sample {
    case object InfoBegin
@@ -47,6 +48,8 @@ object Sample {
    case object DownloadFailedTimeout extends DownloadResult
 //   case class InfoFailedParse( e: Throwable ) extends InfoFailed
    case object DownloadFlushed
+
+   def apply( id: Long ) : Sample = new SampleImpl( id )
 }
 
 trait Sample extends Model {
@@ -59,7 +62,7 @@ trait Sample extends Model {
    })
    def infoResult : Option[ InfoResult ]
    def flushInfo : Unit
-   def performInfo : Unit
+   def performInfo( implicit login: Login ) : Unit
    def queryInfoResult : Future[ InfoResult ]
 
    def download : Option[ String ] = downloadResult.flatMap( _ match {
@@ -68,7 +71,7 @@ trait Sample extends Model {
    })
    def downloadResult : Option[ DownloadResult ]
    def flushDownload : Unit
-   def performDownload : Unit
-   def performDownload( path: String ) : Unit
+   def performDownload( implicit login: Login ) : Unit
+   def performDownload( path: String )( implicit login: Login ) : Unit
    def queryDownloadResult : Future[ DownloadResult ]
 }

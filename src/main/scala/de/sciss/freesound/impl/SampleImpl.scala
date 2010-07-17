@@ -32,10 +32,11 @@ import de.sciss.freesound._
 object SampleImpl {
    private case class IInfoDone( i: SampleInfo )
    private case class IDownloadDone( path: String )
-   private case class IPerformDownload( path: Option[ String ])
+   private case class IPerformInfo( login: Login )
+   private case class IPerformDownload( login: Login, path: Option[ String ])
 }
 
-class SampleImpl( val id: Long, login: LoginImpl )
+class SampleImpl( val id: Long )
 extends Sample {
    sample =>
 
@@ -56,8 +57,8 @@ extends Sample {
             loop { react { case _ => reply( res )}}
          }
 
-         def act { react { case IPerform =>
-            execInfo
+         def act { react { case IPerformInfo( login ) =>
+            execInfo( login )
             if( verbose ) println( "Getting info for sample #" + id + "..." )
             dispatch( InfoBegin )
             react {
@@ -91,13 +92,13 @@ extends Sample {
       dispatch( InfoFlushed )
    }
 
-   def performInfo { infoActor ! IPerform }
+   def performInfo( implicit login: Login ) { infoActor ! IPerformInfo( login )}
 
    def queryInfoResult : Future[ InfoResult ] = infoActor !!( IGetResult, {
       case r => r.asInstanceOf[ InfoResult ]
    })
 
-   private def execInfo {
+   private def execInfo( login: Login ) {
 //         unixCmd( curlPath, "-b", search.cookiePath, "-d", "id=" + id,
 //            infoURL ) { (code, response) => }
 
@@ -126,8 +127,8 @@ extends Sample {
             loop { react { case _ => reply( res )}}
          }
 
-         def act { react { case IPerformDownload( pathOption ) =>
-            execDownload( pathOption )
+         def act { react { case IPerformDownload( login, pathOption ) =>
+            execDownload( login, pathOption )
             if( verbose ) println( "Downloading sample #" + id + "..." )
             dispatch( DownloadBegin )
             react {
@@ -158,19 +159,19 @@ extends Sample {
 
 //      private def infoGet : SampleInfo = info.getOrElse( error( "Requires info to be ready" ))
 
-   def performDownload {
-      downloadActor ! IPerformDownload( None )
+   def performDownload( implicit login: Login ) {
+      downloadActor ! IPerformDownload( login, None )
    }
 
-   def performDownload( path: String ) {
-      downloadActor ! IPerformDownload( Some( path ))
+   def performDownload( path: String )( implicit login: Login ) {
+      downloadActor ! IPerformDownload( login, Some( path ))
    }
 
    def queryDownloadResult : Future[ DownloadResult ] = downloadActor !!( IGetResult, {
       case r => r.asInstanceOf[ DownloadResult ]
    })
 
-   def execDownload( pathOption: Option[ String ]) {
+   def execDownload( login: Login, pathOption: Option[ String ]) {
       Shell.curl( "-b", login.cookiePath, "-I", downloadURL + "?id=" + id ) { (code, response) =>
          if( code != 0 ) {
             downloadActor ! IFailed( code )

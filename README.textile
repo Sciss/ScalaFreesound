@@ -24,10 +24,10 @@ pre. scala> lp.perform
 Trying to log in...
 Login was successful.
 
-pre. scala> val l = lp.login.get
+pre. scala> implicit val l = lp.login.get
 l: de.sciss.freesound.Login = Login(<user>)
 
-pre. scala> val smp = l.sample(25)
+pre. scala> val smp = Sample(25)
 smp: de.sciss.freesound.Sample = Sample(25)
 
 pre. scala> smp.performInfo

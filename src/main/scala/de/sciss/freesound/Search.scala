@@ -26,7 +26,7 @@ import collection.immutable.{ IndexedSeq => IIdxSeq }
 import actors.Future
 
 /**
- *    @version 0.10, 15-Jul-10
+ *    @version 0.10, 17-Jul-10
  */
 object Search {
    case object SearchBegin
@@ -49,4 +49,6 @@ trait Search extends Model {
    })
    def result : Option[ SearchResult ]
    def queryResult : Future[ SearchResult ]
+
+   val login: Login
 }

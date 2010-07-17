@@ -27,7 +27,7 @@ import collection.breakOut
 import collection.immutable.{ IndexedSeq => IIdxSeq, Set => ISet }
 import de.sciss.freesound._
 import xml.{XML, Node}
-import java.io.{Writer, IOException}
+import java.io.{OutputStreamWriter, OutputStream, Writer, IOException}
 
 /**
  *    @version 0.11, 17-Jul-10
@@ -118,7 +118,9 @@ case class SampleInfoImpl( id: Long )( xml: Node,
    override def toString = "SampleInfo(" + id + ", " + fileName + ")"
 
    @throws( classOf[ IOException ])
-   def writeXML( writer: Writer ) {
-      XML.write( writer, xml, "UTF-8", true, null )
+   def writeXML( out: OutputStream ) {
+      val w = new OutputStreamWriter( out )
+      XML.write( w, xml, "UTF-8", true, null )
+      w.flush() // importante!
    }
 }

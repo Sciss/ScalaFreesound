@@ -25,16 +25,16 @@ package de.sciss.freesound
 import impl.SampleInfoImpl
 import java.util.Date
 import collection.immutable.{ IndexedSeq => IIdxSeq, Set => ISet }
-import java.io.{Reader, Writer, InputStream, IOException}
 import xml.XML
+import java.io._
 
 /**
  *    @version 0.11, 17-Jul-10
  */
 object SampleInfo {
    @throws( classOf[ IOException ])
-   def readXML( reader: Reader ) : SampleInfo = {
-      val xml = XML.load( reader )
+   def readXML( in: InputStream ) : SampleInfo = {
+      val xml = XML.load( in )
       SampleInfoImpl.decodeXML( xml )
    }
 }
@@ -63,5 +63,5 @@ trait SampleInfo {
    def comments : IIdxSeq[ Comment ]
 
    @throws( classOf[ IOException ])
-   def writeXML( writer: Writer ) : Unit
+   def writeXML( out: OutputStream ) : Unit
 }

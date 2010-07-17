@@ -1,5 +1,5 @@
 /*
- *  Login.scala
+ *  SampleInfoCache.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010 Hanns Holger Rutz. All rights reserved.
@@ -22,9 +22,31 @@
 
 package de.sciss.freesound
 
-trait Login {
-   def username : String
-   def search( options: SearchOptions ) : Search
-//   def sample( id: Long ) : Sample
-   def cookiePath : String
+import impl.SampleInfoPersistentCacheImpl
+import java.io.IOException
+
+/**
+ *    @version 0.10, 17-Jul-10
+ */
+object SampleInfoCache {
+//   def memory : SampleInfoCache = new SampleInfoMemCacheImpl
+   @throws( classOf[ IOException ])
+   def persistent( path: String ) : SampleInfoCache = {
+      val res = new SampleInfoPersistentCacheImpl( path )
+      res.init
+      res
+   }
+}
+
+trait SampleInfoCache {
+   def contains( id: Long ) : Boolean
+
+   @throws( classOf[ IOException ])
+   def get( id: Long ) : Option[ SampleInfo ]
+
+   @throws( classOf[ IOException ])
+   def add( info: SampleInfo ) : Unit
+
+   @throws( classOf[ IOException ])
+   def remove( id: Long ) : Unit
 }

@@ -26,8 +26,11 @@ import actors.{Actor, DaemonActor}
 import collection.breakOut
 import collection.immutable.{ IndexedSeq => IIdxSeq }
 import xml.XML
-import de.sciss.freesound.{Shell, Freesound, Search, SearchOptions}
+import de.sciss.freesound._
 
+/**
+ *    @version 0.11, 17-Jul-10
+ */
 object SearchImpl {
    private case class  ISearchDone( ids: IIdxSeq[ Long ])
 }
@@ -86,14 +89,14 @@ extends DaemonActor with Search {
                val sz = ids.size
                println( "Search was successful (" + sz + " sample" + (if( sz < 2 ) "" else "s") + " found)." )
             }
-            val samples = ids.map( new SampleImpl( _, login ))
+            val samples = ids.map( Sample( _ ))
             loopResult( SearchDone( samples ))
          }
       }
    }}
 
    private def execSearch {
-      Shell.curl( "-b", login.cookiePath, "-d", "search=" + options.keyword +
+      Shell.curlXML( "-b", login.cookiePath, "-d", "search=" + options.keyword +
          "&start=" + options.offset + "&searchDescriptions=" + (if( options.descriptions ) 1 else 0) +
          "&searchTags=" + (if( options.tags ) 1 else 0) + "&searchFilenames=" + (if( options.fileNames ) 1 else 0) +
          "&searchUsernames=" + (if( options.userNames ) 1 else 0) + "&durationMin=" + options.minDuration +
@@ -102,15 +105,17 @@ extends DaemonActor with Search {
 
          if( code != 0 ) {
             searchActor ! IFailed( code )
-         } else {
-            try {
-               val elems                  = XML.loadString( response ) \ "sample"
-               val ids: IIdxSeq[ Long ]   = elems.map( e => (e \ "@id").text.toLong )( breakOut )
-               searchActor ! ISearchDone( ids )
-            }
-            catch { case e =>
-               searchActor ! IException( e )
-            }
+         } else response match {
+             case Left( xml ) => try {
+                  val elems                  = xml \ "sample"
+                  val ids: IIdxSeq[ Long ]   = elems.map( e => (e \ "@id").text.toLong )( breakOut )
+                  searchActor ! ISearchDone( ids )
+               }
+               catch { case e =>
+                  searchActor ! IException( e )
+               }
+
+            case Right( e ) => searchActor ! IException( e )
          }
       }
    }
