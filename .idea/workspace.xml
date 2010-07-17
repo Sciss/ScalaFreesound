@@ -60,28 +60,82 @@
   <component name="FileColors" enabled="true" enabledForTabs="true" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="SampleInfo.scala" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/SampleInfo.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="50" column="6" selection-start="1618" selection-end="1618" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="Sample.scala" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Sample.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="41" column="30" selection-start="1331" selection-end="1347" vertical-scroll-proportion="0.0">
+            <state line="20" column="3" selection-start="0" selection-end="792" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Freesound.scala" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="Freesound.scala" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Freesound.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="110" column="66" selection-start="3876" selection-end="3876" vertical-scroll-proportion="0.09933775">
+            <state line="64" column="22" selection-start="2216" selection-end="2216" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SampleInfo.scala" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/SampleInfo.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="35" column="0" selection-start="1111" selection-end="1111" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SearchImpl.scala" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SearchImpl.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="25" column="26" selection-start="892" selection-end="892" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="LoginProcessImpl.scala" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/LoginProcessImpl.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="116" column="12" selection-start="3669" selection-end="3669" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SampleImpl.scala" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SampleImpl.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="187" column="68" selection-start="6490" selection-end="6490" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Shell.scala" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Shell.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="80" column="27" selection-start="2553" selection-end="2553" vertical-scroll-proportion="0.25170067">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SampleInfoImpl.scala" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SampleInfoImpl.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="121" column="49" selection-start="4509" selection-end="4509" vertical-scroll-proportion="0.0">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Lightweight.scala" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/Lightweight.scala">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="1" column="15" selection-start="18" selection-end="18" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -97,22 +151,22 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/FreeSoundQuery.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Model.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/SearchOptions.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/FreesoundQuery.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/FreesoundInfo.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Descriptors.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/User.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Comment.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Description.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/SampleInfo.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Statistics.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Search.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Login.scala" />
         <option value="$PROJECT_DIR$/project/build.properties" />
         <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Sample.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/Lightweight.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/LoginImpl.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Util.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/package.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/Impl.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Freesound.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SearchImpl.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/LoginProcessImpl.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/SampleInfo.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SampleInfoImpl.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SampleImpl.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Shell.scala" />
       </list>
     </option>
   </component>
@@ -151,6 +205,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
       <pane id="Favorites" />
       <pane id="ProjectPane">
         <subPane>
@@ -347,6 +402,104 @@
               <option name="myItemId" value="main" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scala" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="freesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="impl" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ScalaFreesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ScalaFreesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scala" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="freesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="impl" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="SampleImpl.scala" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider$PsiClassOwnerTreeNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ScalaFreesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ScalaFreesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scala" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="freesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="impl" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="LoginProcessImpl.scala" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider$PsiClassOwnerTreeNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ScalaFreesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ScalaFreesound" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
@@ -365,7 +518,6 @@
         </subPane>
       </pane>
       <pane id="Scope" />
-      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -547,8 +699,8 @@
     <supportedVersion>125</supportedVersion>
   </component>
   <component name="ToolWindowManager">
-    <frame x="16" y="22" width="1380" height="878" extended-state="0" />
-    <editor active="true" />
+    <frame x="105" y="22" width="1380" height="878" extended-state="0" />
+    <editor active="false" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -560,7 +712,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24943651" sideWeight="0.6619898" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24943651" sideWeight="0.6619898" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -605,31 +757,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Model.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="9" selection-start="12" selection-end="12" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/User.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="20" selection-start="122" selection-end="122" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Description.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="27" column="36" selection-start="886" selection-end="886" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/LoginProcess.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="34" column="0" selection-start="1052" selection-end="1215" vertical-scroll-proportion="0.5510204" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/project/build.properties">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="87" selection-start="173" selection-end="173" vertical-scroll-proportion="0.12244898" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Login.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state line="28" column="0" selection-start="909" selection-end="944" vertical-scroll-proportion="0.5714286" />
@@ -655,23 +782,75 @@
         <state line="49" column="0" selection-start="1430" selection-end="1575" vertical-scroll-proportion="0.57615894" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/SampleInfo.scala">
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/Lightweight.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="50" column="6" selection-start="1618" selection-end="1618" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
+        <state line="1" column="15" selection-start="18" selection-end="18" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Sample.scala">
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/Impl.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="41" column="30" selection-start="1331" selection-end="1347" vertical-scroll-proportion="0.0">
+        <state line="7" column="13" selection-start="187" selection-end="187" vertical-scroll-proportion="0.22340426">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Freesound.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="110" column="66" selection-start="3876" selection-end="3876" vertical-scroll-proportion="0.09933775">
+        <state line="64" column="22" selection-start="2216" selection-end="2216" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Sample.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="20" column="3" selection-start="0" selection-end="792" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SearchImpl.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="25" column="26" selection-start="892" selection-end="892" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/LoginImpl.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="26" column="6" selection-start="902" selection-end="902" vertical-scroll-proportion="0.19148937">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/LoginProcessImpl.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="116" column="12" selection-start="3669" selection-end="3669" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/SampleInfo.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="35" column="0" selection-start="1111" selection-end="1111" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SampleInfoImpl.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="121" column="49" selection-start="4509" selection-end="4509" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/impl/SampleImpl.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="187" column="68" selection-start="6490" selection-end="6490" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/de/sciss/freesound/Shell.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="80" column="27" selection-start="2553" selection-end="2553" vertical-scroll-proportion="0.25170067">
           <folding />
         </state>
       </provider>

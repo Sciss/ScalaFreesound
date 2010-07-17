@@ -22,31 +22,22 @@
 
 package de.sciss.freesound
 
+import impl.SampleInfoImpl
 import java.util.Date
 import collection.immutable.{ IndexedSeq => IIdxSeq, Set => ISet }
+import java.io.{Reader, Writer, InputStream, IOException}
+import xml.XML
 
-//object SampleInfo {
-//
-//}
-
-//case class SampleInfo(
-//   id: Long,
-//   numDownloads: Int,
-//   extension: String,
-//   sampleRate: Double,
-//   bitRate: Int,
-//   bitDepth: Int,
-//   numChannels: Int,
-//   duration: Double,
-//   fileSize: Long,
-//   userID: Long,
-//   userName: String
-//) {
-//   override def toString = "SampleInfo(id = " + id + ", numDownloads = " + numDownloads +
-//      ", extension = \"" + extension + "\", sampleRate = " + sampleRate + ", bitRate = " + bitRate +
-//      ", bitDepth = " + bitDepth + ", numChannels = " + numChannels + ", duration = " + duration +
-//      ", fileSize = " + fileSize + ", userID = " + userID + ", userName = \"" + userName + "\")"
-//}
+/**
+ *    @version 0.11, 17-Jul-10
+ */
+object SampleInfo {
+   @throws( classOf[ IOException ])
+   def readXML( reader: Reader ) : SampleInfo = {
+      val xml = XML.load( reader )
+      SampleInfoImpl.decodeXML( xml )
+   }
+}
 
 trait SampleInfo {
    def id : Long
@@ -70,4 +61,7 @@ trait SampleInfo {
    def descriptions : IIdxSeq[ Description ]
    def tags : ISet[ String ]
    def comments : IIdxSeq[ Comment ]
+
+   @throws( classOf[ IOException ])
+   def writeXML( writer: Writer ) : Unit
 }
