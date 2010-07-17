@@ -86,11 +86,18 @@ extends Sample {
       res
    }
 
-   def flushInfo {
-      // XXX abort ongoing info query?
-      infoResult = None
-      dispatch( InfoFlushed )
+   def info_=( value: Option[ SampleInfo ]) {
+      if( value != info ) {
+         infoResult = value.map( InfoDone( _ ))
+         dispatch( infoResult.getOrElse( InfoFlushed ))
+      }
    }
+
+//   def flushInfo {
+//      // XXX abort ongoing info query?
+//      infoResult = None
+//      dispatch( InfoFlushed )
+//   }
 
    def performInfo( implicit login: Login ) { infoActor ! IPerformInfo( login )}
 

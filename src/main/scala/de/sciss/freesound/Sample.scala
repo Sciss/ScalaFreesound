@@ -60,8 +60,9 @@ trait Sample extends Model {
       case InfoDone( i ) => Some( i )
       case _ => None
    })
+   def info_=( value: Option[ SampleInfo ]) : Unit
    def infoResult : Option[ InfoResult ]
-   def flushInfo : Unit
+//   def flushInfo : Unit
    def performInfo( implicit login: Login ) : Unit
    def queryInfoResult : Future[ InfoResult ]
 
