@@ -158,11 +158,18 @@ extends Sample {
       res
    }
 
-   def flushDownload {
-      // XXX abort ongoing download?
-      downloadResult = None
-      dispatch( DownloadFlushed )
+   def download_=( value: Option[ String ]) {
+      if( value != download ) {
+         downloadResult = value.map( DownloadDone( _ ))
+         dispatch( downloadResult.getOrElse( DownloadFlushed ))
+      }
    }
+
+//   def flushDownload {
+//      // XXX abort ongoing download?
+//      downloadResult = None
+//      dispatch( DownloadFlushed )
+//   }
 
 //      private def infoGet : SampleInfo = info.getOrElse( error( "Requires info to be ready" ))
 

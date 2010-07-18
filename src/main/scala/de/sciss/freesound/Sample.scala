@@ -70,8 +70,9 @@ trait Sample extends Model {
       case DownloadDone( path ) => Some( path )
       case _ => None
    })
+   def download_=( value: Option[ String ]) : Unit
    def downloadResult : Option[ DownloadResult ]
-   def flushDownload : Unit
+//   def flushDownload : Unit
    def performDownload( implicit login: Login ) : Unit
    def performDownload( path: String )( implicit login: Login ) : Unit
    def queryDownloadResult : Future[ DownloadResult ]
