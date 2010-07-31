@@ -28,11 +28,11 @@ case class SearchOptions(
    tags : Boolean = true,
    fileNames : Boolean = false,
    userNames : Boolean = false,
-   minDuration : Int = 1,
-   maxDuration : Int = 20,
+   minDuration : Int = 20,
+   maxDuration : Int = 1200,
    order : Int = 1,
    offset : Int = 0,
-   maxItems : Int = 100
+   maxItems : Int = 500
 ) {
    override def toString = "SearchOptions(keyword = \"" + keyword + "\", descriptions = " + descriptions +
       ", tags = " + tags + ", fileNames = " + fileNames + ", userNames = " + userNames +
