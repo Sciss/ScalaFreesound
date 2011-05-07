@@ -36,8 +36,8 @@ import actors.{Actor, OutputChannel, Future, DaemonActor}
  */
 object Freesound {
    val name          = "ScalaFreesound"
-   val version       = 0.10
-   val copyright     = "(C)opyright 2010 Hanns Holger Rutz"
+   val version       = 0.11
+   val copyright     = "(C)opyright 2010-2011 Hanns Holger Rutz"
 
    def versionString = (version + 0.001).toString.substring( 0, 4 )
 
