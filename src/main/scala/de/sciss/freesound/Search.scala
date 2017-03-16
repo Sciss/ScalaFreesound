@@ -22,33 +22,42 @@
 
 package de.sciss.freesound
 
-import collection.immutable.{ IndexedSeq => IIdxSeq }
-import actors.Future
+import de.sciss.model.Model
 
-/**
- *    @version 0.10, 17-Jul-10
- */
+import scala.collection.immutable.{IndexedSeq => Vec}
+import scala.concurrent.Future
+
 object Search {
-   case object SearchBegin
-   sealed abstract class SearchResult
-   case class SearchDone( ids: IIdxSeq[ Sample ]) extends SearchResult
-   sealed abstract class SearchFailed extends SearchResult
-   case object SearchFailedCurl extends SearchFailed
-   case object SearchFailedTimeout extends SearchFailed
-   case class SearchFailedParse( e: Throwable ) extends SearchFailed
+
+  sealed trait Update
+  case object SearchBegin extends Update
+
+  sealed abstract class SearchResult extends Update
+
+  case class SearchDone(ids: Vec[Sample])     extends SearchResult
+  sealed abstract class SearchFailed          extends SearchResult
+  case object SearchFailedCurl                extends SearchFailed
+  case object SearchFailedTimeout             extends SearchFailed
+  case class SearchFailedParse(e: Throwable)  extends SearchFailed
+
 }
 
-trait Search extends Model {
-   import Search._
+trait Search extends Model[Search.Update] {
 
-   def perform: Unit
-   def options : SearchOptions
-   def samples : Option[ IIdxSeq[ Sample ]] = result.flatMap( _ match {
-      case SearchDone( smps ) => Some( smps )
-      case _ => None
-   })
-   def result : Option[ SearchResult ]
-   def queryResult : Future[ SearchResult ]
+  import Search._
 
-   val login: Login
+  def perform(): Unit
+
+  def options: SearchOptions
+
+  def samples: Option[Vec[Sample]] = result.flatMap(_ match {
+    case SearchDone(smps) => Some(smps)
+    case _ => None
+  })
+
+  def result: Option[SearchResult]
+
+  def queryResult: Future[SearchResult]
+
+  val login: Login
 }

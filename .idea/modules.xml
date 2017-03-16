@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ScalaFreesound.iml" filepath="$PROJECT_DIR$/ScalaFreesound.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scalafreesound.iml" filepath="$PROJECT_DIR$/.idea/modules/scalafreesound.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/scalafreesound-build.iml" filepath="$PROJECT_DIR$/.idea/modules/scalafreesound-build.iml" />
     </modules>
   </component>
 </project>
-

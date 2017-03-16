@@ -1,43 +1,46 @@
-h2. ScalaFreesound
+# ScalaFreesound
 
-h3. statement
+## statement
 
 ScalaFreesound is a library to query the Freesound audio database ("freesound.org":http://freesound.org). As the Mootcher API is currently discontinued, this takes an approach based on the FreeSound quark for SuperCollider by Batuhan Bozkurt ("www.batuhanbozkurt.com/news/freesound-class-for-supercollider-released-as-a-quark":http://www.batuhanbozkurt.com/news/freesound-class-for-supercollider-released-as-a-quark). Big thanks to Batuhan!
 
-ScalaFreesound is (C)opyright 2010 by Hanns Holger Rutz. All rights reserved. It is released under the "GNU Lesser General Public License":http://github.com/Sciss/ScalaFreesound/blob/master/licenses/ScalaFreesound-License.txt and comes with absolutely no warranties. To contact the author, send an email to @contact at sciss.de@
+ScalaFreesound is (C)opyright 2010&ndash;2017 by Hanns Holger Rutz. All rights reserved. It is released under the "GNU Lesser General Public License":http://github.com/Sciss/ScalaFreesound/blob/master/licenses/ScalaFreesound-License.txt and comes with absolutely no warranties. To contact the author, send an email to @contact at sciss.de@
 
 ScalaFreesound requires Scala 2.8 and Java 1.6 to compile, as well as the Curl unix command to execute queries.
 
-h3. sample usage
+## sample usage
 
-pre. Welcome to Scala version 2.8.0.final (Java HotSpot(TM) Client VM, Java 1.6.0_20).
+```
+Welcome to Scala version 2.8.0.final (Java HotSpot(TM) Client VM, Java 1.6.0_20).
 Type in expressions to have them evaluated.
 Type :help for more information.
+```
 
-pre. scala> import de.sciss.freesound._
+```scala
+scala> import de.sciss.freesound._
 import de.sciss.freesound._
 
-pre. scala> val lp = Freesound.login( "<user>", "<pass>" )
+scala> val lp = Freesound.login( "<user>", "<pass>" )
 lp: de.sciss.freesound.LoginProcess = LoginProcess(<user>)
 
-pre. scala> lp.perform
+scala> lp.perform
 Trying to log in...
 Login was successful.
 
 pre. scala> implicit val l = lp.login.get
 l: de.sciss.freesound.Login = Login(<user>)
 
-pre. scala> val smp = Sample(25)
+scala> val smp = Sample(25)
 smp: de.sciss.freesound.Sample = Sample(25)
 
-pre. scala> smp.performInfo
+scala> smp.performInfo
 Getting info for sample #25...
 Info for sample #25 retrieved.
 
-pre. scala> smp.addListener { case Sample.DownloadProgress( p ) => println( "P = " + p + "%" )}
+scala> smp.addListener { case Sample.DownloadProgress( p ) => println( "P = " + p + "%" )}
 res2: de.sciss.freesound.Model.Listener = <function1>
 
-pre. scala> smp.performDownload
+scala> smp.performDownload
 Downloading sample #25...
 P = 0%
 P = 1%
@@ -47,37 +50,38 @@ P = 98%
 P = 100%
 Sample #25 downloaded (/private/var/folders/Dt/DtvfRgm6FGaibyjzjqE6OE+++TI/-Tmp-/25__Anton__Glass_C_mf.wav).
 
-pre. scala> val s = l.search( SearchOptions( "Helicopter" ))
+scala> val s = l.search( SearchOptions( "Helicopter" ))
 s: de.sciss.freesound.Search = Search(SearchOptions(keyword = "Helicopter", descriptions = true, tags = true, fileNames = false, userNames = false, minDuration = 1, maxDuration = 20, order = 1, maxItems = 100))
 
-pre. scala> s.perform
+scala> s.perform
 Performing search...
 Search was successful (45 samples found).
 
-pre. scala> val smps = s.samples.get
+scala> val smps = s.samples.get
 smps: scala.collection.immutable.IndexedSeq[de.sciss.freesound.Sample] = Vector(Sample(23289), Sample(12659), Sample(23288), Sample(39865), Sample(8135), Sample(25951), Sample(23287), Sample(7033), Sample(7034), Sample(7536), Sample(7533), Sample(7538), Sample(7535), Sample(41729), Sample(48561), Sample(41004), Sample(49482), Sample(7534), Sample(5668), Sample(19443), Sample(5469), Sample(69607), Sample(38123), Sample(94867), Sample(69609), Sample(78889), Sample(65457), Sample(69608), Sample(48559), Sample(34941), Sample(50608), Sample(48564), Sample(46803), Sample(93076), Sample(48563), Sample(48562), Sample(76553), Sample(88464), Sample(48560), Sample(71045), Sample(43027), Sample(47167), Sample(81510), Sample(98116), Sample(100150))
 
-pre. scala> val x = smps(0)
+scala> val x = smps(0)
 x: de.sciss.freesound.Sample = Sample(23289)
 
-pre. scala> x.performInfo
+scala> x.performInfo
 Getting info for sample #23289...
 Info for sample #23289 retrieved.
 
-pre. scala> val i = x.info.get
+scala> val i = x.info.get
 i: de.sciss.freesound.SampleInfo = SampleInfo(23289, Resocopter Fast.aif)
 
-pre. scala> i.duration
+scala> i.duration
 res6: Double = 18.0
 
-pre. scala> i.sampleRate
+scala> i.sampleRate
 res7: Double = 44100.0
 
-pre. scala> i.descriptions.head.text
+scala> i.descriptions.head.text
 res8: String = a digital representation of the blades of a helicopter rotating at a fast speed
+```
 
-h3. known issues
+## known issues
 
 There is currently a problem with Scala 2.8 actors that makes them "starve" very easily when using blocking methods such as the downloads of ScalaFreesound. The workaround is to set a specific system property prior using downloading:
 
-pre. System.setProperty( "actors.enableForkJoin", "false" )
+    System.setProperty( "actors.enableForkJoin", "false" )

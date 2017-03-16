@@ -23,94 +23,103 @@
 package de.sciss.freesound.impl
 
 import java.io.File
-import actors.{Actor, DaemonActor}
-import de.sciss.freesound.{Shell, Freesound, LoginProcess}
+
+import de.sciss.freesound.{Freesound, LoginProcess, Shell}
+import de.sciss.model.impl.ModelImpl
+
+import scala.concurrent.Future
 
 object LoginProcessImpl {
-   private case object ILoginDone
+  private case object ILoginDone
 }
 
-class LoginProcessImpl( val username: String, password: String )
-extends DaemonActor with LoginProcess {
-   import LoginProcessImpl._
-   import LoginProcess._
-   import Freesound.{ verbose, tmpPath, loginURL, searchURL }
-   import Impl._
+class LoginProcessImpl(val username: String, password: String)
+  extends DaemonActor with LoginProcess with ModelImpl[LoginProcess.Update] {
 
-   val cookiePath  = {
-      val f = File.createTempFile( "cookie", ".txt", new File( tmpPath ))
-      f.deleteOnExit()
-      f.getCanonicalPath()
-   }
+  import Freesound.{loginURL, searchURL, tmpPath, verbose}
+  import Impl._
+  import LoginProcess._
+  import LoginProcessImpl._
 
-   private lazy val loginActor : Actor = {
-      start
-      this
-   }
+  val cookiePath = {
+    val f = File.createTempFile("cookie", ".txt", new File(tmpPath))
+    f.deleteOnExit()
+    f.getCanonicalPath()
+  }
 
-   @volatile var result: Option[ LoginResult ] = None
+  private lazy val loginActor: Actor = {
+    start
+    this
+  }
 
-   override def toString = "LoginProcess(" + username + ")"
+  @volatile var result: Option[LoginResult] = None
 
-   // we can't use start as name because that
-   // returns an actor... which is opaque in
-   // the implementation
-   def perform { loginActor ! IPerform }
+  override def toString = s"LoginProcess($username)"
 
-   def queryResult : Future[ LoginResult ] = loginActor !!( IGetResult, {
-      case r => r.asInstanceOf[ LoginResult ]
-   })
+  // we can't use start as name because that
+  // returns an actor... which is opaque in
+  // the implementation
+  def perform(): Unit =
+    loginActor ! IPerform
 
-   private def loopResult( res: LoginResult ) {
-      result = Some( res )
-      dispatch( res )
-      loop { react { case _ => reply( res )}}
-   }
+  def queryResult: Future[LoginResult] = loginActor !! (IGetResult, {
+    case r => r.asInstanceOf[LoginResult]
+  })
 
-   def act { react { case IPerform =>
-      execLogin
-      if( verbose ) inform( "Trying to log in..." )
-      dispatch( LoginBegin )
+  private def loopResult(res: LoginResult): Unit = {
+    result = Some(res)
+    dispatch(res)
+    loop {
+      react { case _ => reply(res) }
+    }
+  }
+
+  def act {
+    react { case IPerform =>
+      execLogin()
+      if (verbose) inform("Trying to log in...")
+      dispatch(LoginBegin)
       react {
-         case IFailed( code ) => {
-            val failure = if( code != 0 ) {
-               if( verbose ) err( "There was an error logging in (" + code + ")." )
-               LoginFailedCurl
-            } else {
-               if( verbose ) err( "Login failed, check your username and password." )
-               LoginFailedCredentials
-            }
-            loopResult( failure )
-         }
-         case ITimeout => {
-            if( verbose ) err( "Timeout while trying to log in." )
-            loopResult( LoginFailedTimeout )
-         }
-         case ILoginDone => {
-            if( verbose ) println( "Login was successful." )
-            loopResult( LoginDone( new LoginImpl( cookiePath, username )))
-         }
+        case IFailed(code) => {
+          val failure = if (code != 0) {
+            if (verbose) err(s"There was an error logging in ($code).")
+            LoginFailedCurl
+          } else {
+            if (verbose) err("Login failed, check your username and password.")
+            LoginFailedCredentials
+          }
+          loopResult(failure)
+        }
+        case ITimeout => {
+          if (verbose) err("Timeout while trying to log in.")
+          loopResult(LoginFailedTimeout)
+        }
+        case ILoginDone => {
+          if (verbose) println("Login was successful.")
+          loopResult(LoginDone(new LoginImpl(cookiePath, username)))
+        }
       }
-   }}
+    }
+  }
 
-   private def execLogin {
-      Shell.curl( "-c", cookiePath, "-d", "username=" + username +
-         "&password=" + password + "&redirect=../index.php&login=login&autologin=0",
-         loginURL ) { (code, response) =>
-         if( code != 0 ) {
-            loginActor ! IFailed( code )
-         } else {
-            Shell.curl( "-b", cookiePath, "-I", searchURL ) {
-               (code, response) =>
-               if( code != 0 ) {
-                  loginActor ! IFailed( code )
-               } else if( response.indexOf( "text/xml" ) >= 0 ) {
-                  loginActor ! ILoginDone
-               } else {
-                  loginActor ! IFailed( 0 ) // 0 indicates unexpected result
-               }
+  private def execLogin(): Unit = {
+    Shell.curl("-c", cookiePath, "-d", "username=" + username +
+      "&password=" + password + "&redirect=../index.php&login=login&autologin=0",
+      loginURL) { (code, response) =>
+      if (code != 0) {
+        loginActor ! IFailed(code)
+      } else {
+        Shell.curl("-b", cookiePath, "-I", searchURL) {
+          (code, response) =>
+            if (code != 0) {
+              loginActor ! IFailed(code)
+            } else if (response.indexOf("text/xml") >= 0) {
+              loginActor ! ILoginDone
+            } else {
+              loginActor ! IFailed(0) // 0 indicates unexpected result
             }
-         }
+        }
       }
-   }
+    }
+  }
 }
