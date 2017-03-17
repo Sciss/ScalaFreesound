@@ -16,8 +16,6 @@ package de.sciss.freesound
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-import de.sciss.freesound.impl.LoginProcessImpl
-
 object Freesound {
   var verbose         = true
   var tmpPath: String = System.getProperty("java.io.tmpdir")
@@ -30,5 +28,5 @@ object Freesound {
   val dateFormat      = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
   def login(userName: String, password: String): LoginProcess =
-    new LoginProcessImpl(userName, password)
+    ??? // new LoginProcessImpl(userName, password)
 }

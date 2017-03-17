@@ -14,8 +14,9 @@
 package de.sciss.freesound
 
 trait Login {
-   def username : String
-   def search( options: SearchOptions ) : Search
-//   def sample( id: Long ) : Sample
-   def cookiePath : String
+  def username: String
+
+  def search(options: SearchOptions): Search
+
+  def cookiePath: String
 }

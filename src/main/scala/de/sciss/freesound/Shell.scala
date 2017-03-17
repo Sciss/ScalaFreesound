@@ -13,143 +13,130 @@
 
 package de.sciss.freesound
 
-import java.io.{BufferedReader, InputStreamReader}
-
-import scala.util.control.NonFatal
-import scala.xml.{Node, XML}
+import scala.concurrent.Future
+import scala.util.Try
+import scala.xml.Node
 
 object Shell {
   var curlPath = "curl"
 
-  def command(cmd: String*)(fun: (Int, String) => Unit): Unit =
-    new Command(cmd, StringPost, new ResultActor(fun))
+  def command(cmd: String*): Future[(Int, String)] =
+    Command(cmd, StringPost)
 
-  def curl(args: String*)(fun: (Int, String) => Unit): Unit =
-    new Command(curlPath :: args.toList, StringPost, new ResultActor(fun))
+  def curl(args: String*): Future[(Int, String)] = command(curlPath +: args: _*)
 
   def curlXML(args: String*)(fun: (Int, Either[Node, Throwable]) => Unit): Unit =
-    new Command(curlPath :: args.toList, XMLPost, new ResultActor(fun))
+    Command(curlPath :: args.toList, XMLPost)
 
-  def curlProgress(prog: Int => Unit, args: String*)(fun: Int => Unit): Unit =
-    new Command(curlPath :: args.toList, new CurlProgressPostFactory(prog),
-      new ResultActor((code: Int, _: Unit) => fun(code)))
+  def curlProgress(progress: Int => Unit, args: String*)(fun: Int => Unit): Future[(Int, Unit)] =
+    Command(curlPath :: args.toList, new CurlProgressPostFactory(progress))
 
-  private class Command[A](cmd: Seq[String], post: PostActorFactory[A], resultActor: ResultActor[A]) {
-
+  private def Command[A](cmd: Seq[String], post: PostFactory[A]): Future[(Int, A)] = {
     val pb          = new ProcessBuilder(cmd: _*)
     val p: Process  = pb.start
+    ???
 
-    val postActor: Any = post.make(p, resultActor)
+//    val postActor: Any = post.make(p, resultActor)
+//
+//    val processActor = new DaemonActor {
+//      def act = try {
+//        p.waitFor()
+//      } catch {
+//        case e: InterruptedException =>
+//          p.destroy()
+//      } finally {
+//        resultActor ! Code(p.exitValue)
+//      }
+//    }
+//
+//    resultActor .start
+//    postActor   .start
+//    processActor.start
 
-    val processActor = new DaemonActor {
-      def act = try {
-        p.waitFor()
-      } catch {
-        case e: InterruptedException =>
-          p.destroy()
-      } finally {
-        resultActor ! Code(p.exitValue)
-      }
-    }
-
-    resultActor .start
-    postActor   .start
-    processActor.start
-  }
-
-  private class ResultActor[A](fun: (Int, A) => Unit)
-    extends DaemonActor {
-    def act {
-      react {
-        case Code(code) => react {
-          case response =>
-            fun(code, response.asInstanceOf[A]) // XXX hmmm... not so nice the casting...
-        }
-      }
-    }
+    post.make(p)
   }
 
   private case class Code(value: Int)
 
-  private trait PostActorFactory[A] {
-    def make(p: Process, result: ResultActor[A]): Actor
+  private trait PostFactory[A] {
+    def make(p: Process): Future[(Int, A)]
   }
 
-  private object StringPost extends PostActorFactory[String] {
-    def make(p: Process, result: ResultActor[String]) = new StringPost(p, result)
+  private object StringPost extends PostFactory[String] {
+    def make(p: Process): Future[(Int, String)] = ??? // new StringPost(p, result)
   }
 
-  private class StringPost(p: Process, result: ResultActor[String]) extends DaemonActor {
-    def act {
-      val inReader  = new BufferedReader(new InputStreamReader(p.getInputStream))
-      var isOpen    = true
-      val cBuf      = new Array[Char](256)
-      val sb        = new StringBuilder(256)
-      loopWhile(isOpen) {
-        val num = inReader.read(cBuf)
-        isOpen = num >= 0
-        if (isOpen) {
-          sb.appendAll(cBuf, 0, num)
-        } else {
-          result ! sb.toString()
-        }
-      }
-    }
-  }
+//  private class StringPost(p: Process, result: ResultActor[String]) extends DaemonActor {
+//    def act {
+//      val inReader  = new BufferedReader(new InputStreamReader(p.getInputStream))
+//      var isOpen    = true
+//      val cBuf      = new Array[Char](256)
+//      val sb        = new StringBuilder(256)
+//      loopWhile(isOpen) {
+//        val num = inReader.read(cBuf)
+//        isOpen = num >= 0
+//        if (isOpen) {
+//          sb.appendAll(cBuf, 0, num)
+//        } else {
+//          result ! sb.toString()
+//        }
+//      }
+//    }
+//  }
 
   private class CurlProgressPostFactory(fun: Int => Unit)
-    extends PostActorFactory[Unit] {
-    def make(p: Process, result: ResultActor[Unit]) = new CurlProgressPost(fun, p, result)
+    extends PostFactory[Unit] {
+    def make(p: Process): Future[(Int, Unit)] = ??? // new CurlProgressPost(fun, p, result)
   }
 
-  private class CurlProgressPost(fun: Int => Unit, p: Process, result: ResultActor[Unit])
-    extends DaemonActor {
-    def act {
-      var isOpen = true
-      var bars = 0
-      val is = p.getErrorStream
-      var inBars = false
-      var lastBars = -1
-      loopWhile(isOpen) {
-        is.read() match {
-          case -1 => {
-            isOpen = false; result ! ()
-          }
-          case 13 => {
-            bars = 0; inBars = true
-          } // cr
-          case 35 => bars += 1 // '#'
-          case 32 => if (inBars) {
-            // ' '
-            inBars = false
-            if (bars != lastBars) {
-              lastBars = bars
-              val perc = (bars * 100) / 72
-              fun(perc)
-            }
-          }
-          case _ =>
-        }
-      }
-    }
+//  private class CurlProgressPost(fun: Int => Unit, p: Process, result: ResultActor[Unit])
+//    extends DaemonActor {
+//    def act {
+//      var isOpen = true
+//      var bars = 0
+//      val is = p.getErrorStream
+//      var inBars = false
+//      var lastBars = -1
+//      loopWhile(isOpen) {
+//        is.read() match {
+//          case -1 =>
+//            isOpen = false
+//            result ! ()
+//          case 13 =>
+//            bars = 0
+//            inBars = true // cr
+//          case 35 => bars += 1 // '#'
+//          case 32 => if (inBars) {
+//            // ' '
+//            inBars = false
+//            if (bars != lastBars) {
+//              lastBars = bars
+//              val perc = (bars * 100) / 72
+//              fun(perc)
+//            }
+//          }
+//          case _ =>
+//        }
+//      }
+//    }
+//  }
+
+  private object XMLPost extends PostFactory[Try[Node]] {
+    def make(p: Process): Future[(Int, Try[Node])] = ??? // new XMLPost(p, result)
   }
 
-  private object XMLPost extends PostActorFactory[Either[Node, Throwable]] {
-    def make(p: Process, result: ResultActor[Either[Node, Throwable]]) = new XMLPost(p, result)
-  }
-
-  private class XMLPost(p: Process, result: ResultActor[Either[Node, Throwable]])
-    extends DaemonActor {
-    def act {
-      val is = p.getInputStream
-      result ! (try {
-        val xml = XML.load(is)
-        Left(xml)
-      }
-      catch {
-        case NonFatal(e) => Right(e)
-      })
-    }
-  }
+//  private class XMLPost(p: Process, result: ResultActor[Either[Node, Throwable]])
+//    extends DaemonActor {
+//    def act {
+//      val is = p.getInputStream
+//      result ! (try {
+//        val xml = XML.load(is)
+//        Left(xml)
+//      }
+//      catch {
+//        case NonFatal(e) => Right(e)
+//      })
+//    }
+//  }
 
 }

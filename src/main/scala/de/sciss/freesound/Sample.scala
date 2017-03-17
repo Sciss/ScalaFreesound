@@ -13,7 +13,6 @@
 
 package de.sciss.freesound
 
-import de.sciss.freesound.impl.SampleImpl
 import de.sciss.model.Model
 
 import scala.concurrent.Future
@@ -49,7 +48,7 @@ object Sample {
 
   case object DownloadFlushed extends Update
 
-  def apply(id: Long): Sample = new SampleImpl(id)
+  def apply(id: Long): Sample = ??? // new SampleImpl(id)
 }
 
 trait Sample extends Model[Sample.Update] {
@@ -67,7 +66,6 @@ trait Sample extends Model[Sample.Update] {
 
   def infoResult: Option[InfoResult]
 
-  //   def flushInfo : Unit
   def performInfo(implicit login: Login): Unit
 
   def queryInfoResult: Future[InfoResult]
@@ -81,7 +79,6 @@ trait Sample extends Model[Sample.Update] {
 
   def downloadResult: Option[DownloadResult]
 
-  //   def flushDownload : Unit
   def performDownload(implicit login: Login): Unit
 
   def performDownload(path: String)(implicit login: Login): Unit

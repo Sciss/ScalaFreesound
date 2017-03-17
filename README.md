@@ -16,14 +16,14 @@ Type in expressions to have them evaluated.
 Type :help for more information.
 ```
 
-```scala
+```
 scala> import de.sciss.freesound._
 import de.sciss.freesound._
 
-scala> val lp = Freesound.login( "<user>", "<pass>" )
+scala> val lp = Freesound.login("<user>", "<pass>")
 lp: de.sciss.freesound.LoginProcess = LoginProcess(<user>)
 
-scala> lp.perform
+scala> lp.perform()
 Trying to log in...
 Login was successful.
 
@@ -37,7 +37,7 @@ scala> smp.performInfo
 Getting info for sample #25...
 Info for sample #25 retrieved.
 
-scala> smp.addListener { case Sample.DownloadProgress( p ) => println( "P = " + p + "%" )}
+scala> smp.addListener { case Sample.DownloadProgress(p) => println("P = " + p + "%") }
 res2: de.sciss.freesound.Model.Listener = <function1>
 
 scala> smp.performDownload
@@ -53,7 +53,7 @@ Sample #25 downloaded (/private/var/folders/Dt/DtvfRgm6FGaibyjzjqE6OE+++TI/-Tmp-
 scala> val s = l.search( SearchOptions( "Helicopter" ))
 s: de.sciss.freesound.Search = Search(SearchOptions(keyword = "Helicopter", descriptions = true, tags = true, fileNames = false, userNames = false, minDuration = 1, maxDuration = 20, order = 1, maxItems = 100))
 
-scala> s.perform
+scala> s.perform()
 Performing search...
 Search was successful (45 samples found).
 
@@ -63,7 +63,7 @@ smps: scala.collection.immutable.IndexedSeq[de.sciss.freesound.Sample] = Vector(
 scala> val x = smps(0)
 x: de.sciss.freesound.Sample = Sample(23289)
 
-scala> x.performInfo
+scala> x.performInfo()
 Getting info for sample #23289...
 Info for sample #23289 retrieved.
 
