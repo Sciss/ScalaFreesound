@@ -51,7 +51,7 @@ trait Search extends Model[Search.Update] {
   def options: SearchOptions
 
   def samples: Option[Vec[Sample]] = result.flatMap(_ match {
-    case SearchDone(smps) => Some(smps)
+    case SearchDone(samples) => Some(samples)
     case _ => None
   })
 

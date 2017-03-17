@@ -2,13 +2,37 @@
 
 ## statement
 
-ScalaFreesound is a library to query the Freesound audio database ("freesound.org":http://freesound.org). As the Mootcher API is currently discontinued, this takes an approach based on the FreeSound quark for SuperCollider by Batuhan Bozkurt ("www.batuhanbozkurt.com/news/freesound-class-for-supercollider-released-as-a-quark":http://www.batuhanbozkurt.com/news/freesound-class-for-supercollider-released-as-a-quark). Big thanks to Batuhan!
+ScalaFreesound is a library to query the Freesound audio database ("freesound.org":http://freesound.org). It is (C)opyright 2010&ndash;2017 by Hanns Holger Rutz. All rights reserved. It is released under the [GNU Lesser General Public License](http://github.com/Sciss/ScalaFreesound/blob/master/licenses/ScalaFreesound-License.txt) and comes with absolutely no warranties. To contact the author, send an email to `contact@sciss.de`
 
-ScalaFreesound is (C)opyright 2010&ndash;2017 by Hanns Holger Rutz. All rights reserved. It is released under the "GNU Lesser General Public License":http://github.com/Sciss/ScalaFreesound/blob/master/licenses/ScalaFreesound-License.txt and comes with absolutely no warranties. To contact the author, send an email to @contact at sciss.de@
+ScalaFreesound currently relies on the `curl` unix command to execute queries.
 
-ScalaFreesound requires Scala 2.8 and Java 1.6 to compile, as well as the Curl unix command to execute queries.
+## requirements / installation
 
-## sample usage
+ScalaOSC currently builds against Scala 2.12, 2.11, 2.10 using sbt 0.13.
+
+To link to it:
+
+    libraryDependencies += "de.sciss" %% "scalafreesound" % v
+
+The current version `v` is `"1.0.0"`
+
+## contributing
+
+Please see the file [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## overview
+
+The following example session is obsolete, as the API is currently being reworked. What currently already works is constructing text search strings, like so:
+
+```scala
+TextSearch("water", Filter(numChannels = 2, sampleRate=96000, avgRating = 3.0 to *)).toQueryString
+```
+
+You can pop this into a manual `curl` call:
+
+    curl "http://www.freesound.org/apiv2/search/text/?token=<your-secret-token>&<query-string>
+
+Old session:
 
 ```
 Welcome to Scala version 2.8.0.final (Java HotSpot(TM) Client VM, Java 1.6.0_20).

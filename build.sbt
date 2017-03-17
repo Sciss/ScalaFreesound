@@ -13,11 +13,25 @@ scalacOptions ++= {
   if (scalaVersion.value.startsWith("2.12")) Seq("-Xlint") else Nil
 }
 
-libraryDependencies += "de.sciss" %% "model" % "0.3.3"
+// ---- main dependencies ----
+
+val modelVersion    = "0.3.3"
+val optionalVersion = "1.0.0"
+val xmlVersion      = "1.0.6"
+
+// ---- test dependencies
+
+val scoptVersion  = "3.5.0"
+
+libraryDependencies ++= Seq(
+  "de.sciss"         %% "model"     % modelVersion,
+  "de.sciss"         %% "optional"  % optionalVersion,
+  "com.github.scopt" %% "scopt"     % scoptVersion % "test"
+)
 
 libraryDependencies ++= {
   if (scalaVersion.value.startsWith("2.10")) Nil else Seq(
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
+    "org.scala-lang.modules" %% "scala-xml" % xmlVersion
   )
 }
 

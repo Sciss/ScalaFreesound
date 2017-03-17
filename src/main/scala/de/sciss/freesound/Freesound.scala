@@ -16,6 +16,9 @@ package de.sciss.freesound
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+import scala.collection.immutable.{IndexedSeq => Vec}
+import scala.concurrent.Future
+
 object Freesound {
   var verbose         = true
   var tmpPath: String = System.getProperty("java.io.tmpdir")
@@ -29,4 +32,10 @@ object Freesound {
 
   def login(userName: String, password: String): LoginProcess =
     ??? // new LoginProcessImpl(userName, password)
+
+  def apply(token: String): Freesound = ???
+}
+trait Freesound {
+//  def search(options: SearchOptions): Future[Vec[Sample]]
+  def textSearch(options: TextSearch): Future[Vec[Sample]]
 }
