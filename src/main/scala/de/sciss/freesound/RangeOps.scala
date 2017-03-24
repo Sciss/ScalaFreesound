@@ -2,7 +2,7 @@ package de.sciss.freesound
 
 import java.util.Date
 
-import de.sciss.freesound.Filter.{DateSpec, UDoubleSpec, UIntSpec}
+import de.sciss.freesound.Filter.{DateSpec, StringUnion, UDoubleSpec, UIntSpec}
 
 final class IntRangeOps(private val i: Int) extends AnyVal {
   def to (star: *.type): UIntSpec = UIntSpec.from(i)
@@ -14,4 +14,8 @@ final class DoubleRangeOps(private val i: Double) extends AnyVal {
 
 final class DateRangeOps(private val i: Date) extends AnyVal {
   def to (star: *.type): DateSpec = DateSpec.from(i)
+}
+
+final class StringUnionOps(private val s: String) extends AnyVal {
+  def | (that: String): StringUnion = StringUnion.fromSeq(s :: that :: Nil)
 }

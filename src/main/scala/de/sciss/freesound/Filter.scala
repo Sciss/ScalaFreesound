@@ -6,12 +6,13 @@ import java.util.{Date, Locale}
 import de.sciss.freesound.Filter.{DateSpec, FileTypeUnion, StringTokens, StringUnion, UDoubleSpec, UIntSpec}
 import de.sciss.optional.Optional
 
-import scala.collection.immutable.{Seq => ISeq}
 import scala.language.implicitConversions
 
 object Filter {
   private final implicit class DefinesPropertyOps(private val p: DefinesProperty) extends AnyVal {
-    def mkParam(key: String): Option[String] = p.toPropertyOption.map(value => s"$key:$value")
+    def mkParam(key: String): Option[String] = p.toPropertyOption.map { value =>
+      if (p.isNegated) s"-$key:$value" else s"$key:$value"
+    }
   }
 
   private final implicit class OptionalBooleanOps(private val opt: Optional[Boolean]) /* extends AnyVal */ {
@@ -20,6 +21,8 @@ object Filter {
 
   trait DefinesProperty {
     def toPropertyOption: Option[String]
+
+    def isNegated: Boolean
   }
   
   object UIntSpec {
@@ -57,7 +60,11 @@ object Filter {
 
     val empty: UIntSpec = UIntSpec(start = -1, end = -1)
   }
-  final case class UIntSpec private(private val start: Int, private val end: Int) extends DefinesProperty{
+  final case class UIntSpec private(private val start: Int, private val end: Int, isNegated: Boolean = false)
+    extends DefinesProperty {
+
+    def unary_! : UIntSpec = copy(isNegated = !isNegated)
+
     override def toString: String =
       if      (isEmpty    ) "None"
       else if (isSingle   ) s"Some($start)"
@@ -117,13 +124,17 @@ object Filter {
 
     val empty: UDoubleSpec = UDoubleSpec(start = -1, end = -1)
   }
-  final case class UDoubleSpec private(private val start: Double, private val end: Double) extends DefinesProperty {
+  final case class UDoubleSpec private(private val start: Double, private val end: Double, isNegated: Boolean = false)
+    extends DefinesProperty {
+
     override def toString: String =
       if      (isEmpty    ) "None"
       else if (isSingle   ) s"Some($start)"
       else if (end   == -1) s"UDoubleSpec.from($start)"
       else if (start == -1) s"UDoubleSpec.to($end)"
       else                  s"Some($start to $end)"
+
+    def unary_! : UDoubleSpec = copy(isNegated = !isNegated)
 
     def isSingle: Boolean = isDefined && start == end
 
@@ -144,13 +155,15 @@ object Filter {
   }
 
   object StringUnion {
-    implicit def fromString(s: String): StringUnion = StringUnion(s :: Nil)
-    implicit def fromSeq(xs: Seq[String]): StringUnion = StringUnion(xs.toList)
-    implicit def fromOption(opt: Option[String]): StringUnion = StringUnion(opt.toList)
+    implicit def fromString (s  :        String ): StringUnion = StringUnion(s :: Nil)
+    implicit def fromSeq    (xs : Seq   [String]): StringUnion = StringUnion(xs .toList)
+    implicit def fromOption (opt: Option[String]): StringUnion = StringUnion(opt.toList)
 
     val empty: StringUnion = StringUnion(Nil)
   }
-  final case class StringUnion(elems: List[String]) extends DefinesProperty {
+  final case class StringUnion(elems: List[String], isNegated: Boolean = false) extends DefinesProperty {
+    def unary_! : StringUnion = copy(isNegated = !isNegated)
+
     def | (that: StringUnion): StringUnion = StringUnion(elems = this.elems union that.elems)
 
     def toPropertyOption: Option[String] = elems match {
@@ -162,8 +175,8 @@ object Filter {
   }
 
   object StringTokens {
-    implicit def fromString(s: String): StringTokens = StringTokens(s)
-    implicit def fromSeq(xs: Seq[String]): StringTokens = StringTokens(xs: _*)
+    implicit def fromString(s  :        String ): StringTokens = StringTokens(s)
+    implicit def fromSeq   (xs : Seq   [String]): StringTokens = StringTokens(xs: _*)
     implicit def fromOption(opt: Option[String]): StringTokens = StringTokens(opt.toList: _*)
 
     val empty: StringTokens = StringTokens()
@@ -171,43 +184,24 @@ object Filter {
   final case class StringTokens(elems: String*) extends DefinesProperty {
     // def | (that: StringTokens): StringTokens = StringTokens(elems = this.elems union that.elems: _*)
 
+    def isNegated = false // XXX TODO --- should we allow to change this?
+
     def toPropertyOption: Option[String] = if (elems.isEmpty) None else {
       // XXX TODO --- escape strings, put in double quotes if necessary
       Some(elems.mkString(" "))
     }
   }
 
-  object FileType {
-    case object Wave extends FileType { final val toProperty = "wav"  }
-    case object AIFF extends FileType { final val toProperty = "aif"  }
-    case object Ogg  extends FileType { final val toProperty = "ogg"  }
-    case object MP3  extends FileType { final val toProperty = "mp3"  }
-    case object FLAC extends FileType { final val toProperty = "flac" }
-
-    val all: ISeq[FileType] = ISeq(Wave, AIFF, Ogg, MP3, FLAC)
-
-    implicit def fromString(s: String): FileType = s match {
-      case Wave.toProperty  => Wave
-      case AIFF.toProperty  => AIFF
-      case Ogg .toProperty  => Ogg
-      case MP3 .toProperty  => MP3
-      case FLAC.toProperty  => FLAC
-      case _                =>
-        throw new IllegalArgumentException(s"Unsupported file type '$s' (must be one of ${all.mkString(", ")})")
-    }
-  }
-  sealed trait FileType {
-    def toProperty: String
-  }
-
   object FileTypeUnion {
     implicit def fromString(s  : String)          : FileTypeUnion = FileTypeUnion(s :: Nil)
-    implicit def fromSeq   (xs : Seq   [FileType]): FileTypeUnion = FileTypeUnion(xs.toList)
+    implicit def fromSeq   (xs : Seq   [FileType]): FileTypeUnion = FileTypeUnion(xs .toList)
     implicit def fromOption(opt: Option[FileType]): FileTypeUnion = FileTypeUnion(opt.toList)
 
     val empty: FileTypeUnion = FileTypeUnion(Nil)
   }
-  final case class FileTypeUnion(elems: List[FileType]) extends DefinesProperty {
+  final case class FileTypeUnion(elems: List[FileType], isNegated: Boolean = false) extends DefinesProperty {
+    def unary_! : FileTypeUnion = copy(isNegated = !isNegated)
+
     def | (that: FileTypeUnion): FileTypeUnion = FileTypeUnion(elems = this.elems union that.elems)
 
     def toPropertyOption: Option[String] = {
@@ -234,8 +228,12 @@ object Filter {
     // XXX TODO --- is this the correct one for Freesound?
     private val formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US)
   }
-  final case class DateSpec private(startOption: Option[Date], endOption: Option[Date]) extends DefinesProperty {
+  final case class DateSpec private(startOption: Option[Date], endOption: Option[Date], isNegated: Boolean = false)
+    extends DefinesProperty {
+
     import DateSpec.formatter
+
+    def unary_! : DateSpec = copy(isNegated = !isNegated)
 
     override def toString: String = toPropertyOption.toString
 

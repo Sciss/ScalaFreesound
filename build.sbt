@@ -37,6 +37,7 @@ libraryDependencies ++= {
 
 initialCommands in console :=
   """import de.sciss.freesound._
+    |import Implicits._
     |""".stripMargin
 
 // ---- publishing ----
