@@ -1,6 +1,6 @@
 package de.sciss.freesound
 
-import de.sciss.freesound.Filter.FileTypeUnion
+import de.sciss.freesound.FilterOLD.FileTypeUnion
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.language.implicitConversions
