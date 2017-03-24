@@ -57,8 +57,8 @@ object DateExpr extends Factory[DateExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
-  sealed trait Option
-  case object None extends Option
+  sealed trait Option extends QueryExpr.Option
+  case object None extends Option with QueryExpr.None
 }
 sealed trait DateExpr extends QueryExpr with DateExpr.Option {
   _: Base[DateExpr] =>

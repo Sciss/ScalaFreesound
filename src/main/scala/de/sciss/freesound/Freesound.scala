@@ -37,5 +37,5 @@ object Freesound {
 }
 trait Freesound {
 //  def search(options: SearchOptions): Future[Vec[Sample]]
-  def textSearch(options: TextSearch): Future[Vec[Sample]]
+  def run(options: TextSearch): Future[String] // [Vec[Sample]]
 }

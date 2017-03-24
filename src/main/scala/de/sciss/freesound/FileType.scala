@@ -1,6 +1,17 @@
-package de.sciss.freesound
+/*
+ *  FileType.scala
+ *  (ScalaFreesound)
+ *
+ *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
 
-import de.sciss.freesound.FilterOLD.FileTypeUnion
+package de.sciss.freesound
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.language.implicitConversions
@@ -27,5 +38,5 @@ object FileType {
 sealed trait FileType {
   def toProperty: String
 
-  def unary_! : FileTypeUnion = FileTypeUnion(this :: Nil, isNegated = true)
+  def unary_! : FileTypeExpr = !FileTypeExpr.Const(this)
 }

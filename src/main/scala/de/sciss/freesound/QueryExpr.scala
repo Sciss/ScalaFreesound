@@ -35,8 +35,12 @@ object QueryExpr {
     private[freesound] def a: Repr
   }
 
-//  sealed trait OrEmpty
-//  case object Empty extends OrEmpty
+  trait Option {
+    def toQueryOption: scala.Option[QueryExpr]
+  }
+  trait None extends Option {
+    final def toQueryOption: scala.Option[QueryExpr] = scala.None
+  }
 
   trait Factory[Repr] {
     def not(a: Repr         ): Repr
@@ -45,7 +49,7 @@ object QueryExpr {
   }
 }
 /** Query expression that can make use of the Solr-style logical operators. */
-trait QueryExpr /* extends OrEmpty */ {
+trait QueryExpr {
   // ---- abstract ----
 
   type Repr <: QueryExpr
@@ -63,6 +67,8 @@ trait QueryExpr /* extends OrEmpty */ {
     case op: QueryExpr.Not[Repr]  => s"-$fieldName=${op.a.toQueryStringFragment}"
     case _                        => s"fieldName=$toQueryStringFragment"
   }
+
+  final def toQueryOption: scala.Option[QueryExpr] = Some(this)
 
   // XXX TODO --- we could pretty print `((A OR B) OR C)` and `(A OR (B OR C))` as `(A OR B OR C)`
   final private[freesound] def toQueryStringFragment: String = (self: Base[Repr]) match {

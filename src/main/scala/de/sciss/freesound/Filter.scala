@@ -10,6 +10,10 @@ object Filter {
     def mkParam(key: String): Option[String] = opt.map(value => s"$key=$value")
   }
 
+  private final implicit class QueryExprOps(private val opt: QueryExpr.Option) extends AnyVal {
+    def mkParam(key: String): Option[String] = opt.toQueryOption.map(expr => expr.toQueryString(key))
+  }
+
   type StringTokens = StringExpr.Option
 }
 
@@ -76,36 +80,35 @@ final case class Filter(
 //    s"avgRating out of range: $avgRating")
 
   def toPropertyOption: Option[String] = {
-    ???
-//    import FilterNew.OptionalBooleanOps
-//    val options = Seq(
-//      id            .mkParam("id"),
-//      userName      .mkParam("username"),
-//      created       .mkParam("created"),
-//      fileName      .mkParam("original_filename"),
-//      description   .mkParam("description"),
-//      tag           .mkParam("tag"),
-//      license       .mkParam("license"),
-//      isRemix       .mkParam("is_remix"),
-//      wasRemixed    .mkParam("was_remixed"),
-//      pack          .mkParam("pack"),
-//      packTokens    .mkParam("pack_tokenized"),
-//      geoTagged     .mkParam("is_geotagged"),
-//      fileType      .mkParam("type"),
-//      duration      .mkParam("duration"),
-//      bitDepth      .mkParam("bitdepth"),
-//      bitRate       .mkParam("bitrate"),
-//      sampleRate    .mkParam("samplerate"),
-//      fileSize      .mkParam("filesize"),
-//      numChannels   .mkParam("channels"),
-//      md5           .mkParam("md5"),
-//      numDownloads  .mkParam("num_downloads"),
-//      avgRating     .mkParam("avg_rating"),
-//      numRatings    .mkParam("num_ratings"),
-//      comment       .mkParam("comment"),
-//      numComments   .mkParam("comments")
-//    )
-//    val params = options.flatten
-//    if (params.isEmpty) None else Some(params.mkString(" "))
+    import Filter.{OptionalBooleanOps, QueryExprOps}
+    val options = Seq(
+      id            .mkParam("id"),
+      userName      .mkParam("username"),
+      created       .mkParam("created"),
+      fileName      .mkParam("original_filename"),
+      description   .mkParam("description"),
+      tag           .mkParam("tag"),
+      license       .mkParam("license"),
+      isRemix       .mkParam("is_remix"),
+      wasRemixed    .mkParam("was_remixed"),
+      pack          .mkParam("pack"),
+      packTokens    .mkParam("pack_tokenized"),
+      geoTagged     .mkParam("is_geotagged"),
+      fileType      .mkParam("type"),
+      duration      .mkParam("duration"),
+      bitDepth      .mkParam("bitdepth"),
+      bitRate       .mkParam("bitrate"),
+      sampleRate    .mkParam("samplerate"),
+      fileSize      .mkParam("filesize"),
+      numChannels   .mkParam("channels"),
+      md5           .mkParam("md5"),
+      numDownloads  .mkParam("num_downloads"),
+      avgRating     .mkParam("avg_rating"),
+      numRatings    .mkParam("num_ratings"),
+      comment       .mkParam("comment"),
+      numComments   .mkParam("comments")
+    )
+    val params = options.flatten
+    if (params.isEmpty) None else Some(params.mkString(" "))
   }
 }

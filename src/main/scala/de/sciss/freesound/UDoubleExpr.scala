@@ -37,6 +37,16 @@ object UDoubleExpr extends Factory[UDoubleExpr] {
   // avoid overloading here, so we can infer implicit conversion for `None`
 //  implicit def fromDoubleOption(opt: scala.Option[Double]): Option = opt.fold[Option](None)(fromDouble)
 
+  def from(start: Double): ConstRange = {
+    require(start >= 0, s"Unsigned integer must be >= 0: $start")
+    ConstRange(start = start, end = -1)
+  }
+
+  def to(end: Double): ConstRange = {
+    require(end >= 0, s"Inclusive range end must be >= 0: $end")
+    ConstRange(start = -1, end = end)
+  }
+
   sealed trait Const extends UDoubleExpr with QueryExpr.Const[Repr]
 
   final case class ConstSingle(a: Double) extends Const {
@@ -59,8 +69,8 @@ object UDoubleExpr extends Factory[UDoubleExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
-  sealed trait Option
-  case object None extends Option
+  sealed trait Option extends QueryExpr.Option
+  case object None extends Option with QueryExpr.None
 }
 sealed trait UDoubleExpr extends QueryExpr with UDoubleExpr.Option {
   _: Base[UDoubleExpr] =>

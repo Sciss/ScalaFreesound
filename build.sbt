@@ -18,15 +18,17 @@ scalacOptions ++= {
 val modelVersion    = "0.3.3"
 val optionalVersion = "1.0.0"
 val xmlVersion      = "1.0.6"
+val dispatchVersion = "0.12.0"
 
 // ---- test dependencies
 
 val scoptVersion  = "3.5.0"
 
 libraryDependencies ++= Seq(
-  "de.sciss"         %% "model"     % modelVersion,
-  "de.sciss"         %% "optional"  % optionalVersion,
-  "com.github.scopt" %% "scopt"     % scoptVersion % "test"
+  "de.sciss"                %% "model"          % modelVersion,
+  "de.sciss"                %% "optional"       % optionalVersion,
+  "net.databinder.dispatch" %% "dispatch-core"  % dispatchVersion,
+  "com.github.scopt"        %% "scopt"          % scoptVersion % "test"
 )
 
 libraryDependencies ++= {
@@ -37,7 +39,7 @@ libraryDependencies ++= {
 
 initialCommands in console :=
   """import de.sciss.freesound._
-    |// import Implicits._
+    |import Implicits._
     |""".stripMargin
 
 // ---- publishing ----

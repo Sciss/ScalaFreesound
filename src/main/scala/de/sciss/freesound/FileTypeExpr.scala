@@ -23,7 +23,7 @@ object FileTypeExpr extends Factory[FileTypeExpr] {
   implicit def fromString   (s   : String ): Const = Const(s)
   implicit def fromFileType (tpe: FileType): Const = Const(tpe)
 
-  implicit def fromFileTypes(xs: Seq[FileType]): Option =
+  implicit def fromFileTypeSeq(xs: Seq[FileType]): Option =
     if (xs.isEmpty) None else xs.map(Const(_): Repr).reduce(_ | _)
 
   implicit def fromFileTypeOption(opt: scala.Option[FileType]): Option = opt.fold[Option](None)(fromFileType)
@@ -40,8 +40,8 @@ object FileTypeExpr extends Factory[FileTypeExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
-  sealed trait Option
-  case object None extends Option
+  sealed trait Option extends QueryExpr.Option
+  case object None extends Option with QueryExpr.None
 }
 sealed trait FileTypeExpr extends QueryExpr with FileTypeExpr.Option {
   _: Base[FileTypeExpr] =>

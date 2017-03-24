@@ -63,7 +63,7 @@ object TextSearch {
 
   implicit def fromString(s: String): TextSearch = TextSearch(s)
 }
-final case class TextSearch(query: Query, filter: FilterOLD = FilterOLD(), sort: Sort = Sort.Score,
+final case class TextSearch(query: Query, filter: Filter = Filter(), sort: Sort = Sort.Score,
                             groupByPack: Boolean = false) {
 
   override def toString: String = toFields.mkString("&")

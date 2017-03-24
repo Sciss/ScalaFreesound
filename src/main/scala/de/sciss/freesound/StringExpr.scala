@@ -24,6 +24,9 @@ object StringExpr extends Factory[StringExpr] {
 
   implicit def fromStringOption(opt: scala.Option[String]): Option = opt.fold[Option](None)(fromString)
 
+  implicit def fromStringSeq(xs: Seq[String]): Option =
+    if (xs.isEmpty) None else xs.map(Const(_): Repr).reduce(_ | _)
+
   final case class Const(a: String) extends StringExpr with QueryExpr.Const[Repr] {
     def constString: String = a
   }
@@ -36,11 +39,8 @@ object StringExpr extends Factory[StringExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
-//  object Option {
-//    implicit def lift[A](a: A)(implicit view: A => Repr): Option = view(a)
-//  }
-  sealed trait Option
-  case object None extends Option
+  sealed trait Option extends QueryExpr.Option
+  case object None extends Option with QueryExpr.None
 }
 sealed trait StringExpr extends QueryExpr with StringExpr.Option {
   _: Base[StringExpr] =>
