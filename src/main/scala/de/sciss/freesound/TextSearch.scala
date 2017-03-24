@@ -1,7 +1,5 @@
 package de.sciss.freesound
 
-import java.net.URLEncoder
-
 import de.sciss.freesound.TextSearch.{Query, Sort}
 
 import scala.language.implicitConversions
@@ -68,18 +66,16 @@ object TextSearch {
 final case class TextSearch(query: Query, filter: Filter = Filter(), sort: Sort = Sort.Score,
                             groupByPack: Boolean = false) {
 
-  override def toString: String =
-    toFields.map { case (k, v) => s"$k=$v" } .mkString("&")
+  override def toString: String = toFields.mkString("&")
 
-  def toQueryString: String =
-    toFields.map { case (k, v) => s"$k=${URLEncoder.encode(v, "UTF-8")}" } .mkString("&")
+  def toQueryString: String = toFields.map(_.encoded).mkString("&")
 
-  private def toFields: List[(String, String)] = {
-    var res = List.empty[(String, String)]
-    if (groupByPack)        res ::= "group_by_pack" -> "1"
-    if (sort != Sort.Score) res ::= "sort" -> sort.toProperty
-    filter.toPropertyOption.foreach(f => res ::= "filter" -> f)
-    res ::= "query" -> query.value
+  def toFields: List[QueryField] = {
+    var res = List.empty[QueryField]
+    if (groupByPack)        res ::= QueryField("group_by_pack", "1")
+    if (sort != Sort.Score) res ::= QueryField("sort", sort.toProperty)
+    filter.toPropertyOption.foreach(f => res ::= QueryField("filter", f))
+    res ::= QueryField("query", query.value)
     res
   }
 }

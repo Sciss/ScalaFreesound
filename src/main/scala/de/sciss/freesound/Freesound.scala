@@ -33,7 +33,7 @@ object Freesound {
   def login(userName: String, password: String): LoginProcess =
     ??? // new LoginProcessImpl(userName, password)
 
-  def apply(token: String): Freesound = ???
+  def apply(token: String): Freesound = impl.FreesoundImpl(token)
 }
 trait Freesound {
 //  def search(options: SearchOptions): Future[Vec[Sample]]
