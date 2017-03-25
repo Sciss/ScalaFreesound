@@ -14,9 +14,11 @@
 package de.sciss.freesound
 package impl
 
+import java.io.File
 import java.net.URI
 
 import com.ning.http.client.Response
+import de.sciss.processor.Processor
 import org.json4s.{DefaultFormats, Formats, Serializer, StringInput, TypeInfo}
 import org.json4s.JsonAST.{JString, JValue}
 import org.json4s.native.JsonMethods.parse
@@ -25,7 +27,7 @@ import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
 
 object FreesoundImpl {
-  def apply(apiKey: String): Freesound = new Impl(apiKey)
+  // def apply(apiKey: String): Freesound = new Impl(apiKey)
 
   private final case class ResultPage(count: Int, next: String, results: Vector[Sound], previous: String)
 
@@ -71,43 +73,51 @@ object FreesoundImpl {
       (dispatch.as.String.utf8 andThen (s => parse(StringInput(s), useBigDecimalForDouble = true)))(r)
   }
 
-  private final class Impl(apiKey: String) extends Freesound {
-    override def toString = s"Freesound@${hashCode.toHexString}"
+  def textSearch(query: String, filter: Filter, sort: Sort, groupByPack: Boolean,
+                 maxItems: Int)(implicit api: ApiKey): Future[Vec[Sound]] = {
+    val options = TextSearch(query = query, filter = filter, sort = sort, groupByPack = groupByPack,
+      maxItems = maxItems)
+    runTextSearch(options)
+  }
 
-    def run(options: TextSearch): Future[Vec[Sound]] = {
-      import dispatch._, Defaults._
-      var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
-      params += "token" -> apiKey
-      params += "fields" -> "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth,bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
+  private def runTextSearch(options: TextSearch)(implicit api: ApiKey): Future[Vec[Sound]] = {
+    import dispatch._
+    import Defaults._
 
-      val req0    = url(Freesound.urlTextSearch)
-      val req     = req0 <<? params
+    var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
+    params += "token" -> api.peer
+    params += "fields" -> "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth,bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
+
+    val req0    = url(Freesound.urlTextSearch)
+    val req     = req0 <<? params
 //      val req     = req1.setContentType("application/json", "UTF-8")
 //      println(req.url)
-      val futJson = Http(req.OK(JsonUTF))
-      futJson.map { json =>
-          val mapped = json.mapField {
-          case (k @ "results", v0) => k -> v0.mapField {
-            case ("name"          , v) => ("fileName"     , v)
-            case ("username"      , v) => ("userName"     , v)
-            case ("geotag"        , v) => ("geoTag"       , v)
-            case ("type"          , v) => ("fileType"     , v)
-            case ("channels"      , v) => ("numChannels"  , v)
-            case ("samplerate"    , v) => ("sampleRate"   , v)
-            case ("bitdepth"      , v) => ("bitDepth"     , v)
-            case ("bitrate"       , v) => ("bitRate"      , v)
-            case ("filesize"      , v) => ("fileSize"     , v)
-            case ("num_downloads" , v) => ("numDownloads" , v)
-            case ("avg_rating"    , v) => ("avgRating"    , v)
-            case ("num_ratings"   , v) => ("numRatings"   , v)
-            case ("num_comments"  , v) => ("numComments"  , v)
-            case other => other
-          }
+    val futJson = Http(req.OK(JsonUTF))
+    futJson.map { json =>
+        val mapped = json.mapField {
+        case (k @ "results", v0) => k -> v0.mapField {
+          case ("name"          , v) => ("fileName"     , v)
+          case ("username"      , v) => ("userName"     , v)
+          case ("geotag"        , v) => ("geoTag"       , v)
+          case ("type"          , v) => ("fileType"     , v)
+          case ("channels"      , v) => ("numChannels"  , v)
+          case ("samplerate"    , v) => ("sampleRate"   , v)
+          case ("bitdepth"      , v) => ("bitDepth"     , v)
+          case ("bitrate"       , v) => ("bitRate"      , v)
+          case ("filesize"      , v) => ("fileSize"     , v)
+          case ("num_downloads" , v) => ("numDownloads" , v)
+          case ("avg_rating"    , v) => ("avgRating"    , v)
+          case ("num_ratings"   , v) => ("numRatings"   , v)
+          case ("num_comments"  , v) => ("numComments"  , v)
           case other => other
         }
-        val res = mapped.extract[ResultPage]
-        res.results // .toVector
+        case other => other
       }
+      val res = mapped.extract[ResultPage]
+      res.results // .toVector
     }
   }
+
+  def download(id: Int, out: File)(implicit access: AccessToken): Processor[Unit] =
+    DownloadImpl(id = id, out = out, access = access.peer)
 }

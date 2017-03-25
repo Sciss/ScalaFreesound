@@ -23,6 +23,8 @@ import com.ning.http.client.HttpResponseHeaders
 import com.ning.http.client.resumable.ResumableAsyncHandler
 import dispatch.OkHandler
 
+import scala.util.control.NonFatal
+
 /** Factory for an async-handler that writes to a file
   * and informs a `progress` monitoring function about the download progress.
   */
@@ -39,6 +41,12 @@ object FileWithProgress {
       if (raf.length() > 0L) raf.setLength(0L)
 
       private[this] var fileSize = -1L
+
+      // cf. https://github.com/dispatch/reboot/issues/119#issuecomment-289233891
+      override def onThrowable(t: Throwable): Unit = {
+        super.onThrowable(t)
+        try raf.close() catch { case NonFatal(_) => }
+      }
 
       override def onHeadersReceived(headers: HttpResponseHeaders): STATE = {
         val res: STATE = super.onHeadersReceived(headers)

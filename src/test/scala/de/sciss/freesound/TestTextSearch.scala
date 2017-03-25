@@ -1,14 +1,11 @@
 package de.sciss.freesound
 
-import scala.concurrent.ExecutionContext
-
 object TestTextSearch {
   def main(args: Array[String]): Unit = {
-    val token = args.headOption.getOrElse(sys.error("Need to specify API key"))
-    val fs    = Freesound(token)
-    val fut   = fs run TextSearch("fish", Filter(duration = 4 to 100, tags = "portugal"))
+    implicit val token: ApiKey = args.headOption.getOrElse(sys.error("Need to specify API key"))
+    val fut   = Freesound.textSearch("fish", Filter(duration = 4 to 100, tags = "portugal"))
 
-    import ExecutionContext.Implicits.global
+    import dispatch.Defaults.executor
 
     fut.onComplete { res =>
 //      println(res)

@@ -15,10 +15,10 @@ scalacOptions ++= {
 
 // ---- main dependencies ----
 
-val modelVersion    = "0.3.3"
-val optionalVersion = "1.0.0"
-val xmlVersion      = "1.0.6"
-val dispatchVersion = "0.12.0"
+//val modelVersion    = "0.3.3"
+val optionalVersion   = "1.0.0"
+val processorVersion  = "0.4.1"
+val dispatchVersion   = "0.12.0"
 
 // ---- test dependencies
 
@@ -26,24 +26,19 @@ val scoptVersion    = "3.5.0"
 val fileUtilVersion = "1.1.2"
 
 libraryDependencies ++= Seq(
-  "de.sciss"                %% "model"                  % modelVersion,
+//  "de.sciss"                %% "model"                  % modelVersion,
   "de.sciss"                %% "optional"               % optionalVersion,
+  "de.sciss"                %% "processor"              % processorVersion,
   "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
   "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
   "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
   "de.sciss"                %% "fileutil"               % fileUtilVersion % "test"
 )
 
-libraryDependencies ++= {
-  if (scalaVersion.value.startsWith("2.10")) Nil else Seq(
-    "org.scala-lang.modules" %% "scala-xml" % xmlVersion
-  )
-}
-
 initialCommands in console :=
-  """import de.sciss.freesound._
+  """import de.sciss.freesound.{Freesound => fs, _}
     |import Implicits._
-    |val fs = scala.util.Try { val token = scala.io.Source.fromFile("api_key").getLines.next.trim; Freesound(token) } .toOption.orNull
+    |implicit val apiKey: ApiKey = scala.util.Try { scala.io.Source.fromFile("api_key").getLines.next.trim } .toOption.orNull
     |""".stripMargin
 
 // ---- publishing ----

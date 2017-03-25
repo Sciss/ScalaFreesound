@@ -13,13 +13,15 @@
 
 package de.sciss.freesound
 
+import java.io.File
+
+import de.sciss.processor.Processor
+import de.sciss.freesound.impl.{FreesoundImpl => Impl}
+
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
 
 object Freesound {
-//  var verbose         = true
-//  var tmpPath: String = System.getProperty("java.io.tmpdir")
-
 //  val dateFormat      = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
   val urlApiBase        = "https://www.freesound.org/apiv2"
@@ -30,8 +32,10 @@ object Freesound {
     */
   var urlSoundDownload  = s"$urlApiBase/sounds/%s/download/"
 
-  def apply(apiKey: String): Freesound = impl.FreesoundImpl(apiKey)
-}
-trait Freesound {
-  def run(options: TextSearch): Future[Vec[Sound]]
+  def textSearch(query: String, filter: Filter = Filter(), sort: Sort = Sort.Score,
+          groupByPack: Boolean = false, maxItems: Int = 100)(implicit api: ApiKey): Future[Vec[Sound]] =
+    Impl.textSearch(query = query, filter = filter, sort = sort, groupByPack = groupByPack, maxItems = maxItems)
+
+  def download(id: Int, out: File)(implicit access: AccessToken): Processor[Unit] =
+    Impl.download(id = id, out = out)
 }
