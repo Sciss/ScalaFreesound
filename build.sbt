@@ -22,14 +22,16 @@ val dispatchVersion = "0.12.0"
 
 // ---- test dependencies
 
-val scoptVersion  = "3.5.0"
+val scoptVersion    = "3.5.0"
+val fileUtilVersion = "1.1.2"
 
 libraryDependencies ++= Seq(
   "de.sciss"                %% "model"                  % modelVersion,
   "de.sciss"                %% "optional"               % optionalVersion,
   "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
   "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
-  "com.github.scopt"        %% "scopt"                  % scoptVersion % "test"
+  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
+  "de.sciss"                %% "fileutil"               % fileUtilVersion % "test"
 )
 
 libraryDependencies ++= {

@@ -43,11 +43,11 @@ final case class Sound(
     tags        : List[String],
     description : String,
     userName    : String,
-//    created     : Date,
-    license     : String, // URI
-    pack 	      : Option[String], // Option[URI],
+    created     : String, // Date,
+    license     : URI,
+    pack 	      : Option[URI],
     geoTag      : Option[GeoTag],
-//    fileType    : FileType,
+    fileType    : FileType,
     duration    : Double,
     numChannels : Int,
     sampleRate  : Double,
@@ -58,8 +58,37 @@ final case class Sound(
     avgRating   : Double,
     numRatings  : Int,
     numComments : Int
-  )
+  ) {
 
+  override def toString: String =
+    f"""Sound($id,
+       |  fileName    = $fileName,
+       |  tags        = $tags,
+       |  description = $description,
+       |  userName    = $userName,
+       |  created     = $created,
+       |  license     = $license,
+       |  pack 	      = $pack,
+       |  geoTag      = $geoTag,
+       |  fileType    = $fileType,
+       |  duration    = $duration%1.3f,
+       |  numChannels = $numChannels,
+       |  sampleRate  = $sampleRate%1.1f,
+       |  bitDepth    = $bitDepth,
+       |  bitRate     = $bitRate%1.1f,
+       |  fileSize    = $fileSize,
+       |  numDownloads= $numDownloads,
+       |  avgRating   = $avgRating%1.1f,
+       |  numRatings  = $numRatings,
+       |  numComments = $numComments
+       |)""".stripMargin
 
-//- images 	object 	Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dinctionary includes the fields waveform_l and waveform_m (for large and medium waveform images respectively), and spectral_l and spectral_m (for large and medium spectrogram images respectively).
+  /** Constructs a new file name based on the `id` and `fileType` of this sound.
+    * E.g. if `id` is `1234` and `fileType` is `FileType.AIFF`, the methods
+    * returns `1234.aif`.
+    */
+  def uniqueFileName: String = s"$id.${fileType.toProperty}"
+}
+
+//- images 	object 	Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields waveform_l and waveform_m (for large and medium waveform images respectively), and spectral_l and spectral_m (for large and medium spectrogram images respectively).
 //- analysis 	object 	Object containing requested descriptors information according to the descriptors request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.

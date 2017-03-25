@@ -13,19 +13,24 @@
 
 package de.sciss.freesound
 
-import java.text.SimpleDateFormat
-import java.util.Locale
-
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
 
 object Freesound {
-  var verbose         = true
-  var tmpPath: String = System.getProperty("java.io.tmpdir")
+//  var verbose         = true
+//  var tmpPath: String = System.getProperty("java.io.tmpdir")
 
-  val dateFormat      = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+//  val dateFormat      = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
-  def apply(token: String): Freesound = impl.FreesoundImpl(token)
+  val urlApiBase        = "https://www.freesound.org/apiv2"
+  /** URL for starting a text search. */
+  var urlTextSearch     = s"$urlApiBase/search/text/"
+  /** URL for downloading a sound.
+    * A placeholder `%s` will be replaced by the sound id.
+    */
+  var urlSoundDownload  = s"$urlApiBase/sounds/%s/download/"
+
+  def apply(apiKey: String): Freesound = impl.FreesoundImpl(apiKey)
 }
 trait Freesound {
   def run(options: TextSearch): Future[Vec[Sound]]
