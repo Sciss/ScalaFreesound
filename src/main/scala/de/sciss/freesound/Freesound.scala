@@ -16,26 +16,16 @@ package de.sciss.freesound
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
 
 object Freesound {
   var verbose         = true
   var tmpPath: String = System.getProperty("java.io.tmpdir")
 
-  var loginURL        = "http://www.freesound.org/forum/login.php"
-  var searchURL       = "http://www.freesound.org/searchTextXML.php"
-  var infoURL         = "http://www.freesound.org/samplesViewSingleXML.php"
-  var downloadURL     = "http://www.freesound.org/samplesDownload.php"
-
   val dateFormat      = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-
-  def login(userName: String, password: String): LoginProcess =
-    ??? // new LoginProcessImpl(userName, password)
 
   def apply(token: String): Freesound = impl.FreesoundImpl(token)
 }
 trait Freesound {
-//  def search(options: SearchOptions): Future[Vec[Sample]]
   def run(options: TextSearch): Future[String] // [Vec[Sample]]
 }
