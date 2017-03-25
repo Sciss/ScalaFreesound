@@ -14,14 +14,17 @@
 package de.sciss.freesound
 package impl
 
-import java.io.File
+import java.io.FileOutputStream
 import java.net.URI
+import java.util.{Calendar, Date, TimeZone}
 
 import com.ning.http.client.Response
+import de.sciss.file._
 import de.sciss.processor.Processor
-import org.json4s.{DefaultFormats, Formats, Serializer, StringInput, TypeInfo}
-import org.json4s.JsonAST.{JString, JValue}
+import org.json4s.JsonAST.{JInt, JObject, JString, JValue}
+import org.json4s.native.JsonMethods
 import org.json4s.native.JsonMethods.parse
+import org.json4s.{DefaultFormats, Formats, Serializer, StringInput, TypeInfo}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
@@ -73,19 +76,70 @@ object FreesoundImpl {
       (dispatch.as.String.utf8 andThen (s => parse(StringInput(s), useBigDecimalForDouble = true)))(r)
   }
 
+  def readClient(f: File = file("client.json")): Client = {
+    val json = JsonMethods.parse(f)
+    json.extract[Client]
+  }
+
+  def readAuth(f: File = file("auth.json")): Auth = {
+    val json0 = JsonMethods.parse(f)
+    val json  = json0.camelizeKeys
+    json.extract[Auth]
+  }
+
+  def writeAuth(f: File = file("auth.json"))(implicit auth: Auth): Unit = {
+    val expiresS = jsonFormats.dateFormat.format(auth.expires)
+
+    val json = JObject("access_token"  -> JString(auth.accessToken),
+                       "expires"       -> JString(expiresS),
+                       "refresh_token" -> JString(auth.refreshToken))
+    val s = JsonMethods.pretty(JsonMethods.render(json))
+    val fos = new FileOutputStream(f)
+    try {
+      fos.write(s.getBytes("UTF-8"))
+    } finally {
+      fos.close()
+    }
+  }
+
+  def getAuth(code: String)(implicit client: Client): Future[Auth] = {
+    import dispatch._
+    import Defaults._
+
+    val req0    = url(Freesound.urlGetAuth)
+      .addParameter("client_id", client.id)
+      .addParameter("client_secret", client.secret)
+      .addParameter("grant_type", "authorization_code")
+      .addParameter("code", code)
+
+    val req   = req0.POST
+    val now   = Calendar.getInstance
+    val futJson = Http(req.OK(JsonUTF))
+    futJson.map { json0 =>
+      val json1 = json0.mapField {
+        case ("expires_in", JInt(expiresIn)) =>
+          now.add(Calendar.SECOND, expiresIn.intValue())
+          "expires" -> JString(jsonFormats.dateFormat.format(now.getTime))
+        case other => other
+      }
+      val json = json1.camelizeKeys
+      json.extract[Auth]
+    }
+  }
+
   def textSearch(query: String, filter: Filter, sort: Sort, groupByPack: Boolean,
-                 maxItems: Int)(implicit api: ApiKey): Future[Vec[Sound]] = {
+                 maxItems: Int)(implicit client: Client): Future[Vec[Sound]] = {
     val options = TextSearch(query = query, filter = filter, sort = sort, groupByPack = groupByPack,
       maxItems = maxItems)
     runTextSearch(options)
   }
 
-  private def runTextSearch(options: TextSearch)(implicit api: ApiKey): Future[Vec[Sound]] = {
+  private def runTextSearch(options: TextSearch)(implicit client: Client): Future[Vec[Sound]] = {
     import dispatch._
     import Defaults._
 
     var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
-    params += "token" -> api.peer
+    params += "token" -> client.secret
     params += "fields" -> "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth,bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
 
     val req0    = url(Freesound.urlTextSearch)
@@ -118,6 +172,6 @@ object FreesoundImpl {
     }
   }
 
-  def download(id: Int, out: File)(implicit access: AccessToken): Processor[Unit] =
-    DownloadImpl(id = id, out = out, access = access.peer)
+  def download(id: Int, out: File)(implicit auth: Auth): Processor[Unit] =
+    DownloadImpl(id = id, out = out, access = auth.accessToken)
 }

@@ -15,31 +15,45 @@ scalacOptions ++= {
 
 // ---- main dependencies ----
 
-//val modelVersion    = "0.3.3"
 val optionalVersion   = "1.0.0"
 val processorVersion  = "0.4.1"
 val dispatchVersion   = "0.12.0"
+val fileUtilVersion   = "1.1.2"
 
 // ---- test dependencies
 
-val scoptVersion    = "3.5.0"
-val fileUtilVersion = "1.1.2"
+val scoptVersion      = "3.5.0"
 
 libraryDependencies ++= Seq(
-//  "de.sciss"                %% "model"                  % modelVersion,
   "de.sciss"                %% "optional"               % optionalVersion,
   "de.sciss"                %% "processor"              % processorVersion,
   "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
   "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
-  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
-  "de.sciss"                %% "fileutil"               % fileUtilVersion % "test"
+  "de.sciss"                %% "fileutil"               % fileUtilVersion,
+  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test"
 )
 
-initialCommands in console :=
-  """import de.sciss.freesound.{Freesound => fs, _}
-    |import Implicits._
-    |implicit val apiKey: ApiKey = scala.util.Try { scala.io.Source.fromFile("api_key").getLines.next.trim } .toOption.orNull
-    |""".stripMargin
+initialCommands in (Test, console) := {
+  var res = 
+    """import de.sciss.freesound._
+      |val fs = Freesound  // alias
+      |import Implicits._
+      |import de.sciss.file._
+      |import dispatch.Defaults.executor
+      |type Vec[+A] = scala.collection.immutable.IndexedSeq[A]
+      |val  Vec     = scala.collection.immutable.IndexedSeq
+      |""".stripMargin
+
+  if (file("client.json").exists) res ++=
+    """implicit val client: Client = Freesound.readClient()
+      |""".stripMargin
+
+  if (file("auth.json").exists) res ++=
+    """implicit val auth: Auth = Freesound.readAuth()
+      |""".stripMargin
+  
+  res
+}
 
 // ---- publishing ----
 

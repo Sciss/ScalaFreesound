@@ -18,7 +18,10 @@ import scala.language.implicitConversions
 
 object FileType {
   case object Wave extends FileType { final val toProperty = "wav"  }
-  case object AIFF extends FileType { final val toProperty = "aif"  }
+  case object AIFF extends FileType {
+    final val toProperty  = "aif"
+    final val alternative = "aiff"
+  }
   case object Ogg  extends FileType { final val toProperty = "ogg"  }
   case object MP3  extends FileType { final val toProperty = "mp3"  }
   case object FLAC extends FileType { final val toProperty = "flac" }
@@ -28,6 +31,7 @@ object FileType {
   implicit def fromString(s: String): FileType = s match {
     case Wave.toProperty  => Wave
     case AIFF.toProperty  => AIFF
+    case AIFF.alternative => AIFF
     case Ogg .toProperty  => Ogg
     case MP3 .toProperty  => MP3
     case FLAC.toProperty  => FLAC

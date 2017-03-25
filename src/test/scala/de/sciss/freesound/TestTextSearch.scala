@@ -1,15 +1,24 @@
 package de.sciss.freesound
 
+import de.sciss.file._
+
+import scala.util.{Failure, Success}
+
 object TestTextSearch {
   def main(args: Array[String]): Unit = {
-    implicit val token: ApiKey = args.headOption.getOrElse(sys.error("Need to specify API key"))
-    val fut   = Freesound.textSearch("fish", Filter(duration = 4 to 100, tags = "portugal"))
+    implicit val client: Client = {
+      val f = file("client.json")
+      if (f.isFile) Freesound.readClient()
+      else sys.error("Need to specify API key")
+    }
+//    val fut   = Freesound.textSearch("fish", Filter(duration = 4 to 100, tags = "portugal"))
+    val fut   = Freesound.textSearch("water", Filter(numChannels = 2, sampleRate = 44100))
 
     import dispatch.Defaults.executor
 
-    fut.onComplete { res =>
-//      println(res)
-      res.foreach { xs =>
+    fut.onComplete {
+      case Success(xs) =>
+        println(s"Search found ${xs.size} sounds.")
         xs.foreach { snd =>
           println(snd)
           // val err = Try(new URI(snd.license)).isFailure
@@ -22,8 +31,11 @@ object TestTextSearch {
           require(snd.description  != null)
           require(snd.userName     != null)
         }
-      }
-      sys.exit(if (res.isSuccess) 0 else 1)
+        sys.exit()
+      case Failure(ex) =>
+        println("The search failed:")
+        ex.printStackTrace()
+        sys.exit(1)
     }
   }
 }

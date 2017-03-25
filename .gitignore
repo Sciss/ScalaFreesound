@@ -5,4 +5,5 @@ project/boot/
 .idea/
 .idea_modules/
 .history
-/api_key
+/client.json
+/auth.json
