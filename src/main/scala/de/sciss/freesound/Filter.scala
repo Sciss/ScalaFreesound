@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 
 object Filter {
   private final implicit class OptionalBooleanOps(private val opt: Optional[Boolean]) /* extends AnyVal */ {
-    def mkParam(key: String): Option[String] = opt.map(value => s"$key=$value")
+    def mkParam(key: String): Option[String] = opt.map(value => s"$key:$value")
   }
 
   private final implicit class QueryExprOps(private val opt: QueryExpr.Option) extends AnyVal {

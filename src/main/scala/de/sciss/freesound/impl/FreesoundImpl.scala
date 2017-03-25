@@ -10,9 +10,9 @@ object FreesoundImpl {
   private final class Impl(token: String) extends Freesound {
     def run(options: TextSearch): Future[String] = {
       import dispatch._, Defaults._
-      val params0 = options.toFields.iterator.map { case q @ QueryField(key, value) => (key, q.encodedValue) } .toMap
+      val params0 = options.toFields.iterator.map { case q @ QueryField(key, value) => (key, value) } .toMap
       val params  = params0 + ("token" -> token)
-      val req0    = host("www.freesound.org") / "apiv2" / "search" / "text"
+      val req0    = host("www.freesound.org") / "apiv2" / "search" / "text" / ""
       val req     = req0 <<? params
       println(req.url)
       val jsonS   = Http(req.OK(as.String))

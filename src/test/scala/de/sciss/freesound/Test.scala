@@ -6,7 +6,7 @@ object Test {
   def main(args: Array[String]): Unit = {
     val token = args.headOption.getOrElse(sys.error("Need to specify API key"))
     val fs    = Freesound(token)
-    val fut   = fs run TextSearch("fish")
+    val fut   = fs run TextSearch("fish", Filter(duration = 4 to 100))
 
     import ExecutionContext.Implicits.global
 

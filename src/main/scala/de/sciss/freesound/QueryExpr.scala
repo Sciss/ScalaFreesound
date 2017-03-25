@@ -64,8 +64,8 @@ trait QueryExpr {
   final def unary_!       : Repr = factory.not(self)
 
   final def toQueryString(fieldName: String): String = (self: Base[Repr]) match {
-    case op: QueryExpr.Not[Repr]  => s"-$fieldName=${op.a.toQueryStringFragment}"
-    case _                        => s"fieldName=$toQueryStringFragment"
+    case op: QueryExpr.Not[Repr]  => s"-$fieldName:${op.a.toQueryStringFragment}"
+    case _                        => s"$fieldName:$toQueryStringFragment"
   }
 
   final def toQueryOption: scala.Option[QueryExpr] = Some(this)
