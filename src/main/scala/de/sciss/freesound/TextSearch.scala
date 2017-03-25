@@ -1,3 +1,16 @@
+/*
+ *  TextSearch.scala
+ *  (ScalaFreesound)
+ *
+ *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *
+ *	This software is published under the GNU Lesser General Public License v2.1+
+ *
+ *
+ *  For further information, please contact Hanns Holger Rutz at
+ *  contact@sciss.de
+ */
+
 package de.sciss.freesound
 
 import de.sciss.freesound.TextSearch.{Query, Sort}
@@ -64,7 +77,7 @@ object TextSearch {
   implicit def fromString(s: String): TextSearch = TextSearch(s)
 }
 final case class TextSearch(query: Query, filter: Filter = Filter(), sort: Sort = Sort.Score,
-                            groupByPack: Boolean = false) {
+                            groupByPack: Boolean = false, maxItems: Int = 100) {
 
   override def toString: String = toFields.mkString("&")
 
@@ -72,8 +85,8 @@ final case class TextSearch(query: Query, filter: Filter = Filter(), sort: Sort 
 
   def toFields: List[QueryField] = {
     var res = List.empty[QueryField]
-    if (groupByPack)        res ::= QueryField("group_by_pack", "1")
-    if (sort != Sort.Score) res ::= QueryField("sort", sort.toProperty)
+    if (groupByPack)                     res ::= QueryField("group_by_pack", "1")
+    if (sort != Sort.Score)              res ::= QueryField("sort", sort.toProperty)
     filter.toPropertyOption.foreach(f => res ::= QueryField("filter", f))
     res ::= QueryField("query", query.value)
     res

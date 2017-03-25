@@ -16,6 +16,7 @@ package de.sciss.freesound
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.Future
 
 object Freesound {
@@ -27,5 +28,5 @@ object Freesound {
   def apply(token: String): Freesound = impl.FreesoundImpl(token)
 }
 trait Freesound {
-  def run(options: TextSearch): Future[String] // [Vec[Sample]]
+  def run(options: TextSearch): Future[Vec[Sound]]
 }

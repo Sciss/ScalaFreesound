@@ -37,8 +37,6 @@ id,name,tags,license,username
 - num_ratings 	number 	The number of times the sound was rated.
 - num_comments 	number 	The number of comments.
 - analysis 	object 	Object containing requested descriptors information according to the descriptors request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
-- analysis_stats 	URI 	URI pointing to the complete analysis results of the sound (see Analysis Descriptor Documentation).
-- analysis_frames 	URI 	The URI for retrieving a JSON file with analysis information for each frame of the sound (see Analysis Descriptor Documentation).
 
 ## never we want
 
@@ -51,7 +49,9 @@ id,name,tags,license,username
 - similar_sounds 	URI 	URI pointing to the similarity resource (to get a list of similar sounds).
 - rate 	URI 	The URI for rating the sound.
 - download 	URI 	The URI for retrieving the original sound.
+- analysis_stats 	URI 	URI pointing to the complete analysis results of the sound (see Analysis Descriptor Documentation).
 
 ## optionally we want
 
 - previews 	object 	Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields preview-hq-mp3 and preview-lq-mp3 (for ~128kbps quality and ~64kbps quality mp3 respectively), and preview-hq-ogg and preview-lq-ogg (for ~192kbps quality and ~80kbps quality ogg respectively). API authentication is required for retrieving sound previews (Token or OAuth2).
+- analysis_frames 	URI 	The URI for retrieving a JSON file with analysis information for each frame of the sound (see Analysis Descriptor Documentation).

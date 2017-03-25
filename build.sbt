@@ -25,10 +25,11 @@ val dispatchVersion = "0.12.0"
 val scoptVersion  = "3.5.0"
 
 libraryDependencies ++= Seq(
-  "de.sciss"                %% "model"          % modelVersion,
-  "de.sciss"                %% "optional"       % optionalVersion,
-  "net.databinder.dispatch" %% "dispatch-core"  % dispatchVersion,
-  "com.github.scopt"        %% "scopt"          % scoptVersion % "test"
+  "de.sciss"                %% "model"                  % modelVersion,
+  "de.sciss"                %% "optional"               % optionalVersion,
+  "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
+  "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
+  "com.github.scopt"        %% "scopt"                  % scoptVersion % "test"
 )
 
 libraryDependencies ++= {
@@ -40,6 +41,7 @@ libraryDependencies ++= {
 initialCommands in console :=
   """import de.sciss.freesound._
     |import Implicits._
+    |val fs = scala.util.Try { val token = scala.io.Source.fromFile("api_key").getLines.next.trim; Freesound(token) } .toOption.orNull
     |""".stripMargin
 
 // ---- publishing ----
