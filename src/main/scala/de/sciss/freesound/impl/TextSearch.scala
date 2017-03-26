@@ -27,6 +27,7 @@ object TextSearch {
 }
 final case class TextSearch(query: String, filter: Filter = Filter(), sort: Sort = Sort.Score,
                             groupByPack: Boolean = false, maxItems: Int = 100) {
+  require(maxItems >= 0)
 
   override def toString: String = toFields.mkString("&")
 

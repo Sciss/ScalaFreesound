@@ -7,7 +7,7 @@ description           := "A library for accessing freesound.org from Scala."
 homepage              := Some(url(s"https://github.com/Sciss/${name.value}"))
 licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt"))
 
-scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8")
+scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint")
 
 scalacOptions ++= {
   if (scalaVersion.value.startsWith("2.12")) Seq("-Xlint") else Nil
@@ -20,9 +20,10 @@ val processorVersion  = "0.4.1"
 val dispatchVersion   = "0.12.0"
 val fileUtilVersion   = "1.1.2"
 
-// ---- test dependencies
+// ---- test dependencies ----
 
-val scoptVersion      = "3.5.0"
+//val scoptVersion      = "3.5.0"
+val slf4jVersion      = "1.7.7"
 
 libraryDependencies ++= Seq(
   "de.sciss"                %% "optional"               % optionalVersion,
@@ -30,7 +31,8 @@ libraryDependencies ++= Seq(
   "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
   "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
   "de.sciss"                %% "fileutil"               % fileUtilVersion,
-  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test"
+//  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
+  "org.slf4j"               %  "slf4j-nop"              % slf4jVersion    % "test"
 )
 
 initialCommands in (Test, console) := {

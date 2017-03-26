@@ -12,7 +12,7 @@ object TestTextSearch {
       else sys.error("Need to specify API key")
     }
 //    val fut   = Freesound.textSearch("fish", Filter(duration = 4 to 100, tags = "portugal"))
-    val fut   = Freesound.textSearch("water", Filter(numChannels = 2, sampleRate = 44100))
+    val fut   = Freesound.textSearch("water", Filter(numChannels = 2, sampleRate = 44100), maxItems = 24)
 
     import dispatch.Defaults.executor
 

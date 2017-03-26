@@ -16,7 +16,7 @@ package impl
 
 import java.io.FileOutputStream
 import java.net.URI
-import java.util.{Calendar, Date, TimeZone}
+import java.util.Calendar
 
 import com.ning.http.client.Response
 import de.sciss.file._
@@ -32,7 +32,7 @@ import scala.concurrent.Future
 object FreesoundImpl {
   // def apply(apiKey: String): Freesound = new Impl(apiKey)
 
-  private final case class ResultPage(count: Int, next: String, results: Vector[Sound], previous: String)
+  private final case class ResultPage(count: Int, next: Option[String], results: Vector[Sound])
 
   private trait Deserializer[A] extends Serializer[A] {
     final def serialize(implicit format: Formats): PartialFunction[Any, JValue] =
@@ -102,15 +102,18 @@ object FreesoundImpl {
     }
   }
 
-  def getAuth(code: String)(implicit client: Client): Future[Auth] = {
+  def getAuth(code: String)(implicit client: Client)    : Future[Auth] = getToken(code             , isRefresh = false)
+  def refreshAuth()(implicit client: Client, auth: Auth): Future[Auth] = getToken(auth.refreshToken, isRefresh = true )
+
+  private def getToken(code: String, isRefresh: Boolean)(implicit client: Client): Future[Auth] = {
     import dispatch._
     import Defaults._
 
     val req0    = url(Freesound.urlGetAuth)
       .addParameter("client_id", client.id)
       .addParameter("client_secret", client.secret)
-      .addParameter("grant_type", "authorization_code")
-      .addParameter("code", code)
+      .addParameter("grant_type", if (isRefresh) "refresh_token" else "authorization_code")
+      .addParameter(if (isRefresh) "refresh_token" else "code", code)
 
     val req   = req0.POST
     val now   = Calendar.getInstance
@@ -131,23 +134,27 @@ object FreesoundImpl {
                  maxItems: Int)(implicit client: Client): Future[Vec[Sound]] = {
     val options = TextSearch(query = query, filter = filter, sort = sort, groupByPack = groupByPack,
       maxItems = maxItems)
-    runTextSearch(options)
+    runTextSearch(options, page = 1, done = Vector.empty)
   }
 
-  private def runTextSearch(options: TextSearch)(implicit client: Client): Future[Vec[Sound]] = {
-    import dispatch._
+  private def runTextSearch(options: TextSearch, page: Int, done: Vec[Sound])
+                           (implicit client: Client): Future[Vec[Sound]] = {
+    import dispatch.{Future => _, _}
     import Defaults._
 
+    val remain  = options.maxItems - done.size
     var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
-    params += "token" -> client.secret
+    params += "token"  -> client.secret
     params += "fields" -> "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth,bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
+    if (page > 1)                 params += "page"      -> page  .toString
+    if (page == 1 && remain < 10) params += "page_size" -> remain.toString  // don't download more than necessary
 
     val req0    = url(Freesound.urlTextSearch)
     val req     = req0 <<? params
 //      val req     = req1.setContentType("application/json", "UTF-8")
 //      println(req.url)
     val futJson = Http(req.OK(JsonUTF))
-    futJson.map { json =>
+    futJson.flatMap { json =>
         val mapped = json.mapField {
         case (k @ "results", v0) => k -> v0.mapField {
           case ("name"          , v) => ("fileName"     , v)
@@ -167,8 +174,12 @@ object FreesoundImpl {
         }
         case other => other
       }
-      val res = mapped.extract[ResultPage]
-      res.results // .toVector
+      val res     = mapped.extract[ResultPage]
+      val add     = if (res.results.size <= remain) res.results else res.results.take(remain)
+      val done1   = done ++ add
+      val remain1 = options.maxItems - done1.size
+      if (remain1 == 0) Future.successful(done1)
+      else runTextSearch(options, page = page + 1, done = done1)
     }
   }
 
