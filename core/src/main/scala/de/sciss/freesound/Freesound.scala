@@ -80,6 +80,14 @@ object Freesound {
           groupByPack: Boolean = false, maxItems: Int = 100)(implicit client: Client): Future[Vec[Sound]] =
     Impl.textSearch(query = query, filter = filter, sort = sort, groupByPack = groupByPack, maxItems = maxItems)
 
+  /** Performs a text-based search and returns the total count of matches.
+    *
+    * @param query        the query term(s)
+    * @param filter       a filter definition constraining the search results
+    */
+  def textCount(query: String, filter: Filter = Filter())(implicit client: Client): Future[Int] =
+    Impl.textCount(query = query, filter = filter)
+
   /** Downloads a sound file in its original quality.
     *
     * @param id     the identifier of the sound (i.e. `Sound#id`)

@@ -23,6 +23,10 @@ val processorVersion  = "0.4.1"
 val dispatchVersion   = "0.12.0"
 val fileUtilVersion   = "1.1.2"
 
+// ---- swing dependencies ----
+
+val swingPlusVersion  =  "0.2.2"
+
 // ---- test dependencies ----
 
 //val scoptVersion      = "3.5.0"
@@ -49,9 +53,21 @@ lazy val core = project.in(file("core"))
     initialCommands in (Test, console) := initialCmd()
   )
 
+lazy val swing = project.in(file("swing"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    name        := s"$baseName-swing",
+    moduleName  := s"$baseNameL-swing",
+    description := s"$baseDescr (Swing widgets)",
+    libraryDependencies ++= Seq(
+      "de.sciss" %% "swingplus" % swingPlusVersion
+    )
+  )
+
 lazy val root = project.in(file("."))
-  .dependsOn(core)
-  .aggregate(core)
+  .dependsOn(core, swing)
+  .aggregate(core, swing)
   .settings(commonSettings)
   .settings(
     name        := baseName,

@@ -137,6 +137,55 @@ object FreesoundImpl {
     runTextSearch(options, page = 1, done = Vector.empty)
   }
 
+  def textCount(query: String, filter: Filter)(implicit client: Client): Future[Int] = {
+    // `maxItems = 0` is not allowed by server
+    val options = TextSearch(query = query, filter = filter, maxItems = 1)
+    var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
+    params += "token"     -> client.secret
+    params += "fields"    -> "id"
+    params += "page_size" -> options.maxItems.toString
+
+    import dispatch._
+    import Defaults._
+    val req0    = url(Freesound.urlTextSearch)
+    val req     = req0 <<? params
+    val futJson = Http(req.OK(JsonUTF))
+    futJson.map { json =>
+      val numOpt = json match {
+        case JObject(entries) =>
+          entries.collectFirst {
+            case ("count", JInt(num)) => num.intValue()
+          }
+        case _ => None
+      }
+      numOpt.getOrElse(sys.error("Could not determined 'count' parameter"))
+    }
+  }
+
+  private def extractPage(json: JValue): ResultPage = {
+    val mapped = json.mapField {
+      case (k @ "results", v0) => k -> v0.mapField {
+        case ("name"          , v) => ("fileName"     , v)
+        case ("username"      , v) => ("userName"     , v)
+        case ("geotag"        , v) => ("geoTag"       , v)
+        case ("type"          , v) => ("fileType"     , v)
+        case ("channels"      , v) => ("numChannels"  , v)
+        case ("samplerate"    , v) => ("sampleRate"   , v)
+        case ("bitdepth"      , v) => ("bitDepth"     , v)
+        case ("bitrate"       , v) => ("bitRate"      , v)
+        case ("filesize"      , v) => ("fileSize"     , v)
+        case ("num_downloads" , v) => ("numDownloads" , v)
+        case ("avg_rating"    , v) => ("avgRating"    , v)
+        case ("num_ratings"   , v) => ("numRatings"   , v)
+        case ("num_comments"  , v) => ("numComments"  , v)
+        case other => other
+      }
+
+      case other => other
+    }
+    mapped.extract[ResultPage]
+  }
+
   private def runTextSearch(options: TextSearch, page: Int, done: Vec[Sound])
                            (implicit client: Client): Future[Vec[Sound]] = {
     import dispatch.{Future => _, _}
@@ -155,26 +204,7 @@ object FreesoundImpl {
 //      println(req.url)
     val futJson = Http(req.OK(JsonUTF))
     futJson.flatMap { json =>
-        val mapped = json.mapField {
-        case (k @ "results", v0) => k -> v0.mapField {
-          case ("name"          , v) => ("fileName"     , v)
-          case ("username"      , v) => ("userName"     , v)
-          case ("geotag"        , v) => ("geoTag"       , v)
-          case ("type"          , v) => ("fileType"     , v)
-          case ("channels"      , v) => ("numChannels"  , v)
-          case ("samplerate"    , v) => ("sampleRate"   , v)
-          case ("bitdepth"      , v) => ("bitDepth"     , v)
-          case ("bitrate"       , v) => ("bitRate"      , v)
-          case ("filesize"      , v) => ("fileSize"     , v)
-          case ("num_downloads" , v) => ("numDownloads" , v)
-          case ("avg_rating"    , v) => ("avgRating"    , v)
-          case ("num_ratings"   , v) => ("numRatings"   , v)
-          case ("num_comments"  , v) => ("numComments"  , v)
-          case other => other
-        }
-        case other => other
-      }
-      val res     = mapped.extract[ResultPage]
+      val res     = extractPage(json)
       val add     = if (res.results.size <= remain) res.results else res.results.take(remain)
       val done1   = done ++ add
       val remain1 = options.maxItems - done1.size
