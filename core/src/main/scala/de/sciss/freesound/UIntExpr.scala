@@ -55,7 +55,9 @@ object UIntExpr extends Factory[UIntExpr] {
     def constString: String = a.toString
   }
 
-  final case class ConstRange private(private val start: Int, private val end: Int) extends Const {
+  final case class ConstRange private(private[freesound] val start: Int, private[freesound] val end: Int)
+    extends Const {
+
     def constString: String = {
       val startS = if (start == -1) "*" else start.toString
       val endS   = if (end   == -1) "*" else end  .toString
@@ -79,6 +81,6 @@ sealed trait UIntExpr extends QueryExpr with UIntExpr.Option {
 
   final type Repr = UIntExpr
 
-  final protected def self: Repr with Base[Repr] = this
+  final private[freesound] def self: Repr with Base[Repr] = this
   final protected def factory: Factory[Repr] = UIntExpr
 }

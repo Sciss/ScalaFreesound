@@ -55,7 +55,8 @@ trait QueryExpr {
   type Repr <: QueryExpr
 
   protected def factory: Factory[Repr]
-  protected def self   : Repr with Base[Repr]
+
+  private[freesound] def self: Repr with Base[Repr]
 
   // ---- impl ----
 

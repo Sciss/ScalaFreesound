@@ -15,12 +15,14 @@ package de.sciss.freesound
 package swing
 package impl
 
-import de.sciss.model.impl.ModelImpl
-import de.sciss.swingplus.{GroupPanel, PopupMenu}
+import javax.swing.SpinnerNumberModel
 
-import scala.swing.event.{ButtonClicked, EditDone}
-import scala.swing.{Action, BoxPanel, Button, CheckBox, Component, FlowPanel, Label, MenuItem, Orientation, ScrollPane, SequentialContainer, Swing, TextField}
-import Swing._
+import de.sciss.model.impl.ModelImpl
+import de.sciss.swingplus.{GroupPanel, PopupMenu, Spinner}
+
+import scala.swing.Swing._
+import scala.swing.event.{ButtonClicked, EditDone, ValueChanged}
+import scala.swing.{Action, BoxPanel, Button, CheckBox, Component, Label, MenuItem, Orientation, ScrollPane, SequentialContainer, TextField}
 
 object FilterViewImpl {
   def apply(init: Filter): FilterView = new Impl(init)
@@ -35,52 +37,146 @@ object FilterViewImpl {
     }
   }
 
-  private trait StringPartParent {
+  private trait PartParent[Repr] {
     def fireChange(): Unit
-    def remove(child: StringPart): Unit
-    def replace(before: StringPart, now: StringPart): Unit
+    def remove(child: Part[Repr]): Unit
+    def replace(before: Part[Repr], now: Part[Repr]): Unit
   }
 
-  private sealed trait StringPart {
-    private[this] var _parent: StringPartParent = _
+  private sealed trait Part[Repr] {
+    private[this] var _parent: PartParent[Repr] = _
 
-    final def parent: StringPartParent = {
+    final def parent: PartParent[Repr] = {
       require(_parent != null)
       _parent
     }
 
-    final def parent_=(value: StringPartParent): Unit =
+    final def parent_=(value: PartParent[Repr]): Unit =
       _parent = value
 
     def component: Component
 
-    def toExpr: StringExpr
+    def toExpr: Repr
   }
 
-  private def mkPopupStringConst(p: StringPartConst): PopupMenu = new PopupMenu {
-    contents += new MenuItem(Action("\u00d7 remove") {
+
+  private trait PartFactory[R <: Expr[R]] {
+    implicit def self: PartFactory[R] = this
+
+    def mkPart(ex: R): Part[R]
+
+    def zero: R
+
+    protected final def mkLogicPart(ex: R): Part[R] = (ex.self: QueryExpr.Base[R]) match {
+      case or: QueryExpr.Or[R] /* StringExpr.Or(a, b) */ =>
+        val a  = or.a
+        val b  = or.b
+        val pa = mkPart(a)
+        val pb = mkPart(b)
+        (pa, pb) match {
+          case (PartOr (ca), PartOr (cb)) => PartOr (ca ++ cb)
+          case (PartOr (ca), _          ) => PartOr (ca :+ pb)
+          case (_          , PartOr (cb)) => PartOr (pa +: cb)
+          case _                          => PartOr (pa :: pb :: Nil)
+        }
+
+      case and: QueryExpr.And[R] /* StringExpr.And(a, b) */ =>
+        val a  = and.a
+        val b  = and.b
+        val pa = mkPart(a)
+        val pb = mkPart(b)
+        (pa, pb) match {
+          case (PartAnd(ca), PartAnd(cb)) => PartAnd(ca ++ cb)
+          case (PartAnd(ca), _          ) => PartAnd(ca :+ pb)
+          case (_          , PartAnd(cb)) => PartAnd(pa +: cb)
+          case _                          => PartAnd(pa :: pb :: Nil)
+        }
+
+      case not: QueryExpr.Not[R] /* StringExpr.Not(a) */ =>
+        val a  = not.a
+        val pa = mkPart(a)
+        PartNot(pa)
+
+      case _: QueryExpr.Const[R] => throw new IllegalArgumentException("Must match constants before")
+    }
+  }
+
+  private implicit object StringPartFactory extends PartFactory[StringExpr] {
+    def zero: StringExpr = ""
+
+    override def mkPart(ex: StringExpr): Part[StringExpr] = ex match {
+      case StringExpr.Const(s0) => new StringPartConst(s0)
+      case _ => mkLogicPart(ex)
+    }
+  }
+
+  private final class UIntPartFactory(min: Int, max: Int, step: Int) extends PartFactory[UIntExpr] {
+    def zero: UIntExpr = min
+
+    override def mkPart(ex: UIntExpr): Part[UIntExpr] = ex match {
+      case UIntExpr.ConstSingle(i0) => new UIntPartConstSingle(i0, min = min, max = max, step = step)
+      case UIntExpr.ConstRange (start, end)  =>
+        if (start == -1) {
+          ???
+        } else if (end == -1) {
+          ???
+        } else {
+          ??? // new UIntPartConst(s0)
+        }
+      case _ => mkLogicPart(ex)
+    }
+  }
+
+  private final class UDoublePartFactory(min: Double, max: Double, step: Double) extends PartFactory[UDoubleExpr] {
+    def zero: UDoubleExpr = min
+
+    override def mkPart(ex: UDoubleExpr): Part[UDoubleExpr] = ex match {
+      case UDoubleExpr.ConstSingle(i0) => new UDoublePartConstSingle(i0, min = min, max = max, step = step)
+      case UDoubleExpr.ConstRange (start, end)  =>
+        if (start == -1) {
+          ???
+        } else if (end == -1) {
+          ???
+        } else {
+          ??? // new UDoublePartConst(s0)
+        }
+      case _ => mkLogicPart(ex)
+    }
+  }
+
+  private def mkMenuItemRemove[R <: Expr[R]](p: PartConst[R]): MenuItem =
+    new MenuItem(Action("\u00d7 remove") {
       p.parent.remove(p)
     })
-    contents += new MenuItem(Action("\u22c1 or") {
-      val app = new StringPartConst("")
+
+  private def mkMenuItemOr[R <: Expr[R]](p: PartConst[R])(implicit factory: PartFactory[R]): MenuItem =
+    new MenuItem(Action("\u22c1 or") {
+      val app = factory.mkPart(factory.zero) // new StringPartConst("")
       val par = p.parent  // catch it early!
-      val or  = StringPartOr (p :: app :: Nil)
+      val or  = PartOr (p :: app :: Nil)
       par.replace(p, or)
     })
-    contents += new MenuItem(Action("\u22c0 and") {
-      val app = new StringPartConst("")
+
+  private def mkMenuItemAnd[R <: Expr[R]](p: PartConst[R])(implicit factory: PartFactory[R]): MenuItem =
+    new MenuItem(Action("\u22c0 and") {
+      val app = factory.mkPart(factory.zero)
       val par = p.parent  // catch it early!
-      val and = StringPartAnd(p :: app :: Nil)
-      par.replace(p, and)
+      val or  = PartAnd(p :: app :: Nil)
+      par.replace(p, or)
     })
-    contents += new MenuItem(Action("\u00ac not") {
+
+  private def mkMenuItemNot[R <: Expr[R]](p: PartConst[R])(implicit factory: PartFactory[R]): MenuItem =
+    new MenuItem(Action("\u00ac not") {
       val par = p.parent  // catch it early!
-      val not = StringPartNot(p)
+      val not = PartNot(p)
       par.replace(p, not)
     })
-  }
 
-  private final class StringPartConst(s0: String) extends StringPart {
+  private trait PartConst[Repr] extends Part[Repr]
+
+  private final class StringPartConst(s0: String) extends PartConst[StringExpr] { part =>
+    type R = StringExpr
+
     private[this] lazy val ggText = {
       val res         = new TextField(4)
       res.minimumSize = res.preferredSize
@@ -93,20 +189,72 @@ object FilterViewImpl {
       ggText.reactions += {
         case EditDone(_) => parent.fireChange()
       }
-      val ggEdit = new EditButton(mkPopupStringConst(this))
+      val pop = new PopupMenu {
+        contents += mkMenuItemRemove(part)
+        contents += mkMenuItemOr    (part)
+        contents += mkMenuItemAnd   (part)
+        contents += mkMenuItemNot   (part)
+      }
+      val ggEdit = new EditButton(pop)
       val box = new BoxPanel(Orientation.Horizontal)
       box.contents += ggText
       box.contents += ggEdit
       box
     }
 
-    def toExpr: StringExpr = ggText.text
+    def toExpr: R = ggText.text
+  }
+
+  private trait NumberPartConstSingle[R <: Expr[R]] extends PartConst[R] { part =>
+    
+    protected def model: SpinnerNumberModel
+    implicit protected def factory: PartFactory[R]    
+
+    private[this] lazy val ggSpinner = new Spinner(model)
+
+    lazy val component: Component = {
+      ggSpinner.listenTo(ggSpinner)
+      ggSpinner.reactions += {
+        case ValueChanged(_) => parent.fireChange()
+      }
+      val pop = new PopupMenu {
+        contents += mkMenuItemRemove(part)
+        contents += mkMenuItemOr    (part)
+        contents += mkMenuItemAnd   (part)
+        contents += mkMenuItemNot   (part)
+      }
+      val ggEdit = new EditButton(pop)
+      val box = new BoxPanel(Orientation.Horizontal)
+      box.contents += ggSpinner
+      box.contents += ggEdit
+      box
+    }
+  }
+
+  private final class UIntPartConstSingle(init: Int, min: Int, max: Int, step: Int)
+                                         (implicit protected val factory: PartFactory[UIntExpr])
+    extends NumberPartConstSingle[UIntExpr] {
+    part =>
+
+    protected val model = new SpinnerNumberModel(init, min, max, step)
+
+    def toExpr: UIntExpr = model.getNumber.intValue()
+  }
+
+  private final class UDoublePartConstSingle(init: Double, min: Double, max: Double, step: Double)
+                                         (implicit protected val factory: PartFactory[UDoubleExpr])
+    extends NumberPartConstSingle[UDoubleExpr] {
+    part =>
+
+    protected val model = new SpinnerNumberModel(init, min, max, step)
+
+    def toExpr: UDoubleExpr = model.getNumber.doubleValue()
   }
 
   private final case class ChildPosition(child: Int, start: Int, count: Int)
 
-  private sealed trait StringParentContainerBase extends StringPartParent {
-    protected var _children: List[StringPart]
+  private sealed trait ParentContainerBase[Repr] extends PartParent[Repr] {
+    protected var _children: List[Part[Repr]]
 
     protected def childPosition(idx: Int): ChildPosition
 
@@ -115,9 +263,9 @@ object FilterViewImpl {
     def component: Component with SequentialContainer.Wrapper
 
     protected def becameEmpty(): Unit
-    protected def becameSingle(child: StringPart): Unit
+    protected def becameSingle(child: Part[Repr]): Unit
 
-    final def remove(child: StringPart): Unit = {
+    final def remove(child: Part[Repr]): Unit = {
       val idx = _children.indexOf(child)
       require(idx >= 0)
       val newChildren = _children.patch(idx, Nil, 1)
@@ -131,7 +279,7 @@ object FilterViewImpl {
       }
     }
 
-    final def replace(before: StringPart, now: StringPart): Unit = {
+    final def replace(before: Part[Repr], now: Part[Repr]): Unit = {
       val idx = _children.indexOf(before)
       require(idx >= 0)
       val newChildren = _children.patch(idx, now :: Nil, 1)
@@ -147,7 +295,7 @@ object FilterViewImpl {
       setChildrenAndRevalidate(newChildren)
     }
 
-    private def setChildrenAndRevalidate(newChildren: List[StringPart]): Unit = {
+    private def setChildrenAndRevalidate(newChildren: List[Part[Repr]]): Unit = {
       _children = newChildren
       component.revalidate()
       component.repaint()
@@ -155,15 +303,15 @@ object FilterViewImpl {
     }
   }
 
-  private sealed abstract class StringParentContainer(protected var _children: List[StringPart])
-    extends StringPart with StringParentContainerBase {
+  private sealed abstract class ParentContainer[Repr](protected var _children: List[Part[Repr]])
+    extends Part[Repr] with ParentContainerBase[Repr] {
 
     _children.foreach(_.parent = this)
 
     final def fireChange(): Unit = parent.fireChange()
 
     protected def becameEmpty()                   : Unit = parent.remove (this)
-    protected def becameSingle(child: StringPart) : Unit = parent.replace(this, child)
+    protected def becameSingle(child: Part[Repr]) : Unit = parent.replace(this, child)
 
     protected def childPosition(idx: Int): ChildPosition = {
       val start = idx * 2 + 1
@@ -173,12 +321,12 @@ object FilterViewImpl {
     }
   }
 
-  private trait AndOrLike {
-    _: StringParentContainer =>
+  private trait AndOrLike[Repr] {
+    _: ParentContainer[Repr] =>
 
     protected def opString: String
 
-    protected def mkOp(a: StringExpr, b: StringExpr): StringExpr
+    protected def mkOp(a: Repr, b: Repr): Repr
 
     lazy val component: Component with SequentialContainer.Wrapper = {
       val childViews  = _children.map(_.component)
@@ -195,27 +343,29 @@ object FilterViewImpl {
       box
     }
 
-    def toExpr: StringExpr = _children.map(_.toExpr).reduceLeft(mkOp)
+    def toExpr: Repr = _children.map(_.toExpr).reduceLeft(mkOp)
   }
 
-  private final case class StringPartOr(children: List[StringPart])
-    extends StringParentContainer(children) with AndOrLike {
+  type Expr[R] = QueryExpr { type Repr = R }
+
+  private final case class PartOr[R <: Expr[R]](children: List[Part[R]])
+    extends ParentContainer(children) with AndOrLike[R] {
 
     protected def opString = "\u22c1"
 
-    protected def mkOp(a: StringExpr, b: StringExpr): StringExpr = StringExpr.Or(a, b)
+    protected def mkOp(a: R, b: R): R = a | b
   }
 
-  private final case class StringPartAnd(children: List[StringPart])
-    extends StringParentContainer(children) with AndOrLike {
+  private final case class PartAnd[R <: Expr[R]](children: List[Part[R]])
+    extends ParentContainer(children) with AndOrLike[R] {
 
     protected def opString = "\u22c0"
 
-    protected def mkOp(a: StringExpr, b: StringExpr): StringExpr = StringExpr.And(a, b)
+    protected def mkOp(a: R, b: R): R = a & b
   }
 
-  private final case class StringPartNot(child: StringPart)
-    extends StringParentContainer(child :: Nil) {
+  private final case class PartNot[R <: Expr[R]](child: Part[R])
+    extends ParentContainer(child :: Nil) {
 
 //    override protected def childPosition(idx: Int): ChildPosition =
 //      ChildPosition(child = 1, start = 0, count = 2)
@@ -229,18 +379,25 @@ object FilterViewImpl {
       box
     }
 
-    def toExpr: StringExpr = StringExpr.Not(child.toExpr)
+    def toExpr: R = !child.toExpr
   }
 
-  private final class StringPartTop(private[this] var value: StringExpr.Option, set: StringExpr.Option => Unit)
-    extends StringParentContainerBase {
+  private trait PartTop[R <: Expr[R]] extends ParentContainerBase[R] {
+
+    // ---- abstract ----
+
+    protected def factory: PartFactory[R]
+    protected var valueOption: Option[R]
+    protected def mkConst(): Part[R]
+
+    // ---- impl ----
 
     protected def childPosition(idx: Int): ChildPosition = ChildPosition(child = 2, start = 2, count = 1)
 
-    protected var _children: List[StringPart] = value match {
-      case StringExpr.None  => Nil
-      case ex: StringExpr   =>
-        val c = mkStringPart(ex)
+    protected var _children: List[Part[R]] = valueOption match {
+      case None  => Nil
+      case Some(ex) =>
+        val c = factory.mkPart(ex)
         c.parent = this
         c :: Nil
     }
@@ -256,7 +413,7 @@ object FilterViewImpl {
             case (Some(c), false) =>
               remove(c)
             case (None, true) =>
-              val c = new StringPartConst("")
+              val c = mkConst()
               insert(c)
             case (_, true) =>
               fireChange()
@@ -276,17 +433,18 @@ object FilterViewImpl {
       box
     }
 
-    def toExprOption: StringExpr.Option =
+    def toExprOption: Option[R] =
       _children match {
-        case c :: Nil if ggEnabled.selected => c.toExpr
-        case _                              => StringExpr.None
+        case c :: Nil if ggEnabled.selected => Some(c.toExpr)
+        case _                              => None
       }
 
     def fireChange(): Unit = {
       val newValue = toExprOption
-      if (value != newValue) {
-        value = newValue
-        set(newValue)
+      if (valueOption != newValue) {
+        valueOption = newValue
+//        value = newValue
+//        set(newValue)
       }
     }
 
@@ -295,9 +453,9 @@ object FilterViewImpl {
       fireChange()
     }
 
-    protected def becameSingle(child: StringPart): Unit = throw new IllegalStateException()
+    protected def becameSingle(child: Part[R]): Unit = throw new IllegalStateException()
 
-    private def insert(now: StringPart): Unit = {
+    private def insert(now: Part[R]): Unit = {
       require(_children.isEmpty)
       _children = now :: Nil
       now.parent = this
@@ -310,54 +468,122 @@ object FilterViewImpl {
     }
   }
 
-  private def mkStringPart(ex: StringExpr): StringPart = ex match {
-    case StringExpr.Const(s0) =>
-      new StringPartConst(s0)
+  private final class StringPartTop(private[this] var _value: StringExpr.Option, set: StringExpr.Option => Unit)
+    extends PartTop[StringExpr] {
 
-    case StringExpr.Or(a, b) =>
-      val pa = mkStringPart(a)
-      val pb = mkStringPart(b)
-      (pa, pb) match {
-        case (StringPartOr (ca), StringPartOr (cb)) => StringPartOr (ca ++ cb)
-        case (StringPartOr (ca), _                ) => StringPartOr (ca :+ pb)
-        case (_                , StringPartOr (cb)) => StringPartOr (pa +: cb)
-        case _                                      => StringPartOr (pa :: pb :: Nil)
-      }
+    type R = StringExpr
+    val  R = StringExpr
 
-    case StringExpr.And(a, b) =>
-      val pa = mkStringPart(a)
-      val pb = mkStringPart(b)
-      (pa, pb) match {
-        case (StringPartAnd(ca), StringPartAnd(cb)) => StringPartAnd(ca ++ cb)
-        case (StringPartAnd(ca), _                ) => StringPartAnd(ca :+ pb)
-        case (_                , StringPartAnd(cb)) => StringPartAnd(pa +: cb)
-        case _                                      => StringPartAnd(pa :: pb :: Nil)
-      }
-    case StringExpr.Not(a) =>
-      val pa = mkStringPart(a)
-      StringPartNot(pa)
+    protected def factory: PartFactory[R] = StringPartFactory
+
+    protected def valueOption: Option[R] = _value match {
+      case StringExpr.None => None
+      case ex: StringExpr  => Some(ex)
+    }
+
+    protected def valueOption_=(opt: Option[R]): Unit = {
+      val newValue = opt.fold[R.Option](R.None)(identity)
+      set(newValue)
+    }
+
+    protected def mkConst(): Part[R] = new StringPartConst("")
+  }
+
+  private final class UIntPartTop(private[this] var _value: UIntExpr.Option,
+                                  set: UIntExpr.Option => Unit, default: Int = 0, min: Int = 0,
+                                  max: Int = Int.MaxValue, step: Int = 1)
+    extends PartTop[UIntExpr] {
+
+    type R = UIntExpr
+    val  R = UIntExpr
+
+    protected implicit val factory: PartFactory[R] = new UIntPartFactory(min = min, max = max, step = step)
+
+    protected def valueOption: Option[R] = _value match {
+      case UIntExpr.None => None
+      case ex: UIntExpr  => Some(ex)
+    }
+
+    protected def valueOption_=(opt: Option[R]): Unit = {
+      val newValue = opt.fold[R.Option](R.None)(identity)
+      set(newValue)
+    }
+
+    protected def mkConst(): Part[R] = new UIntPartConstSingle(init = default, min = min, max = max, step = step)
+  }
+
+  private final class UDoublePartTop(private[this] var _value: UDoubleExpr.Option,
+                                  set: UDoubleExpr.Option => Unit, default: Double = 0.0, min: Double = 0.0,
+                                  max: Double = Double.MaxValue, step: Double = 0.1)
+    extends PartTop[UDoubleExpr] {
+
+    type R = UDoubleExpr
+    val  R = UDoubleExpr
+
+    protected implicit val factory: PartFactory[R] = new UDoublePartFactory(min = min, max = max, step = step)
+
+    protected def valueOption: Option[R] = _value match {
+      case UDoubleExpr.None => None
+      case ex: UDoubleExpr  => Some(ex)
+    }
+
+    protected def valueOption_=(opt: Option[R]): Unit = {
+      val newValue = opt.fold[R.Option](R.None)(identity)
+      set(newValue)
+    }
+
+    protected def mkConst(): Part[R] = new UDoublePartConstSingle(init = default, min = min, max = max, step = step)
   }
 
   private final class Impl(private var _filter: Filter) extends FilterView with ModelImpl[Filter] {
+    private def mkLabel(name: String): Label = new Label(s"${name.capitalize}:")
+
     private def mkStr(name: String, init: StringExpr.Option)
                             (copy: StringExpr.Option => Filter): (Label, Component) = {
-      val top = new StringPartTop(init, { v =>
+      val top = new StringPartTop(init, set = { v =>
         _filter = copy(v)
         dispatch(_filter)
       })
-      new Label(s"${name.capitalize}:") -> top.component
+      mkLabel(name) -> top.component
     }
 
-//    private[this] val ggQuery: Component = new TextField(20)
+    private def mkUInt(name: String, init: UIntExpr.Option, default: Int = 0, min: Int = 0, max: Int = Int.MaxValue,
+                       step: Int = 1)
+                      (copy: UIntExpr.Option => Filter): (Label, Component) = {
+      val top = new UIntPartTop(init, default = default, min = min, max = max, step = step, set = { v =>
+        _filter = copy(v)
+        dispatch(_filter)
+      })
+      mkLabel(name) -> top.component
+    }
 
+    private def mkUDouble(name: String, init: UDoubleExpr.Option, default: Double = 0.0,
+                          min: Double = 0.0, max: Double = Double.MaxValue, step: Double = 0.1)
+                         (copy: UDoubleExpr.Option => Filter): (Label, Component) = {
+      val top = new UDoublePartTop(init, default = default, min = min, max = max, step = step, set = { v =>
+        _filter = copy(v)
+        dispatch(_filter)
+      })
+      mkLabel(name) -> top.component
+    }
+    
     private[this] val fields = Seq(
 //      new Label("Query:") -> ggQuery,
       mkStr("tags"       , _filter.tags       )(v => _filter.copy(tags        = v)),
       mkStr("description", _filter.description)(v => _filter.copy(description = v)),
       mkStr("file name"  , _filter.fileName   )(v => _filter.copy(fileName    = v)),
       mkStr("license"    , _filter.license    )(v => _filter.copy(license     = v)),
-      mkStr("user name"  , _filter.userName   )(v => _filter.copy(userName    = v)),
-      mkStr("comment"    , _filter.comment    )(v => _filter.copy(comment     = v))
+//      mkStr("user name"  , _filter.userName   )(v => _filter.copy(userName    = v)),
+//      mkStr("comment"    , _filter.comment    )(v => _filter.copy(comment     = v))
+      mkUDouble("duration [s]", _filter.duration, default = 2, min = 1, max = 8192)(v => _filter.copy(duration = v)),
+      mkUInt("num-channels", _filter.numChannels, default = 2, min = 1, max = 8192)(v => _filter.copy(numChannels = v)),
+      mkUInt("sample-rate [Hz]" , _filter.sampleRate, default = 44100, min = 0, max = 96000 * 4)(v => _filter.copy(sampleRate = v)),
+      mkUInt("bit-depth", _filter.bitDepth, default = 16, min = 8, max = 64, step = 8)(v => _filter.copy(bitDepth = v)),
+      mkUDouble("bit-rate [kbps]", _filter.bitRate, default = 320, min = 8, max = 24000, step = 8)(v => _filter.copy(bitRate = v)),
+//      mkUInt("file-size", _filter.fileSize)(v => _filter.copy(fileSize = v)),
+      mkUInt("num-downloads", _filter.numDownloads, default = 1, max = 10000000)(v => _filter.copy(numDownloads = v)),
+      mkUDouble("average rating", _filter.avgRating, default = 5, min = 0, max = 5)(v => _filter.copy(avgRating = v)),
+      mkUInt("num-ratings", _filter.numRatings, default = 1, max = 1000000)(v => _filter.copy(numRatings = v))
     )
 
     lazy val component: Component = {
@@ -385,21 +611,22 @@ object FilterViewImpl {
       fileName    : StringTokens        = None,
       tags        : StringExpr  .Option = None,
       description : StringTokens        = None,
-      userName    : StringExpr  .Option = None,
     created     : DateExpr    .Option = None,
       license     : StringExpr  .Option = None,
     geoTag      : Optional[Boolean]   = None,
     fileType    : FileTypeExpr.Option = None,
-    duration    : UDoubleExpr .Option = None,
-    numChannels : UIntExpr    .Option = None,
-    sampleRate  : UIntExpr    .Option = None,
-    bitDepth    : UIntExpr    .Option = None,
-    bitRate     : UDoubleExpr .Option = None,
+      duration    : UDoubleExpr .Option = None,
+      numChannels : UIntExpr    .Option = None,
+      sampleRate  : UIntExpr    .Option = None,
+      bitDepth    : UIntExpr    .Option = None,
+      bitRate     : UDoubleExpr .Option = None,
+      numDownloads: UIntExpr    .Option = None,
+      avgRating   : UDoubleExpr .Option = None,
+      numRatings  : UIntExpr    .Option = None,
+
+    userName    : StringExpr  .Option = None,
     fileSize    : UIntExpr    .Option = None,
-    numDownloads: UIntExpr    .Option = None,
-    avgRating   : UDoubleExpr .Option = None,
-    numRatings  : UIntExpr    .Option = None,
-      comment     : StringTokens        = None,
+    comment     : StringTokens        = None,
     numComments : UIntExpr    .Option = None,
     isRemix     : Optional[Boolean]   = None,
     wasRemixed  : Optional[Boolean]   = None,
