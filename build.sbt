@@ -1,19 +1,22 @@
-name                  := "ScalaFreesound"
-version               := "1.0.0-SNAPSHOT"
-organization          := "de.sciss"
-scalaVersion          := "2.12.1"
-crossScalaVersions    := Seq("2.12.1", "2.11.8" /* , "2.10.6" */)
-description           := "A library for accessing freesound.org from Scala."
-homepage              := Some(url(s"https://github.com/Sciss/${name.value}"))
-licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt"))
+val baseName  = "ScalaFreesound"
+val baseNameL = baseName.toLowerCase
 
-scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint")
+val baseDescr = "A library for accessing freesound.org from Scala."
 
-scalacOptions ++= {
-  if (scalaVersion.value.startsWith("2.12")) Seq("-Xlint") else Nil
-}
+lazy val commonSettings = Seq(
+  version               := "1.0.0-SNAPSHOT",
+  organization          := "de.sciss",
+  scalaVersion          := "2.12.1",
+  crossScalaVersions    := Seq("2.12.1", "2.11.8" /* , "2.10.6" */),
+  homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
+  licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
+  scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint"),
+  scalacOptions ++= {
+    if (scalaVersion.value.startsWith("2.12")) Seq("-Xlint") else Nil
+  }
+)
 
-// ---- main dependencies ----
+// ---- core dependencies ----
 
 val optionalVersion   = "1.0.0"
 val processorVersion  = "0.4.1"
@@ -25,17 +28,40 @@ val fileUtilVersion   = "1.1.2"
 //val scoptVersion      = "3.5.0"
 val slf4jVersion      = "1.7.7"
 
-libraryDependencies ++= Seq(
-  "de.sciss"                %% "optional"               % optionalVersion,
-  "de.sciss"                %% "processor"              % processorVersion,
-  "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
-  "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
-  "de.sciss"                %% "fileutil"               % fileUtilVersion,
-//  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
-  "org.slf4j"               %  "slf4j-nop"              % slf4jVersion    % "test"
-)
+// ---- modules ----
 
-initialCommands in (Test, console) := {
+lazy val core = project.in(file("core"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    name        := s"$baseName-core",
+    moduleName  := s"$baseNameL-core",
+    description := s"$baseDescr (core module)",
+    libraryDependencies ++= Seq(
+      "de.sciss"                %% "optional"               % optionalVersion,
+      "de.sciss"                %% "processor"              % processorVersion,
+      "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
+      "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
+      "de.sciss"                %% "fileutil"               % fileUtilVersion,
+      //  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
+      "org.slf4j"               %  "slf4j-nop"              % slf4jVersion    % "test"
+    ),
+    initialCommands in (Test, console) := initialCmd()
+  )
+
+lazy val root = project.in(file("."))
+  .dependsOn(core)
+  .aggregate(core)
+  .settings(commonSettings)
+  .settings(
+    name        := baseName,
+    moduleName  := baseNameL,
+    description := baseDescr,
+    initialCommands in (Test, console) := initialCmd(),
+    packagedArtifacts := Map.empty           // prevent publishing anything!
+  )
+
+def initialCmd(): String = {
   var res = 
     """import de.sciss.freesound._
       |val fs = Freesound  // alias
@@ -59,29 +85,28 @@ initialCommands in (Test, console) := {
 
 // ---- publishing ----
 
-publishMavenStyle := true
-
-publishTo :=
-  Some(if (isSnapshot.value)
-    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-  else
-    "Sonatype Releases"  at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-  )
-
-publishArtifact in Test := false
-
-pomIncludeRepository := { _ => false }
-
-pomExtra := { val n = name.value
+lazy val publishSettings = Seq(
+  publishMavenStyle := true,
+  publishTo := {
+    Some(if (isSnapshot.value)
+      "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+    else
+      "Sonatype Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+    )
+  },
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ => false },
+  pomExtra := { val n = name.value
 <scm>
   <url>git@github.com:Sciss/{n}.git</url>
   <connection>scm:git:git@github.com:Sciss/{n}.git</connection>
 </scm>
-<developers>
-  <developer>
-    <id>sciss</id>
-    <name>Hanns Holger Rutz</name>
-    <url>http://www.sciss.de</url>
-  </developer>
-</developers>
-}
+  <developers>
+    <developer>
+      <id>sciss</id>
+      <name>Hanns Holger Rutz</name>
+      <url>http://www.sciss.de</url>
+    </developer>
+  </developers>
+  }
+)
