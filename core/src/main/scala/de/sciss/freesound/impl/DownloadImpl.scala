@@ -45,7 +45,7 @@ object DownloadImpl {
       }
 
       private[this] val req: (Request, AsyncHandler[_]) = req1 > handler
-      private[this] val lFut: ListenableFuture[_] = Http.client.executeRequest(req._1, req._2)
+      private[this] val lFut: ListenableFuture[_] = Http.client.executeRequest(req._1, req._2) // XXX TODO --- this can block
       private[this] val pr    = Promise[Unit]()
 
       protected def peerFuture: Future[Unit] = pr.future

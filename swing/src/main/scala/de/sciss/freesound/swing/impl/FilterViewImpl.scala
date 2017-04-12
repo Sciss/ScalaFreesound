@@ -16,16 +16,23 @@ package swing
 package impl
 
 import de.sciss.model.impl.ModelImpl
-import de.sciss.swingplus.GroupPanel
+import de.sciss.swingplus.{GroupPanel, PopupMenu}
 
 import scala.swing.event.{ButtonClicked, EditDone}
-import scala.swing.{Button, CheckBox, Component, FlowPanel, Label, ScrollPane, SequentialContainer, TextField}
+import scala.swing.{Action, BoxPanel, Button, CheckBox, Component, FlowPanel, Label, MenuItem, Orientation, ScrollPane, SequentialContainer, Swing, TextField}
+import Swing._
 
 object FilterViewImpl {
   def apply(init: Filter): FilterView = new Impl(init)
 
-  private final class EditButton extends Button("\u2335") {
+  private final class EditButton(pop: => PopupMenu) extends Button("\u2335") {
+    private[this] lazy val _pop = pop
 
+    listenTo(this)
+    reactions += {
+      case ButtonClicked(_) =>
+        _pop.show(this, 0, peer.getHeight)
+    }
   }
 
   private trait StringPartParent {
@@ -50,25 +57,58 @@ object FilterViewImpl {
     def toExpr: StringExpr
   }
 
+  private def mkPopupStringConst(p: StringPartConst): PopupMenu = new PopupMenu {
+    contents += new MenuItem(Action("\u00d7 remove") {
+      p.parent.remove(p)
+    })
+    contents += new MenuItem(Action("\u22c1 or") {
+      val app = new StringPartConst("")
+      val par = p.parent  // catch it early!
+      val or  = StringPartOr (p :: app :: Nil)
+      par.replace(p, or)
+    })
+    contents += new MenuItem(Action("\u22c0 and") {
+      val app = new StringPartConst("")
+      val par = p.parent  // catch it early!
+      val and = StringPartAnd(p :: app :: Nil)
+      par.replace(p, and)
+    })
+    contents += new MenuItem(Action("\u00ac not") {
+      val par = p.parent  // catch it early!
+      val not = StringPartNot(p)
+      par.replace(p, not)
+    })
+  }
+
   private final class StringPartConst(s0: String) extends StringPart {
-    private[this] lazy val ggText = new TextField(6)
+    private[this] lazy val ggText = {
+      val res         = new TextField(4)
+      res.minimumSize = res.preferredSize
+      res.columns     = 6
+      res
+    }
 
     lazy val component: Component = {
       ggText.listenTo(ggText)
       ggText.reactions += {
         case EditDone(_) => parent.fireChange()
       }
-      val ggEdit = new EditButton
-      new FlowPanel(FlowPanel.Alignment.Leading)(ggText, ggEdit)
+      val ggEdit = new EditButton(mkPopupStringConst(this))
+      val box = new BoxPanel(Orientation.Horizontal)
+      box.contents += ggText
+      box.contents += ggEdit
+      box
     }
 
     def toExpr: StringExpr = ggText.text
   }
 
+  private final case class ChildPosition(child: Int, start: Int, count: Int)
+
   private sealed trait StringParentContainerBase extends StringPartParent {
     protected var _children: List[StringPart]
 
-    protected def childComponentOffset: Int
+    protected def childPosition(idx: Int): ChildPosition
 
     def fireChange(): Unit
 
@@ -85,7 +125,8 @@ object FilterViewImpl {
         case Nil            => becameEmpty()
         case single :: Nil  => becameSingle(single)
         case _ =>
-          component.contents.remove(idx + childComponentOffset)
+          val pos = childPosition(idx)
+          component.contents.remove(pos.start, pos.count)
           setChildrenAndRevalidate(newChildren)
       }
     }
@@ -94,8 +135,15 @@ object FilterViewImpl {
       val idx = _children.indexOf(before)
       require(idx >= 0)
       val newChildren = _children.patch(idx, now :: Nil, 1)
-      now.parent = this
-      component.contents.update(idx + childComponentOffset, now.component)
+      now.parent  = this
+      val pos     = childPosition(idx)
+      // because `now.component` is lazy and
+      // might add the before component, make
+      // sure we remove first, and not call `update`
+      val compPar = component
+      compPar.contents.remove(pos.child)
+      val compNow = now.component
+      compPar.contents.insert(pos.child, compNow)
       setChildrenAndRevalidate(newChildren)
     }
 
@@ -116,43 +164,70 @@ object FilterViewImpl {
 
     protected def becameEmpty()                   : Unit = parent.remove (this)
     protected def becameSingle(child: StringPart) : Unit = parent.replace(this, child)
+
+    protected def childPosition(idx: Int): ChildPosition = {
+      val start = idx * 2 + 1
+      val child = start + 1
+      val count = 2
+      ChildPosition(child = child, start = start, count = count)
+    }
+  }
+
+  private trait AndOrLike {
+    _: StringParentContainer =>
+
+    protected def opString: String
+
+    protected def mkOp(a: StringExpr, b: StringExpr): StringExpr
+
+    lazy val component: Component with SequentialContainer.Wrapper = {
+      val childViews  = _children.map(_.component)
+      val ggEdit      = new EditButton(new PopupMenu)
+      val ggAll       = childViews.zipWithIndex.flatMap { case (view, i) =>
+        new Label(if (i == 0) "(" else s" $opString ") :: view :: Nil
+      }
+      val box = new BoxPanel(Orientation.Horizontal)
+      box.contents += HStrut(4)
+      box.contents ++= ggAll
+      box.contents += new Label(")")
+      box.contents += ggEdit
+      box.contents += HStrut(4)
+      box
+    }
+
+    def toExpr: StringExpr = _children.map(_.toExpr).reduceLeft(mkOp)
   }
 
   private final case class StringPartOr(children: List[StringPart])
-    extends StringParentContainer(children) {
+    extends StringParentContainer(children) with AndOrLike {
 
-    protected def childComponentOffset: Int = 0
+    protected def opString = "\u22c1"
 
-    lazy val component: Component with SequentialContainer.Wrapper = {
-      val childViews  = children.map(_.component)
-      val ggEdit      = new EditButton
-      new FlowPanel(childViews :+ ggEdit: _*)
-    }
-
-    def toExpr: StringExpr = children.map(_.toExpr).reduceLeft(StringExpr.Or)
+    protected def mkOp(a: StringExpr, b: StringExpr): StringExpr = StringExpr.Or(a, b)
   }
 
   private final case class StringPartAnd(children: List[StringPart])
-    extends StringParentContainer(children) {
+    extends StringParentContainer(children) with AndOrLike {
 
-    protected def childComponentOffset: Int = 0
+    protected def opString = "\u22c0"
 
-    lazy val component: Component with SequentialContainer.Wrapper = {
-      val childViews  = children.map(_.component)
-      val ggEdit      = new EditButton
-      new FlowPanel(childViews :+ ggEdit: _*)
-    }
-
-    def toExpr: StringExpr = children.map(_.toExpr).reduceLeft(StringExpr.Or)
+    protected def mkOp(a: StringExpr, b: StringExpr): StringExpr = StringExpr.And(a, b)
   }
 
   private final case class StringPartNot(child: StringPart)
     extends StringParentContainer(child :: Nil) {
 
-    protected def childComponentOffset: Int = 1
+//    override protected def childPosition(idx: Int): ChildPosition =
+//      ChildPosition(child = 1, start = 0, count = 2)
 
-    lazy val component: Component with SequentialContainer.Wrapper =
-      new FlowPanel(new Label("¬("), child.component, new Label(")"))
+    lazy val component: Component with SequentialContainer.Wrapper = {
+      val ggEdit = new EditButton(new PopupMenu)
+      val box = new BoxPanel(Orientation.Horizontal)
+      box.contents ++= Seq(
+        HStrut(4), new Label("¬("), child.component, new Label(")"), ggEdit
+      )
+      box
+    }
 
     def toExpr: StringExpr = StringExpr.Not(child.toExpr)
   }
@@ -160,7 +235,7 @@ object FilterViewImpl {
   private final class StringPartTop(private[this] var value: StringExpr.Option, set: StringExpr.Option => Unit)
     extends StringParentContainerBase {
 
-    protected def childComponentOffset = 1
+    protected def childPosition(idx: Int): ChildPosition = ChildPosition(child = 2, start = 2, count = 1)
 
     protected var _children: List[StringPart] = value match {
       case StringExpr.None  => Nil
@@ -193,7 +268,12 @@ object FilterViewImpl {
     }
 
     lazy val component: Component with SequentialContainer.Wrapper = {
-      new FlowPanel(FlowPanel.Alignment.Leading)(ggEnabled :: _children.map(_.component): _*)
+      val box = new BoxPanel(Orientation.Horizontal)
+      box.contents += ggEnabled
+      box.contents += HStrut(4)
+      box.contents ++ _children.map(_.component)
+      box.contents += HGlue
+      box
     }
 
     def toExprOption: StringExpr.Option =
@@ -221,7 +301,8 @@ object FilterViewImpl {
       require(_children.isEmpty)
       _children = now :: Nil
       now.parent = this
-      component.contents.insert(childComponentOffset, now.component)
+      val pos = childPosition(0)
+      component.contents.insert(pos.child, now.component)
       component.revalidate()
       component.repaint()
       ggEnabled.selected = true

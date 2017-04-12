@@ -9,7 +9,7 @@ import scala.swing.{BorderPanel, Frame, Label, MainFrame, SimpleSwingApplication
 
 object FilterViewApp extends SimpleSwingApplication {
   override def main(args: Array[String]): Unit = {
-    Submin.install(false)
+    Submin.install(true)
     super.main(args)
   }
 

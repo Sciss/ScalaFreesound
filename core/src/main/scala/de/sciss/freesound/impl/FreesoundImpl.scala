@@ -21,13 +21,14 @@ import java.util.Calendar
 import com.ning.http.client.Response
 import de.sciss.file._
 import de.sciss.processor.Processor
+import dispatch.Http
 import org.json4s.JsonAST.{JInt, JObject, JString, JValue}
 import org.json4s.native.JsonMethods
 import org.json4s.native.JsonMethods.parse
 import org.json4s.{DefaultFormats, Formats, Serializer, StringInput, TypeInfo}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
-import scala.concurrent.Future
+import scala.concurrent.{Future, blocking}
 
 object FreesoundImpl {
   // def apply(apiKey: String): Freesound = new Impl(apiKey)
@@ -149,7 +150,7 @@ object FreesoundImpl {
     import Defaults._
     val req0    = url(Freesound.urlTextSearch)
     val req     = req0 <<? params
-    val futJson = Http(req.OK(JsonUTF))
+    val futJson = runJSON(req) // Http(req.OK(JsonUTF))
     futJson.map { json =>
       val numOpt = json match {
         case JObject(entries) =>
@@ -186,6 +187,18 @@ object FreesoundImpl {
     mapped.extract[ResultPage]
   }
 
+  private def runJSON(req: dispatch.Req): Future[JValue] = {
+    // Netty connect may block even before the future is spun up.
+    // Therefore add another layer of wrapping!
+    import dispatch.Defaults._
+    Future {
+      val jsonFut = blocking(
+        Http(req.OK(JsonUTF))
+      )
+      jsonFut // Await.result(jsonFut, Duration.Inf)
+    } .flatten
+  }
+
   private def runTextSearch(options: TextSearch, page: Int, done: Vec[Sound])
                            (implicit client: Client): Future[Vec[Sound]] = {
     import dispatch.{Future => _, _}
@@ -202,7 +215,7 @@ object FreesoundImpl {
     val req     = req0 <<? params
 //      val req     = req1.setContentType("application/json", "UTF-8")
 //      println(req.url)
-    val futJson = Http(req.OK(JsonUTF))
+    val futJson = runJSON(req) // Http(req.OK(JsonUTF))
     futJson.flatMap { json =>
       val res     = extractPage(json)
       val add     = if (res.results.size <= remain) res.results else res.results.take(remain)
