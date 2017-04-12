@@ -54,6 +54,7 @@ lazy val core = project.in(file("core"))
   )
 
 lazy val swing = project.in(file("swing"))
+  .dependsOn(core)
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(

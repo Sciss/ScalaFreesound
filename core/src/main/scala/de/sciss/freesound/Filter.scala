@@ -89,6 +89,8 @@ final case class Filter(
     md5         : StringExpr  .Option = None
   ) {
 
+  override def toString: String = s"$productPrefix(${toPropertyOption.getOrElse("")})"
+
 //  require(avgRating.startOption.forall(_ <= 5) &&
 //    avgRating.endOption.forall(_ <= 5),
 //    s"avgRating out of range: $avgRating")
