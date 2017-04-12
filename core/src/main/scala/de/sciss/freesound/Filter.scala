@@ -91,6 +91,10 @@ final case class Filter(
 
   override def toString: String = s"$productPrefix(${toPropertyOption.getOrElse("")})"
 
+  def isDefined: Boolean = toPropertyOption.isDefined
+  def isEmpty  : Boolean = toPropertyOption.isEmpty
+  def nonEmpty : Boolean = isDefined
+
 //  require(avgRating.startOption.forall(_ <= 5) &&
 //    avgRating.endOption.forall(_ <= 5),
 //    s"avgRating out of range: $avgRating")

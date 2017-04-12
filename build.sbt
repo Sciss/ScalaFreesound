@@ -30,6 +30,7 @@ val swingPlusVersion  =  "0.2.2"
 // ---- test dependencies ----
 
 //val scoptVersion      = "3.5.0"
+val subminVersion     = "0.2.1"
 val slf4jVersion      = "1.7.7"
 
 // ---- modules ----
@@ -62,7 +63,8 @@ lazy val swing = project.in(file("swing"))
     moduleName  := s"$baseNameL-swing",
     description := s"$baseDescr (Swing widgets)",
     libraryDependencies ++= Seq(
-      "de.sciss" %% "swingplus" % swingPlusVersion
+      "de.sciss" %% "swingplus" % swingPlusVersion,
+      "de.sciss" %  "submin"    % subminVersion % "test"
     )
   )
 

@@ -19,12 +19,12 @@ import de.sciss.model.impl.ModelImpl
 import de.sciss.swingplus.GroupPanel
 
 import scala.swing.event.{ButtonClicked, EditDone}
-import scala.swing.{Button, CheckBox, Component, FlowPanel, Label, SequentialContainer, TextField}
+import scala.swing.{Button, CheckBox, Component, FlowPanel, Label, ScrollPane, SequentialContainer, TextField}
 
 object FilterViewImpl {
   def apply(init: Filter): FilterView = new Impl(init)
 
-  private final class EditButton extends Button("*") {
+  private final class EditButton extends Button("\u2335") {
 
   }
 
@@ -258,29 +258,55 @@ object FilterViewImpl {
   }
 
   private final class Impl(private var _filter: Filter) extends FilterView with ModelImpl[Filter] {
+    private def mkStr(name: String, init: StringExpr.Option)
+                            (copy: StringExpr.Option => Filter): (Label, Component) = {
+      val top = new StringPartTop(init, { v =>
+        _filter = copy(v)
+        dispatch(_filter)
+      })
+      new Label(s"${name.capitalize}:") -> top.component
+    }
 
-    private[this] val viewTags = new StringPartTop(_filter.tags, { v =>
-      _filter = _filter.copy(tags = v)
-      dispatch(_filter)
-    })
+//    private[this] val ggQuery: Component = new TextField(20)
 
-    lazy val component: Component = new GroupPanel {
-      val lbTags = new Label("Tags:")
-      horizontal  = Seq(lbTags, viewTags.component)
-      vertical    = Par(GroupPanel.Alignment.Baseline)(lbTags, viewTags.component)
+    private[this] val fields = Seq(
+//      new Label("Query:") -> ggQuery,
+      mkStr("tags"       , _filter.tags       )(v => _filter.copy(tags        = v)),
+      mkStr("description", _filter.description)(v => _filter.copy(description = v)),
+      mkStr("file name"  , _filter.fileName   )(v => _filter.copy(fileName    = v)),
+      mkStr("license"    , _filter.license    )(v => _filter.copy(license     = v)),
+      mkStr("user name"  , _filter.userName   )(v => _filter.copy(userName    = v)),
+      mkStr("comment"    , _filter.comment    )(v => _filter.copy(comment     = v))
+    )
+
+    lazy val component: Component = {
+      val gp = new GroupPanel {
+        val lbTags = new Label("Tags:")
+        import GroupPanel.Element
+        horizontal  = Seq(Par(fields.map(_._1: Element): _*), Par(fields.map(_._2: Element): _*))
+        vertical    = Seq(
+          fields.map(tup => Par(GroupPanel.Alignment.Baseline)(tup._1, tup._2)): _*
+        )
+        preferredSize = {
+          val p = preferredSize
+          p.width = math.max(p.width, 400)  // XXX TODO --- quite arbitrary
+          p
+        }
+      }
+      val scroll = new ScrollPane(gp)
+      scroll.peer.putClientProperty("styleId", "undecorated")
+      scroll
     }
 
     /*
 
     id          : UIntExpr    .Option = None,
-    fileName    : StringTokens        = None,
-    tags        : StringExpr  .Option = None,
-    description : StringTokens        = None,
-    userName    : StringExpr  .Option = None,
+      fileName    : StringTokens        = None,
+      tags        : StringExpr  .Option = None,
+      description : StringTokens        = None,
+      userName    : StringExpr  .Option = None,
     created     : DateExpr    .Option = None,
-    license     : StringExpr  .Option = None,
-    pack        : StringExpr  .Option = None,
-    packTokens  : StringTokens        = None,
+      license     : StringExpr  .Option = None,
     geoTag      : Optional[Boolean]   = None,
     fileType    : FileTypeExpr.Option = None,
     duration    : UDoubleExpr .Option = None,
@@ -292,10 +318,13 @@ object FilterViewImpl {
     numDownloads: UIntExpr    .Option = None,
     avgRating   : UDoubleExpr .Option = None,
     numRatings  : UIntExpr    .Option = None,
-    comment     : StringTokens        = None,
+      comment     : StringTokens        = None,
     numComments : UIntExpr    .Option = None,
     isRemix     : Optional[Boolean]   = None,
     wasRemixed  : Optional[Boolean]   = None,
+
+    pack        : StringExpr  .Option = None,
+    packTokens  : StringTokens        = None,
     md5         : StringExpr  .Option = None
 
      */
