@@ -17,6 +17,7 @@ package impl
 
 import javax.swing.SpinnerNumberModel
 
+import de.sciss.freesound
 import de.sciss.model.impl.ModelImpl
 import de.sciss.swingplus.{GroupPanel, PopupMenu, Spinner}
 
@@ -61,7 +62,7 @@ object FilterViewImpl {
 
 
   private trait PartFactory[R <: Expr[R]] {
-    implicit def self: PartFactory[R] = this
+    implicit def self: this.type = this
 
     def mkPart(ex: R): Part[R]
 
@@ -101,6 +102,11 @@ object FilterViewImpl {
     }
   }
 
+  private trait NumberPartFactory[R <: Expr[R]] extends PartFactory[R] {
+    def from(ex: R with QueryExpr.Const[R]): R
+    def to  (ex: R with QueryExpr.Const[R]): R
+  }
+
   private implicit object StringPartFactory extends PartFactory[StringExpr] {
     def zero: StringExpr = ""
 
@@ -110,16 +116,33 @@ object FilterViewImpl {
     }
   }
 
-  private final class UIntPartFactory(min: Int, max: Int, step: Int) extends PartFactory[UIntExpr] {
-    def zero: UIntExpr = min
+  private final class UIntPartFactory(min: Int, max: Int, step: Int) extends NumberPartFactory[UIntExpr] {
+    import freesound.{UIntExpr => R}
 
-    override def mkPart(ex: UIntExpr): Part[UIntExpr] = ex match {
-      case UIntExpr.ConstSingle(i0) => new UIntPartConstSingle(i0, min = min, max = max, step = step)
-      case UIntExpr.ConstRange (start, end)  =>
+    def zero: R = min
+
+    def from(ex: R with QueryExpr.Const[R]): R = {
+      val R.ConstSingle(v) = ex
+      R.from(v)
+    }
+
+    def to  (ex: R with QueryExpr.Const[R]): R = {
+      val R.ConstSingle(v) = ex
+      R.to(v)
+    }
+
+    private def mkConstPart(i0: Int): PartConst[R] =
+      new UIntPartConstSingle(i0, min = min, max = max, step = step)
+
+    override def mkPart(ex: R): Part[R] = ex match {
+      case R.ConstSingle(i0) => mkConstPart(i0)
+      case R.ConstRange (start, end)  =>
         if (start == -1) {
-          ???
+          val endP = mkConstPart(end)
+          PartLtEq[R](endP)
         } else if (end == -1) {
-          ???
+          val startP = mkConstPart(start)
+          PartGtEq[R](startP)
         } else {
           ??? // new UIntPartConst(s0)
         }
@@ -127,16 +150,35 @@ object FilterViewImpl {
     }
   }
 
-  private final class UDoublePartFactory(min: Double, max: Double, step: Double) extends PartFactory[UDoubleExpr] {
-    def zero: UDoubleExpr = min
+  private final class UDoublePartFactory(min: Double, max: Double, step: Double)
+    extends NumberPartFactory[UDoubleExpr] {
 
-    override def mkPart(ex: UDoubleExpr): Part[UDoubleExpr] = ex match {
-      case UDoubleExpr.ConstSingle(i0) => new UDoublePartConstSingle(i0, min = min, max = max, step = step)
-      case UDoubleExpr.ConstRange (start, end)  =>
+    import freesound.{UDoubleExpr => R}
+
+    def zero: R = min
+
+    def from(ex: R with QueryExpr.Const[R]): R = {
+      val R.ConstSingle(v) = ex
+      R.from(v)
+    }
+
+    def to  (ex: R with QueryExpr.Const[R]): R = {
+      val R.ConstSingle(v) = ex
+      R.to(v)
+    }
+
+    private def mkConstPart(i0: Double): PartConst[R] =
+      new UDoublePartConstSingle(i0, min = min, max = max, step = step)
+
+    override def mkPart(ex: R): Part[R] = ex match {
+      case R.ConstSingle(i0) => mkConstPart(i0)
+      case R.ConstRange (start, end)  =>
         if (start == -1) {
-          ???
+          val endP = mkConstPart(end)
+          PartLtEq[R](endP)
         } else if (end == -1) {
-          ???
+          val startP = mkConstPart(start)
+          PartGtEq[R](startP)
         } else {
           ??? // new UDoublePartConst(s0)
         }
@@ -172,7 +214,23 @@ object FilterViewImpl {
       par.replace(p, not)
     })
 
-  private trait PartConst[Repr] extends Part[Repr]
+  private def mkMenuItemLtEq[R <: Expr[R]](p: PartConst[R])(implicit factory: NumberPartFactory[R]): MenuItem =
+    new MenuItem(Action("\u2264") {
+      val par = p.parent
+      val or  = PartLtEq(p)
+      par.replace(p, or)
+    })
+
+  private def mkMenuItemGtEq[R <: Expr[R]](p: PartConst[R])(implicit factory: NumberPartFactory[R]): MenuItem =
+    new MenuItem(Action("\u2265") {
+      val par = p.parent
+      val or  = PartGtEq(p)
+      par.replace(p, or)
+    })
+
+  private trait PartConst[Repr] extends Part[Repr] {
+    override def toExpr: Repr with QueryExpr.Const[Repr]
+  }
 
   private final class StringPartConst(s0: String) extends PartConst[StringExpr] { part =>
     type R = StringExpr
@@ -202,13 +260,13 @@ object FilterViewImpl {
       box
     }
 
-    def toExpr: R = ggText.text
+    def toExpr: StringExpr.Const = ggText.text
   }
 
   private trait NumberPartConstSingle[R <: Expr[R]] extends PartConst[R] { part =>
     
     protected def model: SpinnerNumberModel
-    implicit protected def factory: PartFactory[R]    
+    implicit protected def factory: NumberPartFactory[R]
 
     private[this] lazy val ggSpinner = new Spinner(model)
 
@@ -219,6 +277,8 @@ object FilterViewImpl {
       }
       val pop = new PopupMenu {
         contents += mkMenuItemRemove(part)
+        contents += mkMenuItemLtEq  (part)
+        contents += mkMenuItemGtEq  (part)
         contents += mkMenuItemOr    (part)
         contents += mkMenuItemAnd   (part)
         contents += mkMenuItemNot   (part)
@@ -232,23 +292,23 @@ object FilterViewImpl {
   }
 
   private final class UIntPartConstSingle(init: Int, min: Int, max: Int, step: Int)
-                                         (implicit protected val factory: PartFactory[UIntExpr])
+                                         (implicit protected val factory: NumberPartFactory[UIntExpr])
     extends NumberPartConstSingle[UIntExpr] {
     part =>
 
     protected val model = new SpinnerNumberModel(init, min, max, step)
 
-    def toExpr: UIntExpr = model.getNumber.intValue()
+    def toExpr: UIntExpr.ConstSingle = model.getNumber.intValue()
   }
 
   private final class UDoublePartConstSingle(init: Double, min: Double, max: Double, step: Double)
-                                         (implicit protected val factory: PartFactory[UDoubleExpr])
+                                         (implicit protected val factory: NumberPartFactory[UDoubleExpr])
     extends NumberPartConstSingle[UDoubleExpr] {
     part =>
 
     protected val model = new SpinnerNumberModel(init, min, max, step)
 
-    def toExpr: UDoubleExpr = model.getNumber.doubleValue()
+    def toExpr: UDoubleExpr.ConstSingle = model.getNumber.doubleValue()
   }
 
   private final case class ChildPosition(child: Int, start: Int, count: Int)
@@ -367,8 +427,8 @@ object FilterViewImpl {
   private final case class PartNot[R <: Expr[R]](child: Part[R])
     extends ParentContainer(child :: Nil) {
 
-//    override protected def childPosition(idx: Int): ChildPosition =
-//      ChildPosition(child = 1, start = 0, count = 2)
+    //    override protected def childPosition(idx: Int): ChildPosition =
+    //      ChildPosition(child = 1, start = 0, count = 2)
 
     lazy val component: Component with SequentialContainer.Wrapper = {
       val ggEdit = new EditButton(new PopupMenu)
@@ -380,6 +440,36 @@ object FilterViewImpl {
     }
 
     def toExpr: R = !child.toExpr
+  }
+
+  private final case class PartGtEq[R <: Expr[R]](child: PartConst[R])(implicit factory: NumberPartFactory[R])
+    extends ParentContainer(child :: Nil) {
+
+    lazy val component: Component with SequentialContainer.Wrapper = {
+      val ggEdit = new EditButton(new PopupMenu)
+      val box = new BoxPanel(Orientation.Horizontal)
+      box.contents ++= Seq(
+        HStrut(4), new Label("\u2265"), child.component, ggEdit
+      )
+      box
+    }
+
+    def toExpr: R = factory.from(child.toExpr)
+  }
+
+  private final case class PartLtEq[R <: Expr[R]](child: PartConst[R])(implicit factory: NumberPartFactory[R])
+    extends ParentContainer(child :: Nil) {
+
+    lazy val component: Component with SequentialContainer.Wrapper = {
+      val ggEdit = new EditButton(new PopupMenu)
+      val box = new BoxPanel(Orientation.Horizontal)
+      box.contents ++= Seq(
+        HStrut(4), new Label("\u2264"), child.component, ggEdit
+      )
+      box
+    }
+
+    def toExpr: R = factory.to(child.toExpr)
   }
 
   private trait PartTop[R <: Expr[R]] extends ParentContainerBase[R] {
@@ -497,7 +587,7 @@ object FilterViewImpl {
     type R = UIntExpr
     val  R = UIntExpr
 
-    protected implicit val factory: PartFactory[R] = new UIntPartFactory(min = min, max = max, step = step)
+    protected implicit val factory: NumberPartFactory[R] = new UIntPartFactory(min = min, max = max, step = step)
 
     protected def valueOption: Option[R] = _value match {
       case UIntExpr.None => None
@@ -520,7 +610,7 @@ object FilterViewImpl {
     type R = UDoubleExpr
     val  R = UDoubleExpr
 
-    protected implicit val factory: PartFactory[R] = new UDoublePartFactory(min = min, max = max, step = step)
+    protected implicit val factory: NumberPartFactory[R] = new UDoublePartFactory(min = min, max = max, step = step)
 
     protected def valueOption: Option[R] = _value match {
       case UDoubleExpr.None => None
