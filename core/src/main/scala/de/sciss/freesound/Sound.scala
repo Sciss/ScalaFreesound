@@ -16,6 +16,8 @@ package de.sciss.freesound
 import java.net.URI
 import java.util.Date
 
+import scala.util.Try
+
 /** Database record of a sound.
   *
   * @param id           the unique identifier on the Freesound platform
@@ -44,8 +46,8 @@ final case class Sound(
     description : String,
     userName    : String,
     created     : String, // Date,
-    license     : URI,
-    pack 	      : Option[URI],
+    license     : License,
+    pack        : Option[URI],
     geoTag      : Option[GeoTag],
     fileType    : FileType,
     duration    : Double,
@@ -59,6 +61,16 @@ final case class Sound(
     numRatings  : Int,
     numComments : Int
   ) {
+
+  def packId: Option[Int] = pack.flatMap { uri =>
+    val xs = uri.getPath
+    val i  = xs.lastIndexOf('/')
+    val j  = xs.lastIndexOf('/', i - 1) + 1
+    if (j >= i) None else {
+      val s = xs.substring(j, i)
+      Try(s.toInt).toOption
+    }
+  }
 
   override def toString: String =
     f"""Sound($id,

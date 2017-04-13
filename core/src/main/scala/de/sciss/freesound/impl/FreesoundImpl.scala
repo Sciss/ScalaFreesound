@@ -48,6 +48,14 @@ object FreesoundImpl {
     }
   }
 
+  private final object LicenseSerializer extends Deserializer[License] {
+    private[this] val Clazz = classOf[License]
+
+    def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), License] = {
+      case (TypeInfo(Clazz, _), JString(s)) => License.parse(new URI(s))
+    }
+  }
+
   private final object FileTypeSerializer extends Deserializer[FileType] {
     private[this] val Clazz = classOf[FileType]
 
@@ -67,7 +75,7 @@ object FreesoundImpl {
   }
 
   private final implicit val jsonFormats: Formats =
-    DefaultFormats ++ (URISerializer :: FileTypeSerializer :: GeoTagSerializer :: Nil)
+    DefaultFormats ++ (URISerializer :: LicenseSerializer :: FileTypeSerializer :: GeoTagSerializer :: Nil)
 
   // default `json4.Json` uses `as.String` which in turn takes charset
   // from content-type, and if not provided (which I guess is the case?),
