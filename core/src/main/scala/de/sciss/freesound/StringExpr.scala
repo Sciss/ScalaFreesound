@@ -47,6 +47,6 @@ sealed trait StringExpr extends QueryExpr with StringExpr.Option {
 
   final type Repr = StringExpr
 
-  final protected def self: Repr with Base[Repr] = this
+  final private[freesound] def self: Repr with Base[Repr] = this
   final protected def factory: Factory[Repr] = StringExpr
 }

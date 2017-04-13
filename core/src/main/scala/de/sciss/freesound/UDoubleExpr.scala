@@ -77,6 +77,6 @@ sealed trait UDoubleExpr extends QueryExpr with UDoubleExpr.Option {
 
   final type Repr = UDoubleExpr
 
-  final protected def self: Repr with Base[Repr] = this
+  final private[freesound] def self: Repr with Base[Repr] = this
   final protected def factory: Factory[Repr] = UDoubleExpr
 }

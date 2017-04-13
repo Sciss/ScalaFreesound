@@ -65,6 +65,6 @@ sealed trait DateExpr extends QueryExpr with DateExpr.Option {
 
   final type Repr = DateExpr
 
-  final protected def self: Repr with Base[Repr] = this
+  final private[freesound] def self: Repr with Base[Repr] = this
   final protected def factory: Factory[Repr] = DateExpr
 }
