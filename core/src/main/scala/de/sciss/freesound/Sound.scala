@@ -59,7 +59,8 @@ final case class Sound(
     numDownloads: Int,
     avgRating   : Double,
     numRatings  : Int,
-    numComments : Int
+    numComments : Int,
+    previews    : Option[Previews]
   ) {
 
   def packId: Option[Int] = pack.flatMap { uri =>
@@ -92,7 +93,8 @@ final case class Sound(
        |  numDownloads= $numDownloads,
        |  avgRating   = $avgRating%1.1f,
        |  numRatings  = $numRatings,
-       |  numComments = $numComments
+       |  numComments = $numComments,
+       |  previews    = $previews
        |)""".stripMargin
 
   /** Constructs a new file name based on the `id` and `fileType` of this sound.

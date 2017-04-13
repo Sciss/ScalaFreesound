@@ -70,15 +70,17 @@ object Freesound {
     *
     * @param query        the query term(s)
     * @param filter       a filter definition constraining the search results
+    * @param previews     whether the results should include URLs for the sound preview links
     * @param sort         the order in which the results will be sorted
     * @param groupByPack  if `true`, groups results by sound pack (collection)
     * @param maxItems     the maximum number of result items to obtain. If the search
     *                     yields more items that this number, only the first `maxItems`
     *                     items will be received.
     */
-  def textSearch(query: String, filter: Filter = Filter(), sort: Sort = Sort.Score,
+  def textSearch(query: String, filter: Filter = Filter(), previews: Boolean = false, sort: Sort = Sort.Score,
           groupByPack: Boolean = false, maxItems: Int = 100)(implicit client: Client): Future[Vec[Sound]] =
-    Impl.textSearch(query = query, filter = filter, sort = sort, groupByPack = groupByPack, maxItems = maxItems)
+    Impl.textSearch(query = query, filter = filter, previews = previews,
+      sort = sort, groupByPack = groupByPack, maxItems = maxItems)
 
   /** Performs a text-based search and returns the total count of matches.
     *

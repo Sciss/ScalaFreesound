@@ -139,10 +139,10 @@ object FreesoundImpl {
     }
   }
 
-  def textSearch(query: String, filter: Filter, sort: Sort, groupByPack: Boolean,
+  def textSearch(query: String, filter: Filter, sort: Sort, previews: Boolean, groupByPack: Boolean,
                  maxItems: Int)(implicit client: Client): Future[Vec[Sound]] = {
-    val options = TextSearch(query = query, filter = filter, sort = sort, groupByPack = groupByPack,
-      maxItems = maxItems)
+    val options = TextSearch(query = query, filter = filter, previews = previews,
+      sort = sort, groupByPack = groupByPack, maxItems = maxItems)
     runTextSearch(options, page = 1, done = Vector.empty)
   }
 
@@ -187,6 +187,13 @@ object FreesoundImpl {
         case ("avg_rating"    , v) => ("avgRating"    , v)
         case ("num_ratings"   , v) => ("numRatings"   , v)
         case ("num_comments"  , v) => ("numComments"  , v)
+        case (k1 @ "previews" , v) => k1 -> v.mapField {
+          case ("preview-hq-mp3", v1) => ("mp3High", v1)
+          case ("preview-lq-mp3", v1) => ("mp3Low" , v1)
+          case ("preview-hq-ogg", v1) => ("oggHigh", v1)
+          case ("preview-lq-ogg", v1) => ("oggLow" , v1)
+          case other => other
+        }
         case other => other
       }
 
@@ -198,14 +205,20 @@ object FreesoundImpl {
   private def runJSON(req: dispatch.Req): Future[JValue] = {
     // Netty connect may block even before the future is spun up.
     // Therefore add another layer of wrapping!
+    // Cf. http://stackoverflow.com/questions/43391769
     import dispatch.Defaults._
-    Future {
+    Future.successful(()).flatMap { _ =>
       val jsonFut = blocking(
         Http(req.OK(JsonUTF))
       )
       jsonFut // Await.result(jsonFut, Duration.Inf)
-    } .flatMap(identity)  // .flatten only exists in Scala 2.12
+    }
   }
+
+  private[this] final val defaultFields =
+    "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth," +
+    "bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
+  private[this] final val fieldsWithPreview = defaultFields + ",previews"
 
   private def runTextSearch(options: TextSearch, page: Int, done: Vec[Sound])
                            (implicit client: Client): Future[Vec[Sound]] = {
@@ -214,8 +227,9 @@ object FreesoundImpl {
 
     val remain  = options.maxItems - done.size
     var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
+    val fields  = if (options.previews) fieldsWithPreview else defaultFields
     params += "token"  -> client.secret
-    params += "fields" -> "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth,bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
+    params += "fields" -> fields
     if (page > 1)                 params += "page"      -> page  .toString
     if (page == 1 && remain < 10) params += "page_size" -> remain.toString  // don't download more than necessary
 

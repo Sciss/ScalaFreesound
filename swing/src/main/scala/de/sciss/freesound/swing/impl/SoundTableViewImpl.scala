@@ -159,8 +159,8 @@ object SoundTableViewImpl {
     Column(15, "Size"           , 48,  64,  72, _.fileSize        , Some(FileSizeRenderer)    , Some(Ordering.Long  )),
     Column(16, null             , 48,  52,  64, _.numDownloads    , Some(RightAlignedRenderer), Some(Ordering.Int   ),
       headerRenderer = Some(DownloadHeaderRenderer)),
-    Column(17, "Avg \u2605"     , 60,  60,  60, _.avgRating       , Some(RatingRenderer)      , Some(Ordering.Double)),
-    Column(18, "No \u2605"      , 48,  52,  56, _.numRatings      , Some(RightAlignedRenderer), Some(Ordering.Int   )),
+    Column(17, "Avg.\u2605"     , 60,  60,  60, _.avgRating       , Some(RatingRenderer)      , Some(Ordering.Double)),
+    Column(18, "No.\u2605"      , 48,  52,  56, _.numRatings      , Some(RightAlignedRenderer), Some(Ordering.Int   )),
     Column(19, null             , 48,  52,  64, _.numComments     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
       headerRenderer = Some(CommentsHeaderRenderer))
   )

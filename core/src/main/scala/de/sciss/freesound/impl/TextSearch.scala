@@ -25,7 +25,8 @@ object TextSearch {
 
   implicit def fromString(s: String): TextSearch = TextSearch(s)
 }
-final case class TextSearch(query: String, filter: Filter = Filter(), sort: Sort = Sort.Score,
+final case class TextSearch(query: String, filter: Filter = Filter(), previews: Boolean = false,
+                            sort: Sort = Sort.Score,
                             groupByPack: Boolean = false, maxItems: Int = 100) {
   require(maxItems >= 0)
 
