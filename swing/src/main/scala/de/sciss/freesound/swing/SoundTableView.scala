@@ -21,9 +21,19 @@ object SoundTableView {
   def apply(init: ISeq[Sound] = Nil): SoundTableView = impl.SoundTableViewImpl(init)
 }
 trait SoundTableView {
+  /** The top level component containing the view. */
   def component: Component
 
+  /** The table component (which is not the top-level component!).
+    * Use this to customise the table, install a selection listener, etc.
+    */
   def table: Table
 
+  /** Get or set the current list of sound instances shown in the table. */
   var sounds: ISeq[Sound]
+
+//  /** Get or set the current list of sound instances selected in the table. */
+//  var selectedSounds: ISeq[Sound]
+
+
 }

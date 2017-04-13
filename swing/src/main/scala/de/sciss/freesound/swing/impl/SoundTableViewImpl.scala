@@ -15,9 +15,13 @@ package de.sciss.freesound
 package swing
 package impl
 
+import java.awt.Color
+import java.awt.geom.Path2D
 import java.util.Comparator
 import javax.swing.table.{AbstractTableModel, DefaultTableCellRenderer, TableCellRenderer, TableRowSorter}
 import javax.swing.{Icon, JTable, SwingConstants}
+
+import de.sciss.icons.raphael
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.Table.AutoResizeMode
@@ -30,31 +34,9 @@ object SoundTableViewImpl {
 //    sound.productIterator.map(_.asInstanceOf[AnyRef]).toArray
 //  )(breakOut)
 
-  private case class Column(idx: Int, name: String, minWidth: Int, prefWidth: Int, maxWidth: Int, extract: Sound => Any,
-                            renderer: Option[TableCellRenderer], sorter: Option[Comparator[_]])
-
-  private val columns: Array[Column] = Array(
-    Column( 0, "Id"             , 64,  64,  64, _.id              , Some(RightAlignedRenderer), Some(Ordering.Int)),
-    Column( 1, "Name"           , 64, 128, 256, _.fileName        , None, None),
-    Column( 2, "Tags"           , 64, 128, 256, _.tags            , Some(TagsRenderer), None),
-    Column( 3, "Description"    , 64, 128, 384, _.description     , None, None),
-    Column( 4, "User"           , 56,  72, 128, _.userName        , None, None),
-    Column( 5, "Created"        , 64,  96, 152, _.created         , None, None),
-    Column( 6, "License"        , 64,  96, 360, _.license         , None, None),
-    Column( 7, "Pack"           , 48,  48,  64, _.packId          , Some(PackRenderer), Some(Ordering.Option[Int /* URI */])),
-    Column( 8, "Geo"            , 48,  56, 160, _.geoTag          , Some(GeoTagRenderer), Some(Ordering.Option[GeoTag])),
-    Column( 9, "Type"           , 48,  48,  56, _.fileType        , None, None),
-    Column(10, "Duration [s]"   , 48,  48,  64, _.duration        , Some(DurationRenderer    ), Some(Ordering.Double)),
-    Column(11, "Chans"          , 32,  32,  48, _.numChannels     , Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(12, "sr [Hz]"        , 48,  48,  64, _.sampleRate.toInt, Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(13, "Bits"           , 48,  48,  64, _.bitDepth        , Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(14, "Bit rate [kbps]", 48,  48,  64, _.bitRate/*.toInt*/,Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(15, "Size"           , 48,  64,  72, _.fileSize        , Some(FileSizeRenderer)    , Some(Ordering.Long  )),
-    Column(16, "Downloads"      , 48,  48,  64, _.numDownloads    , Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(17, "Avg \u2605"     , 60,  60,  60, _.avgRating       , Some(RatingRenderer)      , Some(Ordering.Double)),
-    Column(18, "No \u2605"      , 48,  48,  56, _.numRatings      , Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(19, "Comments"       , 48,  48,  64, _.numComments     , Some(RightAlignedRenderer), Some(Ordering.Int   ))
-  )
+  private case class Column(idx: Int, name: String, minWidth: Int, prefWidth: Int, maxWidth: Int,
+                            extract: Sound => Any, cellRenderer: Option[TableCellRenderer] = None,
+                            sorter: Option[Comparator[_]] = None, headerRenderer: Option[TableCellRenderer] = None)
 
   private object RatingRenderer extends DefaultTableCellRenderer with Icon {
     setIcon(this)
@@ -84,8 +66,10 @@ object SoundTableViewImpl {
     }
   }
 
-  private object RightAlignedRenderer extends DefaultTableCellRenderer {
-    setHorizontalAlignment(SwingConstants.TRAILING)
+  private val RightAlignedRenderer = {
+    val res = new DefaultTableCellRenderer
+    res.setHorizontalAlignment(SwingConstants.TRAILING)
+    res
   }
 
   private object DurationRenderer extends DefaultTableCellRenderer {
@@ -96,6 +80,19 @@ object SoundTableViewImpl {
       case _                    => super.setValue(value)
     }
   }
+
+  private def mkIconHeader(tt: String, shape: Path2D => Unit): TableCellRenderer = {
+    val res = new DefaultTableCellRenderer
+    res.setIcon(raphael.Icon(extent = 14, fill = Color.black)(shape))
+    res.setHorizontalAlignment(SwingConstants.CENTER)
+    res.setToolTipText(tt)
+    res
+  }
+
+  private val DownloadHeaderRenderer = mkIconHeader("No. of Downloads", Shapes.Download)
+  private val DurationHeaderRenderer = mkIconHeader("Duration [s]"    , raphael.Shapes.FutureTime)
+  private val CommentsHeaderRenderer = mkIconHeader("No. of Comments" , Shapes.Comment)
+  private val ChannelsHeaderRenderer = mkIconHeader("No. of Channels" , raphael.Shapes.Flickr /* "stereo" */)
 
   private object TagsRenderer extends DefaultTableCellRenderer {
     override def setValue(value: AnyRef): Unit = value match {
@@ -141,6 +138,33 @@ object SoundTableViewImpl {
     }
   }
 
+  private val columns: Array[Column] = Array(
+    Column( 0, "Id"             , 64,  64,  64, _.id              , Some(RightAlignedRenderer), Some(Ordering.Int)),
+    Column( 1, "Name"           , 64, 144, 256, _.fileName        , None, None),
+    Column( 2, "Tags"           , 64, 144, 256, _.tags            , Some(TagsRenderer), None),
+    Column( 3, "Description"    , 64, 160, 384, _.description     , None, None),
+    Column( 4, "User"           , 56,  72, 128, _.userName        , None, None),
+    Column( 5, "Created"        , 64,  96, 152, _.created         , None, None),
+    Column( 6, "License"        , 64,  96, 360, _.license         , None, None),
+    Column( 7, "Pack"           , 48,  52,  64, _.packId          , Some(PackRenderer), Some(Ordering.Option[Int /* URI */])),
+    Column( 8, "Geo"            , 48,  60, 160, _.geoTag          , Some(GeoTagRenderer), Some(Ordering.Option[GeoTag])),
+    Column( 9, "Type"           , 48,  52,  56, _.fileType        , None, None),
+    Column(10, null             , 48,  52,  64, _.duration        , Some(DurationRenderer    ), Some(Ordering.Double),
+      headerRenderer = Some(DurationHeaderRenderer)),
+    Column(11, null             , 32,  32,  48, _.numChannels     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
+      headerRenderer = Some(ChannelsHeaderRenderer)),
+    Column(12, "sr [Hz]"        , 48,  60,  64, _.sampleRate.toInt, Some(RightAlignedRenderer), Some(Ordering.Int   )),
+    Column(13, "Bits"           , 48,  52,  64, _.bitDepth        , Some(RightAlignedRenderer), Some(Ordering.Int   )),
+    Column(14, "kbps"           , 48,  52,  64, _.bitRate/*.toInt*/,Some(RightAlignedRenderer), Some(Ordering.Int   )),
+    Column(15, "Size"           , 48,  64,  72, _.fileSize        , Some(FileSizeRenderer)    , Some(Ordering.Long  )),
+    Column(16, null             , 48,  52,  64, _.numDownloads    , Some(RightAlignedRenderer), Some(Ordering.Int   ),
+      headerRenderer = Some(DownloadHeaderRenderer)),
+    Column(17, "Avg \u2605"     , 60,  60,  60, _.avgRating       , Some(RatingRenderer)      , Some(Ordering.Double)),
+    Column(18, "No \u2605"      , 48,  52,  56, _.numRatings      , Some(RightAlignedRenderer), Some(Ordering.Int   )),
+    Column(19, null             , 48,  52,  64, _.numComments     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
+      headerRenderer = Some(CommentsHeaderRenderer))
+  )
+
   private final class Impl(private[this] var _sounds: ISeq[Sound]) extends SoundTableView {
     private object model extends AbstractTableModel {
       def getRowCount   : Int = _sounds.size
@@ -177,7 +201,8 @@ object SoundTableViewImpl {
         tc.setMinWidth      (col.minWidth )
         tc.setMaxWidth      (col.maxWidth )
         tc.setPreferredWidth(col.prefWidth)
-        col.renderer.foreach(tc.setCellRenderer)
+        col.cellRenderer  .foreach(tc.setCellRenderer  )
+        col.headerRenderer.foreach(tc.setHeaderRenderer)
       }
       // cm.setColumnMargin(6)
       resJ.setRowSorter(sorter)

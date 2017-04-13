@@ -20,7 +20,7 @@ object SoundTableViewApp extends SimpleSwingApplication {
       else sys.error("Need to specify API key")
     }
 
-    val fut = Freesound.textSearch("metal", Filter(numChannels = 2, sampleRate = 44100), maxItems = 48 /* 24 */)
+    val fut = Freesound.textSearch("rising", Filter(numChannels = 2, sampleRate = 44100), maxItems = 48 /* 24 */)
 
     import dispatch.Defaults.executor
 

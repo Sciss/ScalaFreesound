@@ -25,7 +25,8 @@ val fileUtilVersion   = "1.1.2"
 
 // ---- swing dependencies ----
 
-val swingPlusVersion  =  "0.2.2"
+val swingPlusVersion  = "0.2.2"
+val raphaelVersion    = "1.0.4"
 
 // ---- test dependencies ----
 
@@ -63,8 +64,9 @@ lazy val swing = project.in(file("swing"))
     moduleName  := s"$baseNameL-swing",
     description := s"$baseDescr (Swing widgets)",
     libraryDependencies ++= Seq(
-      "de.sciss" %% "swingplus" % swingPlusVersion,
-      "de.sciss" %  "submin"    % subminVersion % "test"
+      "de.sciss" %% "swingplus"     % swingPlusVersion,
+      "de.sciss" %% "raphael-icons" % raphaelVersion,
+      "de.sciss" %  "submin"        % subminVersion % "test"
     )
   )
 
