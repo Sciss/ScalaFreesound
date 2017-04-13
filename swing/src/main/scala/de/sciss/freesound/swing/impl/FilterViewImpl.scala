@@ -670,7 +670,7 @@ object FilterViewImpl {
       mkUInt("sample-rate [Hz]" , _filter.sampleRate, default = 44100, min = 0, max = 96000 * 4)(v => _filter.copy(sampleRate = v)),
       mkUInt("bit-depth", _filter.bitDepth, default = 16, min = 8, max = 64, step = 8)(v => _filter.copy(bitDepth = v)),
       // XXX TODO --- bit-rate filter seems broken, no matter what ranges we put, result is empty
-//      mkUDouble("bit-rate [kbps]", _filter.bitRate, default = 320, min = 8, max = 24000, step = 8)(v => _filter.copy(bitRate = v)),
+      mkUInt("bit-rate [kbps]", _filter.bitRate, default = 320, min = 8, max = 24000, step = 8)(v => _filter.copy(bitRate = v)),
 //      mkUInt("file-size", _filter.fileSize)(v => _filter.copy(fileSize = v)),
       mkUInt("num-downloads", _filter.numDownloads, default = 1, max = 1000000)(v => _filter.copy(numDownloads = v)),
       mkUDouble("average rating", _filter.avgRating, default = 5, min = 0, max = 5)(v => _filter.copy(avgRating = v)),
