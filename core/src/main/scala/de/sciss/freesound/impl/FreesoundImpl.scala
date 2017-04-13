@@ -204,7 +204,7 @@ object FreesoundImpl {
         Http(req.OK(JsonUTF))
       )
       jsonFut // Await.result(jsonFut, Duration.Inf)
-    } .flatten
+    } .flatMap(identity)  // .flatten only exists in Scala 2.12
   }
 
   private def runTextSearch(options: TextSearch, page: Int, done: Vec[Sound])
