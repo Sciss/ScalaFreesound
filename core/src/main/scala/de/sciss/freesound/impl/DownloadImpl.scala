@@ -26,15 +26,20 @@ import scala.concurrent.Promise
 import scala.util.Try
 
 object DownloadImpl {
-  def apply(id: Int, out: File, access: String): Processor[Unit] = {
+  def sound(id: Int, out: File, access: String): Processor[Unit] = {
+    import dispatch._
+    val req0    = url(Freesound.urlSoundDownload.format(id))
+    val req1    = req0.addHeader("Authorization", s"Bearer $access")
+    apply(req1, out, info = id.toString)
+  }
+
+  def apply(req: dispatch.Req, out: File, info: String): Processor[Unit] = {
     import dispatch._
     import Defaults._
 
-    val req0    = url(Freesound.urlSoundDownload.format(id))
-    val req1    = req0.addHeader("Authorization", s"Bearer $access")
     if (out.isFile) out.delete()
 
-    new Impl(id, out) {
+    new Impl(info, out) {
       var progress: Double = 0.0
 
       private[this] val handler = FileWithProgress(out) { (pos, size) =>
@@ -44,8 +49,8 @@ object DownloadImpl {
         dispatch(Processor.Progress(this, p))
       }
 
-      private[this] val req: (Request, AsyncHandler[_]) = req1 > handler
-      private[this] val lFut: ListenableFuture[_] = Http.client.executeRequest(req._1, req._2) // XXX TODO --- this can block
+      private[this] val reqH: (Request, AsyncHandler[_]) = req > handler
+      private[this] val lFut: ListenableFuture[_] = Http.client.executeRequest(reqH._1, reqH._2) // XXX TODO --- this can block
       private[this] val pr    = Promise[Unit]()
 
       protected def peerFuture: Future[Unit] = pr.future
@@ -63,11 +68,11 @@ object DownloadImpl {
     }
   }
 
-  private abstract class Impl(id: Int, out: File)
+  private abstract class Impl(info: String, out: File)
     extends Processor[Unit]
     with FutureProxy[Unit]
     with ModelImpl[Processor.Update[Unit, Processor[Unit]]] {
 
-    override def toString = s"Download($id, $out) - ${peerFuture.value}"
+    override def toString = s"Download($info, $out) - ${peerFuture.value}"
   }
 }

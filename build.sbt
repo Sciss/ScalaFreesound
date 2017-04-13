@@ -18,21 +18,26 @@ lazy val commonSettings = Seq(
 
 // ---- core dependencies ----
 
-val optionalVersion   = "1.0.0"
-val processorVersion  = "0.4.1"
-val dispatchVersion   = "0.12.0"
-val fileUtilVersion   = "1.1.2"
+val optionalVersion       = "1.0.0"
+val processorVersion      = "0.4.1"
+val dispatchVersion       = "0.12.0"
+val fileUtilVersion       = "1.1.2"
 
 // ---- swing dependencies ----
 
-val swingPlusVersion  = "0.2.2"
-val raphaelVersion    = "1.0.4"
+val swingPlusVersion      = "0.2.2"
+val raphaelVersion        = "1.0.4"
+
+// ---- lucre dependencies ---
+
+val soundProcessesVersion = "3.11.1"
+val fileCacheVersion      = "0.3.4"
 
 // ---- test dependencies ----
 
-//val scoptVersion      = "3.5.0"
-val subminVersion     = "0.2.1"
-val slf4jVersion      = "1.7.7"
+//val scoptVersion         = "3.5.0"
+val subminVersion         = "0.2.1"
+val slf4jVersion          = "1.7.7"
 
 // ---- modules ----
 
@@ -70,9 +75,23 @@ lazy val swing = project.in(file("swing"))
     )
   )
 
+lazy val lucre = project.in(file("lucre"))
+  .dependsOn(swing)
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    name        := s"$baseName-lucre",
+    moduleName  := s"$baseNameL-lucre",
+    description := s"$baseDescr (SoundProcesses integration)",
+    libraryDependencies ++= Seq(
+      "de.sciss" %% "soundprocesses-views" % soundProcessesVersion,
+      "de.sciss" %% "filecache-mutable"    % fileCacheVersion
+    )
+  )
+
 lazy val root = project.in(file("."))
-  .dependsOn(core, swing)
-  .aggregate(core, swing)
+  .dependsOn(core, swing, lucre)
+  .aggregate(core, swing, lucre)
   .settings(commonSettings)
   .settings(
     name        := baseName,

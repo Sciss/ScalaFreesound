@@ -13,6 +13,8 @@
 
 package de.sciss.freesound
 
+import java.net.URI
+
 import de.sciss.file._
 import de.sciss.freesound.impl.{FreesoundImpl => Impl}
 import de.sciss.processor.Processor
@@ -97,4 +99,12 @@ object Freesound {
     */
   def download(id: Int, out: File)(implicit auth: Auth): Processor[Unit] =
     Impl.download(id = id, out = out)
+
+  /** Downloads a sound file in its reduced preview quality.
+    *
+    * @param uri    the URI to the preview file, as obtained from a `Preview` instance.
+    * @param out    the file to write to
+    */
+  def downloadPreview(uri: URI, out: File)(implicit client: Client): Processor[Unit] =
+    Impl.downloadPreview(uri = uri, out = out)
 }

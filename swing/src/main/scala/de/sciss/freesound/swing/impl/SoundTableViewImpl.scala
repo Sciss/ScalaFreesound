@@ -154,7 +154,7 @@ object SoundTableViewImpl {
     Column(11, null             , 32,  32,  48, _.numChannels     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
       headerRenderer = Some(ChannelsHeaderRenderer)),
     Column(12, "sr [Hz]"        , 48,  60,  64, _.sampleRate.toInt, Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(13, "Bits"           , 48,  52,  64, _.bitDepth        , Some(RightAlignedRenderer), Some(Ordering.Int   )),
+    Column(13, "Bits"           , 48,  52,  64, _.bitDepth.getOrElse(0), Some(RightAlignedRenderer), Some(Ordering.Int   )),
     Column(14, "kbps"           , 48,  52,  64, _.bitRate/*.toInt*/,Some(RightAlignedRenderer), Some(Ordering.Int   )),
     Column(15, "Size"           , 48,  64,  72, _.fileSize        , Some(FileSizeRenderer)    , Some(Ordering.Long  )),
     Column(16, null             , 48,  52,  64, _.numDownloads    , Some(RightAlignedRenderer), Some(Ordering.Int   ),
@@ -217,6 +217,11 @@ object SoundTableViewImpl {
 //      res.horizontalScrollBarPolicy = BarPolicy.Always
 //      res.verticalScrollBarPolicy   = BarPolicy.Always
       res.peer.putClientProperty("styleId", "undecorated")
+      res.preferredSize = {
+        val d = res.preferredSize
+        d.width = math.min(1024, table.preferredSize.width)
+        d
+      }
       res
     }
 

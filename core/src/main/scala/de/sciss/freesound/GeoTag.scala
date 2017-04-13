@@ -7,6 +7,10 @@ object GeoTag {
     def compare(x: GeoTag, y: GeoTag): Int = peer.compare(x.toTuple, y.toTuple)
   }
 }
+
+/** Geo location of a sound.
+  * Warning: We have seen 'NaN's in the Freesound database.
+  */
 final case class GeoTag(lat: Double, lon: Double) {
   override def toString = f"$lat%1.4f, $lon%1.4f"
 

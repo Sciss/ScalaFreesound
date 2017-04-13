@@ -70,7 +70,9 @@ object FreesoundImpl {
     def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), GeoTag] = {
       case (TypeInfo(Clazz, _), JString(s)) =>
         val Array(latS, lonS) = s.split(' ')
-        GeoTag(lat = latS.toDouble, lon = lonS.toDouble)
+        val lat = if (latS == "nan") Double.NaN else latS.toDouble
+        val lon = if (lonS == "nan") Double.NaN else lonS.toDouble
+        GeoTag(lat = lat, lon = lon)
     }
   }
 
@@ -230,8 +232,10 @@ object FreesoundImpl {
     val fields  = if (options.previews) fieldsWithPreview else defaultFields
     params += "token"  -> client.secret
     params += "fields" -> fields
-    if (page > 1)                 params += "page"      -> page  .toString
-    if (page == 1 && remain < 10) params += "page_size" -> remain.toString  // don't download more than necessary
+    val pageSize0 = 50
+    val pageSize  = if (page == 1) math.min(remain, pageSize0) else pageSize0
+    if (page > 1) params += "page" -> page.toString
+    params += "page_size" -> pageSize.toString
 
     val req0    = url(Freesound.urlTextSearch)
     val req     = req0 <<? params
@@ -242,12 +246,22 @@ object FreesoundImpl {
       val res     = extractPage(json)
       val add     = if (res.results.size <= remain) res.results else res.results.take(remain)
       val done1   = done ++ add
-      val remain1 = options.maxItems - done1.size
+      val remain1 = math.min(res.count, options.maxItems) - done1.size
       if (remain1 == 0) Future.successful(done1)
       else runTextSearch(options, page = page + 1, done = done1)
     }
   }
 
   def download(id: Int, out: File)(implicit auth: Auth): Processor[Unit] =
-    DownloadImpl(id = id, out = out, access = auth.accessToken)
+    DownloadImpl.sound(id = id, out = out, access = auth.accessToken)
+
+  def downloadPreview(uri: URI, out: File)(implicit client: Client): Processor[Unit] = {
+    import dispatch._
+    val uriS    = uri.toString
+    val req0    = url(uriS)
+    val req1    = req0.addHeader("Authorization", s"Token ${client.secret}")
+    val i       = uriS.lastIndexOf('/') + 1
+    val info    = uriS.substring(i)
+    DownloadImpl(req = req1, out = out, info = info)
+  }
 }

@@ -28,7 +28,7 @@ object FilterViewApp extends SimpleSwingApplication {
   def updateCount(filter: Filter): Unit = {
     println(s"New filter: $filter")
     if (filter.nonEmpty) {
-      val fut = Freesound.textCount("", filter = view.filter)
+      val fut = Freesound.textCount("", filter = filter)
       futCount = fut
       import ExecutionContext.Implicits.global
       fut.onComplete { tr =>
