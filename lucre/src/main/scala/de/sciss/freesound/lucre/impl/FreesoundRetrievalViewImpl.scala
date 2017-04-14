@@ -15,19 +15,23 @@ package de.sciss.freesound
 package lucre
 package impl
 
+import javax.swing.Timer
+
+import de.sciss.audiowidgets.Transport.{ButtonStrip, Loop, Play, Stop}
 import de.sciss.audiowidgets.{Axis, AxisFormat, Transport}
+import de.sciss.file._
 import de.sciss.freesound.swing.{SearchView, SoundTableView}
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.TxnLike.peer
 import de.sciss.lucre.swing.deferTx
 import de.sciss.lucre.swing.impl.ComponentHolder
-import de.sciss.lucre.synth.{Synth, Sys}
-import de.sciss.synth.proc.AuralSystem
-import de.sciss.synth.proc.SoundProcesses
+import de.sciss.lucre.synth.{Buffer, Server, Synth, Sys}
+import de.sciss.synth.{ControlSet, SynthGraph}
+import de.sciss.synth.proc.{AuralSystem, SoundProcesses}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref
-import scala.swing.{BorderPanel, BoxPanel, Component, Orientation, TabbedPane}
+import scala.swing.{BorderPanel, BoxPanel, Component, Orientation, Swing, TabbedPane}
 import scala.util.Success
 
 object FreesoundRetrievalViewImpl {
@@ -54,6 +58,7 @@ object FreesoundRetrievalViewImpl {
     private def stopAndRelease()(implicit tx: S#Tx): Unit = {
       synth   .swap(None).foreach(_.dispose())
       acquired.swap(None).foreach(previewCache.release)
+      deferTx(timerPrepare.stop())
     }
 
     private[this] var selected = Option.empty[Sound]
@@ -62,6 +67,48 @@ object FreesoundRetrievalViewImpl {
 
     private[this] val acquired  = Ref(Option.empty[Previews])
     private[this] val synth     = Ref(Option.empty[Synth   ])
+    private[this] val isLooping = Ref(true)
+
+    private[this] var timerPrepare: Timer = _
+    private[this] var transPane   : Component with ButtonStrip = _
+
+    private def play(s: Server, f: File, sampleRate: Double, numChannels: Int)(implicit tx: S#Tx): Unit = {
+      val buf = Buffer.diskIn(s)(path = f.path, startFrame = 0L, numChannels = numChannels)
+      val graph = SynthGraph {
+        import de.sciss.synth.Ops.stringToControl
+        import de.sciss.synth.ugen._
+        val speed = "speed".ir
+        val bufId = "buf"  .ir
+        val loop  = "loop" .kr
+        val disk  = VDiskIn.ar(numChannels = numChannels, buf = bufId, speed = speed, loop = loop)
+//        val done  = Done.kr(disk)
+//        FreeSelf.kr(done)
+        val sig   = if (numChannels == 1) Pan2.ar(disk) else disk
+        Out.ar(0, sig)
+      }
+      val speed = sampleRate.toDouble / s.sampleRate
+      val loopI = if (isLooping()) 1f else 0f
+      val args  = List[ControlSet]("speed" -> speed, "buf" -> buf.id, "loop" -> loopI)
+      val syn   = Synth.play(graph, nameHint = Some(s"preview-$numChannels"))(
+        target = s.defaultGroup, args = args, dependencies = buf :: Nil)
+      syn.onEndTxn { implicit tx => buf.dispose() }
+      synth.swap(Some(syn)).foreach(_.dispose())
+    }
+
+    private def markT(element: Transport.Element): Unit = {
+      val gg = transPane.button(element).get
+      gg.selected = true
+    }
+
+    private def unmarkT(element: Transport.Element): Unit = {
+      val gg = transPane.button(element).get
+      gg.selected = false
+    }
+
+    private def toggleT(element: Transport.Element): Unit = {
+      val gg = transPane.button(element).get
+      gg.selected = !gg.selected
+    }
 
     private def guiInit(): Unit = {
       val searchView      = SearchView    ()
@@ -73,12 +120,18 @@ object FreesoundRetrievalViewImpl {
 
       searchView.previews = true
 
-      def previewRtz(): Unit = {
-
-      }
+//      def previewRtz(): Unit = {
+//        val isPlaying = synth.single().isDefined
+//        previewStop()
+//        if (isPlaying) previewPlay()
+//      }
 
       def previewStop(): Unit = {
-
+        cursor.step { implicit tx =>
+          stopAndRelease()
+        }
+        unmarkT(Play)
+        markT  (Stop)
       }
 
       def previewPlay(): Unit =
@@ -86,33 +139,67 @@ object FreesoundRetrievalViewImpl {
           sound    <- selected
           previews <- sound.previews
         } {
+          unmarkT(Stop)
+
           val fut = cursor.step { implicit tx =>
             stopAndRelease()
             acquired() = Some(previews)
             previewCache.acquire(previews)
           }
           import SoundProcesses.executionContext
-          fut.foreach { f =>
-            println(s"Yo, got $f")
+
+          timerPrepare.restart()
+          fut.onComplete { tr =>
+            cursor.step { implicit tx =>
+              if (acquired().contains(previews)) {
+                deferTx(timerPrepare.stop())
+                (tr, aural.serverOption) match {
+                  case (Success(f), Some(s)) =>
+                    val sampleRate  = sound.sampleRate                // this seems to be preserved
+                    val numChannels = math.min(2, sound.numChannels)  // this seems to be constrained
+                    play(s, f, sampleRate = sampleRate, numChannels = numChannels)
+                    deferTx(markT(Play))
+
+                  case _ =>
+                    deferTx {
+                      unmarkT(Play)
+                      markT  (Stop)
+                    }
+                }
+              }
+            }
           }
         }
 
       def previewLoop(): Unit = {
-
+        val gg = transPane.button(Loop).get
+        val value = !gg.selected
+        gg.selected = value
+        cursor.step { implicit tx =>
+          isLooping() = value
+          val valueI  = if (value) 1f else 0f
+          synth().foreach(_.set("loop" -> valueI))
+        }
       }
 
-      val transPane = {
-        import Transport._
-        makeButtonStrip(
-          Seq(GoToBegin(previewRtz()), Stop(previewStop()), Play(previewPlay()), Loop(previewLoop())))
+      transPane = {
+        Transport.makeButtonStrip(
+          Seq(/* GoToBegin(previewRtz()), */ Stop(previewStop()), Play(previewPlay()), Loop(previewLoop())))
       }
+      markT(Loop)
 
-      val axis          = new Axis
-      axis.fixedBounds  = true
-      axis.format       = AxisFormat.Time()
+      timerPrepare = new Timer(100, Swing.ActionListener { _ =>
+        toggleT(Play)
+      })
+      timerPrepare.setRepeats(true)
+
+//      val axis          = new Axis
+//      axis.fixedBounds  = true
+//      axis.format       = AxisFormat.Time()
 
       val bottomPane = new BoxPanel(Orientation.Vertical) {
-        contents += axis
+//        contents += axis
+        contents += Swing.VStrut(4)
         contents += transPane
       }
 
