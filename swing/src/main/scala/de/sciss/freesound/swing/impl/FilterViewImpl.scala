@@ -64,9 +64,13 @@ object FilterViewImpl {
   private trait PartFactory[R <: Expr[R]] {
     implicit def self: this.type = this
 
+    type ROpt <: QueryExpr.Option { type Repr = R }
+
     def mkPart(ex: R): Part[R]
 
     def zero: R
+
+    def fromOption(opt: Option[R]): ROpt
 
     protected final def mkLogicPart(ex: R): Part[R] = (ex.self: QueryExpr.Base[R]) match {
       case or: QueryExpr.Or[R] /* StringExpr.Or(a, b) */ =>
@@ -108,9 +112,15 @@ object FilterViewImpl {
   }
 
   private implicit object StringPartFactory extends PartFactory[StringExpr] {
-    def zero: StringExpr = ""
+    import freesound.{StringExpr => R}
 
-    override def mkPart(ex: StringExpr): Part[StringExpr] = ex match {
+    type ROpt = R.Option
+
+    def zero: R = ""
+
+    def fromOption(opt: Option[R]): R.Option = opt.fold[R.Option](R.None)(identity)
+
+    override def mkPart(ex: R): Part[R] = ex match {
       case StringExpr.Const(s0) => new StringPartConst(s0)
       case _ => mkLogicPart(ex)
     }
@@ -119,7 +129,11 @@ object FilterViewImpl {
   private final class UIntPartFactory(min: Int, max: Int, step: Int) extends NumberPartFactory[UIntExpr] {
     import freesound.{UIntExpr => R}
 
+    type ROpt = R.Option
+
     def zero: R = min
+
+    def fromOption(opt: Option[R]): R.Option = opt.fold[R.Option](R.None)(identity)
 
     def from(ex: R with QueryExpr.Const[R]): R = {
       val R.ConstSingle(v) = ex
@@ -155,7 +169,11 @@ object FilterViewImpl {
 
     import freesound.{UDoubleExpr => R}
 
+    type ROpt = R.Option
+
     def zero: R = min
+
+    def fromOption(opt: Option[R]): R.Option = opt.fold[R.Option](R.None)(identity)
 
     def from(ex: R with QueryExpr.Const[R]): R = {
       val R.ConstSingle(v) = ex
@@ -490,21 +508,36 @@ object FilterViewImpl {
     def toExpr: R = factory.to(child.toExpr)
   }
 
-  private trait PartTop[R <: Expr[R]] extends ParentContainerBase[R] {
+  private trait PartTop[R <: Expr[R]] extends ParentContainerBase[R] { self =>
 
     // ---- abstract ----
 
-    protected def factory: PartFactory[R]
-    protected var valueOption: Option[R]
+    type ROpt <: QueryExpr.Option { type Repr = R }
+
+    import self.{ROpt => ROpt1}
+
+    protected def factory: PartFactory[R] { type ROpt = ROpt1 }
+
     protected def mkConst(): Part[R]
 
-    def update(): Unit
+    protected def get: () => ROpt
+    protected def set:       ROpt => Unit
 
     // ---- impl ----
 
+    private[this] var _value: ROpt = get()
+
+    final def update(): Unit = {
+      val newValue: ROpt = get()
+      if (_value != newValue) {
+        _value = newValue
+        updateChildren()
+      }
+    }
+
     protected def childPosition(idx: Int): ChildPosition = ChildPosition(child = 2, start = 2, count = 1)
 
-    private def mkChildren(): List[Part[R]] = valueOption match {
+    private def mkChildren(): List[Part[R]] = _value.toQueryOption match {
       case None  => Nil
       case Some(ex) =>
         val c = factory.mkPart(ex)
@@ -512,7 +545,7 @@ object FilterViewImpl {
         c :: Nil
     }
 
-    final protected def updateChildren(): Unit = {
+    private def updateChildren(): Unit = {
       _children = mkChildren()
       val box = component
       box.contents.remove(2, box.contents.size - 2)
@@ -523,7 +556,7 @@ object FilterViewImpl {
       ggEnabled.selected = _children.nonEmpty
     }
 
-    final protected var _children: List[Part[R]] = mkChildren()
+    protected final var _children: List[Part[R]] = mkChildren()
 
     private[this] lazy val ggEnabled = {
       val res     = new CheckBox
@@ -561,18 +594,19 @@ object FilterViewImpl {
       box
     }
 
-    def toExprOption: Option[R] =
-      _children match {
+    private def toExprOption: ROpt = {
+      val opt = _children match {
         case c :: Nil if ggEnabled.selected => Some(c.toExpr)
-        case _                              => None
+        case _ => None
       }
+      factory.fromOption(opt)
+    }
 
     def fireChange(): Unit = {
       val newValue = toExprOption
-      if (valueOption != newValue) {
-        valueOption = newValue
-//        value = newValue
-//        set(newValue)
+      if (_value != newValue) {
+        _value = newValue
+        set(newValue)
       }
     }
 
@@ -601,102 +635,42 @@ object FilterViewImpl {
     def editor: Component = top.component
   }
 
-  private final class StringPartTop(get: () => StringExpr.Option, set: StringExpr.Option => Unit)
+  private final class StringPartTop(val get: () => StringExpr.Option, val set: StringExpr.Option => Unit)
     extends PartTop[StringExpr] {
 
-    type R = StringExpr
-    val  R = StringExpr
+    import freesound.{StringExpr => R}
 
-    private[this] var _value: R.Option = get()
+    type ROpt = R.Option
 
-    // XXX TODO --- DRY
-    def update(): Unit = {
-      val newValue = get()
-      if (_value != newValue) {
-        _value = newValue
-        updateChildren()
-      }
-    }
-
-    protected def factory: PartFactory[R] = StringPartFactory
-
-    protected def valueOption: Option[R] = _value match {
-      case StringExpr.None => None
-      case ex: StringExpr  => Some(ex)
-    }
-
-    protected def valueOption_=(opt: Option[R]): Unit = {
-      val newValue = opt.fold[R.Option](R.None)(identity)
-      set(newValue)
-    }
+    protected def factory: StringPartFactory.type = StringPartFactory
 
     protected def mkConst(): Part[R] = new StringPartConst("")
   }
 
-  private final class UIntPartTop(get: () => UIntExpr.Option,
-                                  set: UIntExpr.Option => Unit, default: Int = 0, min: Int = 0,
+  private final class UIntPartTop(val get: () => UIntExpr.Option,
+                                  val set: UIntExpr.Option => Unit, default: Int = 0, min: Int = 0,
                                   max: Int = Int.MaxValue, step: Int = 1)
     extends PartTop[UIntExpr] {
 
-    type R = UIntExpr
-    val  R = UIntExpr
+    import freesound.{UIntExpr => R}
 
-    private[this] var _value: UIntExpr.Option = get()
+    type ROpt = R.Option
 
-    // XXX TODO --- DRY
-    def update(): Unit = {
-      val newValue = get()
-      if (_value != newValue) {
-        _value = newValue
-        updateChildren()
-      }
-    }
-
-    protected implicit val factory: NumberPartFactory[R] = new UIntPartFactory(min = min, max = max, step = step)
-
-    protected def valueOption: Option[R] = _value match {
-      case UIntExpr.None => None
-      case ex: UIntExpr  => Some(ex)
-    }
-
-    protected def valueOption_=(opt: Option[R]): Unit = {
-      val newValue = opt.fold[R.Option](R.None)(identity)
-      set(newValue)
-    }
+    protected implicit val factory: UIntPartFactory = new UIntPartFactory(min = min, max = max, step = step)
 
     protected def mkConst(): Part[R] = new UIntPartConstSingle(init = default, min = min, max = max, step = step)
   }
 
-  private final class UDoublePartTop(get: () => UDoubleExpr.Option,
-                                  set: UDoubleExpr.Option => Unit, default: Double = 0.0, min: Double = 0.0,
-                                  max: Double = Double.MaxValue, step: Double = 0.1)
+  private final class UDoublePartTop(val get: () => UDoubleExpr.Option,
+                                     val set: UDoubleExpr.Option => Unit, default: Double = 0.0, min: Double = 0.0,
+                                     max: Double = Double.MaxValue, step: Double = 0.1)
     extends PartTop[UDoubleExpr] {
 
-    type R = UDoubleExpr
-    val  R = UDoubleExpr
+    import freesound.{UDoubleExpr => R}
 
-    private[this] var _value: UDoubleExpr.Option = get()
+    type ROpt = R.Option
 
-    // XXX TODO --- DRY
-    def update(): Unit = {
-      val newValue = get()
-      if (_value != newValue) {
-        _value = newValue
-        updateChildren()
-      }
-    }
-
-    protected implicit val factory: NumberPartFactory[R] = new UDoublePartFactory(min = min, max = max, step = step)
-
-    protected def valueOption: Option[R] = _value match {
-      case UDoubleExpr.None => None
-      case ex: UDoubleExpr  => Some(ex)
-    }
-
-    protected def valueOption_=(opt: Option[R]): Unit = {
-      val newValue = opt.fold[R.Option](R.None)(identity)
-      set(newValue)
-    }
+    protected implicit val factory: UDoublePartFactory = new UDoublePartFactory(min = min, max = max, step = step)
 
     protected def mkConst(): Part[R] = new UDoublePartConstSingle(init = default, min = min, max = max, step = step)
   }
