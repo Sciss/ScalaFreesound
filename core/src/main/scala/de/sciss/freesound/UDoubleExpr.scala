@@ -69,13 +69,13 @@ object UDoubleExpr extends Factory[UDoubleExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
-  sealed trait Option extends QueryExpr.Option
+  sealed trait Option extends QueryExpr.Option {
+    final type Repr = UDoubleExpr
+  }
   case object None extends Option with QueryExpr.None
 }
 sealed trait UDoubleExpr extends QueryExpr with UDoubleExpr.Option {
   _: Base[UDoubleExpr] =>
-
-  final type Repr = UDoubleExpr
 
   final private[freesound] def self: Repr with Base[Repr] = this
   final protected def factory: Factory[Repr] = UDoubleExpr

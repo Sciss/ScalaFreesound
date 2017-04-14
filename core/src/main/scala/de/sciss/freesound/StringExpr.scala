@@ -39,13 +39,13 @@ object StringExpr extends Factory[StringExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
-  sealed trait Option extends QueryExpr.Option
+  sealed trait Option extends QueryExpr.Option {
+    final type Repr = StringExpr
+  }
   case object None extends Option with QueryExpr.None
 }
 sealed trait StringExpr extends QueryExpr with StringExpr.Option {
   _: Base[StringExpr] =>
-
-  final type Repr = StringExpr
 
   final private[freesound] def self: Repr with Base[Repr] = this
   final protected def factory: Factory[Repr] = StringExpr

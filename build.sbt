@@ -30,7 +30,7 @@ val raphaelVersion        = "1.0.4"
 
 // ---- lucre dependencies ---
 
-val soundProcessesVersion = "3.11.1"
+val soundProcessesVersion = "3.11.0"
 val fileCacheVersion      = "0.3.4"
 
 // ---- test dependencies ----

@@ -15,31 +15,37 @@ package de.sciss.freesound
 package lucre
 package impl
 
+import java.net.URI
+
 import de.sciss.file.File
 import de.sciss.filecache.MutableConsumer
-import de.sciss.freesound.swing.{FilterView, SoundTableView}
+import de.sciss.freesound.swing.{SearchView, SoundTableView}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.{Component, TabbedPane}
 
 object FreesoundRetrievalViewImpl {
   def apply(queryInit: String, filterInit: Filter, soundInit: ISeq[Sound])
-           (implicit client: Client, previewCache: MutableConsumer[Int, File]): FreesoundRetrievalView = {
-    new Impl(filterInit, soundInit)
+           (implicit client: Client, previewCache: MutableConsumer[URI, File]): FreesoundRetrievalView = {
+    new Impl(queryInit, filterInit, soundInit)
   }
 
-  private final class Impl(filterInit: Filter, soundInit: ISeq[Sound])
-                          (implicit client: Client, previewCache: MutableConsumer[Int, File])
+  private final class Impl(queryInit: String, filterInit: Filter, soundInit: ISeq[Sound])
+                          (implicit client: Client, previewCache: MutableConsumer[URI, File])
     extends FreesoundRetrievalView {
 
-    private[this] val filterView      = FilterView    (filterInit)
-    private[this] val soundTableView  = SoundTableView(soundInit )
+    private[this] val searchView      = SearchView    ()
+    private[this] val soundTableView  = SoundTableView()
+
+    if (queryInit .nonEmpty) searchView    .query  = queryInit
+    if (filterInit.nonEmpty) searchView    .filter = filterInit
+    if (soundInit .nonEmpty) soundTableView.sounds = soundInit
 
     lazy val component: Component = {
       val tabs = new TabbedPane
-      tabs.pages += new TabbedPane.Page("Search" , ???)
-      tabs.pages += new TabbedPane.Page("Results", ???)
-      ???
+      tabs.pages += new TabbedPane.Page("Search" , searchView    .component)
+      tabs.pages += new TabbedPane.Page("Results", soundTableView.component)
+      tabs
     }
   }
 }

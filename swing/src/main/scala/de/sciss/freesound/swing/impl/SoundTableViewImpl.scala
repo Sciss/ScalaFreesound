@@ -28,7 +28,7 @@ import scala.swing.Table.AutoResizeMode
 import scala.swing.{Component, ScrollPane, Table}
 
 object SoundTableViewImpl {
-  def apply(init: ISeq[Sound]): SoundTableView = new Impl(init)
+  def apply(): SoundTableView = new Impl()
   
 //  private def toRawData(in: ISeq[Sound]): Array[Array[AnyRef]] = in.map(sound =>
 //    sound.productIterator.map(_.asInstanceOf[AnyRef]).toArray
@@ -165,7 +165,9 @@ object SoundTableViewImpl {
       headerRenderer = Some(CommentsHeaderRenderer))
   )
 
-  private final class Impl(private[this] var _sounds: ISeq[Sound]) extends SoundTableView {
+  private final class Impl extends SoundTableView {
+    private[this] var _sounds: ISeq[Sound] = Nil
+
     private object model extends AbstractTableModel {
       def getRowCount   : Int = _sounds.size
       def getColumnCount: Int = columns.length

@@ -36,10 +36,12 @@ object QueryExpr {
   }
 
   trait Option {
-    def toQueryOption: scala.Option[QueryExpr]
+    type Repr <: QueryExpr
+
+    def toQueryOption: scala.Option[Repr]
   }
   trait None extends Option {
-    final def toQueryOption: scala.Option[QueryExpr] = scala.None
+    final def toQueryOption: scala.Option[Nothing] = scala.None
   }
 
   trait Factory[Repr] {
@@ -69,7 +71,7 @@ trait QueryExpr {
     case _                        => s"$fieldName:$toQueryStringFragment"
   }
 
-  final def toQueryOption: scala.Option[QueryExpr] = Some(this)
+  final def toQueryOption: scala.Option[Repr] = Some(self)
 
   // XXX TODO --- we could pretty print `((A OR B) OR C)` and `(A OR (B OR C))` as `(A OR B OR C)`
   final private[freesound] def toQueryStringFragment: String = (self: Base[Repr]) match {

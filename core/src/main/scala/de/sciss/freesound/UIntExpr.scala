@@ -73,13 +73,13 @@ object UIntExpr extends Factory[UIntExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
-  sealed trait Option extends QueryExpr.Option
+  sealed trait Option extends QueryExpr.Option {
+    final type Repr = UIntExpr
+  }
   case object None extends Option with QueryExpr.None
 }
 sealed trait UIntExpr extends QueryExpr with UIntExpr.Option {
   _: Base[UIntExpr] =>
-
-  final type Repr = UIntExpr
 
   final private[freesound] def self: Repr with Base[Repr] = this
   final protected def factory: Factory[Repr] = UIntExpr

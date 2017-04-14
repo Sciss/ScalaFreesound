@@ -18,7 +18,7 @@ import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.{Component, Table}
 
 object SoundTableView {
-  def apply(init: ISeq[Sound] = Nil): SoundTableView = impl.SoundTableViewImpl(init)
+  def apply(): SoundTableView = impl.SoundTableViewImpl()
 }
 trait SoundTableView {
   /** The top level component containing the view. */

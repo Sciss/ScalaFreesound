@@ -23,7 +23,7 @@ import de.sciss.swingplus.{GroupPanel, PopupMenu, Spinner}
 
 import scala.swing.Swing._
 import scala.swing.event.{ButtonClicked, EditDone, ValueChanged}
-import scala.swing.{Action, BoxPanel, Button, CheckBox, Component, Label, MenuItem, Orientation, ScrollPane, SequentialContainer, TextField}
+import scala.swing.{Action, Alignment, BorderPanel, BoxPanel, Button, CheckBox, Component, Label, MenuItem, Orientation, ScrollPane, SequentialContainer, TextField}
 
 object FilterViewImpl {
   def apply(init: Filter): FilterView = new Impl(init)
@@ -255,6 +255,24 @@ object FilterViewImpl {
       }
       val ggEdit = new EditButton(pop)
       val box = new BoxPanel(Orientation.Horizontal)
+//      {
+//        override lazy val peer: JPanel with SuperMixin = {
+//          val p = new javax.swing.JPanel with SuperMixin {
+////            override def getBaselineResizeBehavior: java.awt.Component.BaselineResizeBehavior =
+////              BaselineResizeBehavior.CONSTANT_ASCENT
+//            override def getBaseline(width: Int, height: Int): Int = {
+//              doLayout()
+//              val size = ggText.preferredSize
+//              val res = ggText.peer.getY + ggText.peer.getBaseline(size.width, size.height)
+//              println(s"getBaseline($width, $height) = $res")
+//              res
+//            }
+//          }
+//          val l = new javax.swing.BoxLayout(p, Orientation.Horizontal.id)
+//          p.setLayout(l)
+//          p
+//        }
+//      }
       box.contents += ggText
       box.contents += ggEdit
       box
@@ -264,7 +282,7 @@ object FilterViewImpl {
   }
 
   private trait NumberPartConstSingle[R <: Expr[R]] extends PartConst[R] { part =>
-    
+
     protected def model: SpinnerNumberModel
     implicit protected def factory: NumberPartFactory[R]
 
@@ -480,11 +498,13 @@ object FilterViewImpl {
     protected var valueOption: Option[R]
     protected def mkConst(): Part[R]
 
+    def update(): Unit
+
     // ---- impl ----
 
     protected def childPosition(idx: Int): ChildPosition = ChildPosition(child = 2, start = 2, count = 1)
 
-    protected var _children: List[Part[R]] = valueOption match {
+    private def mkChildren(): List[Part[R]] = valueOption match {
       case None  => Nil
       case Some(ex) =>
         val c = factory.mkPart(ex)
@@ -492,8 +512,26 @@ object FilterViewImpl {
         c :: Nil
     }
 
+    final protected def updateChildren(): Unit = {
+      _children = mkChildren()
+      val box = component
+      box.contents.remove(2, box.contents.size - 2)
+      box.contents ++ _children.map(_.component)
+      box.contents += HGlue
+      box.revalidate()
+      box.repaint()
+      ggEnabled.selected = _children.nonEmpty
+    }
+
+    final protected var _children: List[Part[R]] = mkChildren()
+
     private[this] lazy val ggEnabled = {
       val res     = new CheckBox
+//      res.preferredSize = {
+//        val d = res.preferredSize
+//        d.height = math.max(24, d.height)
+//        d
+//      }
       res.listenTo(res)
       res.reactions += {
         case ButtonClicked(_) =>
@@ -514,7 +552,7 @@ object FilterViewImpl {
       res
     }
 
-    lazy val component: Component with SequentialContainer.Wrapper = {
+    final lazy val component: Component with SequentialContainer.Wrapper = {
       val box = new BoxPanel(Orientation.Horizontal)
       box.contents += ggEnabled
       box.contents += HStrut(4)
@@ -550,19 +588,35 @@ object FilterViewImpl {
       _children = now :: Nil
       now.parent = this
       val pos = childPosition(0)
-      component.contents.insert(pos.child, now.component)
-      component.revalidate()
-      component.repaint()
+      val box = component
+      box.contents.insert(pos.child, now.component)
+      box.revalidate()
+      box.repaint()
       ggEnabled.selected = true
       fireChange()
     }
   }
 
-  private final class StringPartTop(private[this] var _value: StringExpr.Option, set: StringExpr.Option => Unit)
+  private final case class EntryView[R <: Expr[R]](label: Component, top: PartTop[R]) {
+    def editor: Component = top.component
+  }
+
+  private final class StringPartTop(get: () => StringExpr.Option, set: StringExpr.Option => Unit)
     extends PartTop[StringExpr] {
 
     type R = StringExpr
     val  R = StringExpr
+
+    private[this] var _value: R.Option = get()
+
+    // XXX TODO --- DRY
+    def update(): Unit = {
+      val newValue = get()
+      if (_value != newValue) {
+        _value = newValue
+        updateChildren()
+      }
+    }
 
     protected def factory: PartFactory[R] = StringPartFactory
 
@@ -579,13 +633,24 @@ object FilterViewImpl {
     protected def mkConst(): Part[R] = new StringPartConst("")
   }
 
-  private final class UIntPartTop(private[this] var _value: UIntExpr.Option,
+  private final class UIntPartTop(get: () => UIntExpr.Option,
                                   set: UIntExpr.Option => Unit, default: Int = 0, min: Int = 0,
                                   max: Int = Int.MaxValue, step: Int = 1)
     extends PartTop[UIntExpr] {
 
     type R = UIntExpr
     val  R = UIntExpr
+
+    private[this] var _value: UIntExpr.Option = get()
+
+    // XXX TODO --- DRY
+    def update(): Unit = {
+      val newValue = get()
+      if (_value != newValue) {
+        _value = newValue
+        updateChildren()
+      }
+    }
 
     protected implicit val factory: NumberPartFactory[R] = new UIntPartFactory(min = min, max = max, step = step)
 
@@ -602,13 +667,24 @@ object FilterViewImpl {
     protected def mkConst(): Part[R] = new UIntPartConstSingle(init = default, min = min, max = max, step = step)
   }
 
-  private final class UDoublePartTop(private[this] var _value: UDoubleExpr.Option,
+  private final class UDoublePartTop(get: () => UDoubleExpr.Option,
                                   set: UDoubleExpr.Option => Unit, default: Double = 0.0, min: Double = 0.0,
                                   max: Double = Double.MaxValue, step: Double = 0.1)
     extends PartTop[UDoubleExpr] {
 
     type R = UDoubleExpr
     val  R = UDoubleExpr
+
+    private[this] var _value: UDoubleExpr.Option = get()
+
+    // XXX TODO --- DRY
+    def update(): Unit = {
+      val newValue = get()
+      if (_value != newValue) {
+        _value = newValue
+        updateChildren()
+      }
+    }
 
     protected implicit val factory: NumberPartFactory[R] = new UDoublePartFactory(min = min, max = max, step = step)
 
@@ -626,64 +702,104 @@ object FilterViewImpl {
   }
 
   private final class Impl(private var _filter: Filter) extends FilterView with ModelImpl[Filter] {
-    private def mkLabel(name: String): Label = new Label(s"${name.capitalize}:")
+    private def mkLabel(name: String): Component = {
+      val lb = new Label(s"${name.capitalize}:", null, Alignment.Leading)
+//      new BoxPanel(Orientation.Vertical) {
+//        contents += lb
+//        preferredSize = {
+//          val d = preferredSize
+//          d.height = math.max(d.height, 48)
+//          d
+//        }
+//      }
+      new BorderPanel {
+//        add(VGlue, BorderPanel.Position.North)
+//        add(VGlue, BorderPanel.Position.South)
+        border = EmptyBorder(6, 0, 6, 6)
+//        border = MatteBorder(6, 0, 6, 0, java.awt.Color.red)
+        add(lb, BorderPanel.Position.Center)
+        maximumSize = {
+          val d = lb.preferredSize
+          d
+        }
+      }
+    }
 
-    private def mkStr(name: String, init: StringExpr.Option)
-                            (copy: StringExpr.Option => Filter): (Label, Component) = {
-      val top = new StringPartTop(init, set = { v =>
+    private def mkS(name: String)(init: => StringExpr.Option)
+                   (copy: StringExpr.Option => Filter): EntryView[StringExpr] = {
+      val top = new StringPartTop(() => init, set = { v =>
         _filter = copy(v)
         dispatch(_filter)
       })
-      mkLabel(name) -> top.component
+      EntryView(mkLabel(name), top)
     }
 
-    private def mkUInt(name: String, init: UIntExpr.Option, default: Int = 0, min: Int = 0, max: Int = Int.MaxValue,
-                       step: Int = 1)
-                      (copy: UIntExpr.Option => Filter): (Label, Component) = {
-      val top = new UIntPartTop(init, default = default, min = min, max = max, step = step, set = { v =>
+    private def mkI(name: String, df: Int = 0, min: Int = 0, max: Int = Int.MaxValue,
+                    step: Int = 1)(init: => UIntExpr.Option)
+                   (copy: UIntExpr.Option => Filter): EntryView[UIntExpr] = {
+      val top = new UIntPartTop(() => init, default = df, min = min, max = max, step = step, set = { v =>
         _filter = copy(v)
         dispatch(_filter)
       })
-      mkLabel(name) -> top.component
+      EntryView(mkLabel(name), top)
     }
 
-    private def mkUDouble(name: String, init: UDoubleExpr.Option, default: Double = 0.0,
-                          min: Double = 0.0, max: Double = Double.MaxValue, step: Double = 0.1)
-                         (copy: UDoubleExpr.Option => Filter): (Label, Component) = {
-      val top = new UDoublePartTop(init, default = default, min = min, max = max, step = step, set = { v =>
+    private def mkD(name: String, df: Double = 0.0,
+                    min: Double = 0.0, max: Double = Double.MaxValue, step: Double = 0.1)
+                   (init: => UDoubleExpr.Option)
+                   (copy: UDoubleExpr.Option => Filter): EntryView[UDoubleExpr] = {
+      val top = new UDoublePartTop(() => init, default = df, min = min, max = max, step = step, set = { v =>
         _filter = copy(v)
         dispatch(_filter)
       })
-      mkLabel(name) -> top.component
+      EntryView(mkLabel(name), top)
     }
-    
+
+    private[this] lazy val entryTags  = mkS("tags"            )(_filter.tags       )(v => _filter.copy(tags        = v))
+    private[this] lazy val entryDescr = mkS("description"     )(_filter.description)(v => _filter.copy(description = v))
+    private[this] lazy val entryFile  = mkS("file name"       )(_filter.fileName   )(v => _filter.copy(fileName    = v))
+    private[this] lazy val entryLic   = mkS("license"         )(_filter.license    )(v => _filter.copy(license     = v))
+    private[this] lazy val entryDur   = mkD("duration [s]", df = 2, min = 1, max = 8192)(_filter.duration)(v => _filter.copy(duration = v))
+    private[this] lazy val entryChan  = mkI("num-channels", df = 2, min = 1, max = 8192)(_filter.numChannels)(v => _filter.copy(numChannels = v))
+    private[this] lazy val entrySr    = mkI("sample-rate [Hz]", df = 44100, min = 0, max = 96000 * 4)(_filter.sampleRate)(v => _filter.copy(sampleRate = v))
+    private[this] lazy val entryDepth = mkI("bit-depth", df = 16, min = 8, max = 64, step = 8)(_filter.bitDepth)(v => _filter.copy(bitDepth = v))
+    private[this] lazy val entryKpbs  = mkI("bit-rate [kbps]", df = 320, min = 8, max = 24000, step = 8)(_filter.bitRate)(v => _filter.copy(bitRate = v))
+    private[this] lazy val entryDown  = mkI("num-downloads", df = 1, max = 1000000)(_filter.numDownloads)(v => _filter.copy(numDownloads = v))
+    private[this] lazy val entryAvgRat= mkD("average rating", df = 5, min = 0, max = 5)(_filter.avgRating)(v => _filter.copy(avgRating = v))
+    private[this] lazy val entryNumRat= mkI("num-ratings", df = 1, max = 100000)(_filter.numRatings)(v => _filter.copy(numRatings = v))
+
     private[this] val fields = Seq(
-//      new Label("Query:") -> ggQuery,
-      mkStr("tags"       , _filter.tags       )(v => _filter.copy(tags        = v)),
-      mkStr("description", _filter.description)(v => _filter.copy(description = v)),
-      mkStr("file name"  , _filter.fileName   )(v => _filter.copy(fileName    = v)),
-      mkStr("license"    , _filter.license    )(v => _filter.copy(license     = v)),
-//      mkStr("user name"  , _filter.userName   )(v => _filter.copy(userName    = v)),
-//      mkStr("comment"    , _filter.comment    )(v => _filter.copy(comment     = v))
-      mkUDouble("duration [s]", _filter.duration, default = 2, min = 1, max = 8192)(v => _filter.copy(duration = v)),
-      mkUInt("num-channels", _filter.numChannels, default = 2, min = 1, max = 8192)(v => _filter.copy(numChannels = v)),
-      mkUInt("sample-rate [Hz]" , _filter.sampleRate, default = 44100, min = 0, max = 96000 * 4)(v => _filter.copy(sampleRate = v)),
-      mkUInt("bit-depth", _filter.bitDepth, default = 16, min = 8, max = 64, step = 8)(v => _filter.copy(bitDepth = v)),
-      // XXX TODO --- bit-rate filter seems broken, no matter what ranges we put, result is empty
-      mkUInt("bit-rate [kbps]", _filter.bitRate, default = 320, min = 8, max = 24000, step = 8)(v => _filter.copy(bitRate = v)),
-//      mkUInt("file-size", _filter.fileSize)(v => _filter.copy(fileSize = v)),
-      mkUInt("num-downloads", _filter.numDownloads, default = 1, max = 1000000)(v => _filter.copy(numDownloads = v)),
-      mkUDouble("average rating", _filter.avgRating, default = 5, min = 0, max = 5)(v => _filter.copy(avgRating = v)),
-      mkUInt("num-ratings", _filter.numRatings, default = 1, max = 100000)(v => _filter.copy(numRatings = v))
+      entryTags,
+      entryDescr,
+      entryFile,
+      entryLic,
+      entryDur,
+      entryChan,
+      entrySr,
+      entryDepth,
+      entryKpbs,
+      entryDown,
+      entryAvgRat,
+      entryNumRat
     )
+
+    def filter: Filter = _filter
+    def filter_=(value: Filter): Unit = {
+      _filter = value
+      fields.foreach(_.top.update())
+    }
 
     lazy val component: Component = {
       val gp = new GroupPanel {
+//        autoContainerGaps = false
+        autoGaps          = false
+//        autoContainerGaps = true
+//        autoGaps          = true
         val lbTags = new Label("Tags:")
         import GroupPanel.Element
-        horizontal  = Seq(Par(fields.map(_._1: Element): _*), Par(fields.map(_._2: Element): _*))
+        horizontal  = Seq(Par(fields.map(_.label: Element): _*), Par(fields.map(_.editor: Element): _*))
         vertical    = Seq(
-          fields.map(tup => Par(GroupPanel.Alignment.Baseline)(tup._1, tup._2)): _*
+          fields.map(entry => Par(GroupPanel.Alignment.Baseline)(entry.label, entry.editor)): _*
         )
         preferredSize = {
           val p = preferredSize
@@ -727,11 +843,5 @@ object FilterViewImpl {
     md5         : StringExpr  .Option = None
 
      */
-
-    def filter: Filter = _filter
-    def filter_=(value: Filter): Unit = {
-      ???
-      _filter = value
-    }
   }
 }
