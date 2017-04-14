@@ -1,56 +1,52 @@
 package de.sciss.freesound
 package lucre
 
-import java.net.URI
-
 import de.sciss.file._
-import de.sciss.filecache
-import de.sciss.filecache.{MutableConsumer, MutableProducer}
 import de.sciss.freesound.Implicits._
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.lucre.swing.deferTx
+import de.sciss.lucre.synth.InMemory
+import de.sciss.submin.Submin
+import de.sciss.synth.proc.AuralSystem
 
-import scala.swing.{Frame, MainFrame, SimpleSwingApplication}
-import scala.util.{Failure, Success}
+import scala.swing.MainFrame
 
-object RetrievalApp extends SimpleSwingApplication {
+object RetrievalApp {
   implicit val client: Client = Freesound.readClient()
 
-  implicit object uriSerializer extends ImmutableSerializer[URI] {
-    def read (in         : DataInput ): URI  = new URI(in.readUTF())
-    def write(v: URI, out: DataOutput): Unit = out.writeUTF(v.toString)
-  }
+  def main(args: Array[String]): Unit = run()
 
-  implicit val previewCache: MutableConsumer[URI, File] = {
-    val config = filecache.Config[URI, File]()
-    config.capacity = filecache.Limit(count = 100, space = 4L << 1024 << 1024)
-    config.evict    = (_ /* uri */, f) => if (!f.delete()) f.deleteOnExit()
-    config.space    = (_ /* uri */, f) => f.length()
-    config.accept   = (_ /* uri */, f) => f.length() > 0L
-    val baseDir     = file("/") / "data" / "temp"
+  type S = InMemory
+
+  def run(): Unit = {
+    Submin.install(true)
+
+    val baseDir   = file("/") / "data" / "temp"
     require(baseDir.isDirectory)
-    config.folder   = baseDir / "freesound_cache"
-    config.folder.mkdirs()
+    val cacheDir  = baseDir / "freesound_cache"
+    cacheDir.mkdirs()
 
-    val prod: MutableProducer[URI, File] = MutableProducer(config)
-    MutableConsumer(prod) { uri =>
-      val uriS    = uri.getPath
-      val name    = uriS.substring(uriS.lastIndexOf('/') + 1)
-      val out     = config.folder / name
-      val proc    = Freesound.downloadPreview(uri, out = out)
-      implicit val exec = config.executionContext
-      proc.transform {
-        case Success(())  => Success(out)
-        case Failure(e)   => config.evict(uri, out); Failure(e)
-      }
+    implicit val auralSystem: AuralSystem   = AuralSystem()
+    implicit val system     : S             = InMemory()
+
+    system.step { implicit tx =>
+      auralSystem.start()
+
+      implicit val cache: PreviewsCache = PreviewsCache(dir = cacheDir)
+
+      val queryInit   = "water"
+      val filterInit  = Filter(numChannels = 2, sampleRate = 44100 to *, duration = 10.0 to *)
+      val view        = FreesoundRetrievalView[S](queryInit = queryInit, filterInit = filterInit)
+
+      deferTx(guiInit(view))
     }
   }
 
-  lazy val top: Frame = {
-    val queryInit   = "water"
-    val filterInit  = Filter(numChannels = 2, sampleRate = 44100 to *, duration = 10.0 to *)
-    val view        = FreesoundRetrievalView(queryInit = queryInit, filterInit = filterInit)
-    new MainFrame {
-      contents = view.component
+  def guiInit(view: FreesoundRetrievalView[S]): Unit = {
+    val top = new MainFrame {
+      title     = "Retrieval Test"
+      contents  = view.component
     }
+    top.pack().centerOnScreen()
+    top.open()
   }
 }

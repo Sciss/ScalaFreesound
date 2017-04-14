@@ -85,7 +85,8 @@ lazy val lucre = project.in(file("lucre"))
     description := s"$baseDescr (SoundProcesses integration)",
     libraryDependencies ++= Seq(
       "de.sciss" %% "soundprocesses-views" % soundProcessesVersion,
-      "de.sciss" %% "filecache-mutable"    % fileCacheVersion
+      "de.sciss" %% "filecache-txn"        % fileCacheVersion,
+      "de.sciss" %  "submin"               % subminVersion % "test"
     )
   )
 

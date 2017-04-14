@@ -14,13 +14,18 @@
 package de.sciss.freesound
 package swing
 
+import de.sciss.model.Model
+
 import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.{Component, Table}
 
 object SoundTableView {
   def apply(): SoundTableView = impl.SoundTableViewImpl()
+
+  sealed trait Update
+  final case class Selection(sounds: ISeq[Sound]) extends Update
 }
-trait SoundTableView {
+trait SoundTableView extends Model[SoundTableView.Update] {
   /** The top level component containing the view. */
   def component: Component
 
@@ -32,8 +37,6 @@ trait SoundTableView {
   /** Get or set the current list of sound instances shown in the table. */
   var sounds: ISeq[Sound]
 
-//  /** Get or set the current list of sound instances selected in the table. */
-//  var selectedSounds: ISeq[Sound]
-
-
+  /** Get or set the current list of sound instances selected in the table. */
+  var selection: ISeq[Sound]
 }

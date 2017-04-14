@@ -14,19 +14,17 @@
 package de.sciss.freesound
 package lucre
 
-import java.net.URI
-
-import de.sciss.file.File
-import de.sciss.filecache.MutableConsumer
+import de.sciss.lucre.stm
+import de.sciss.lucre.swing.View
+import de.sciss.lucre.synth.Sys
+import de.sciss.synth.proc.AuralSystem
 
 import scala.collection.immutable.{Seq => ISeq}
-import scala.swing.Component
 
 object FreesoundRetrievalView {
-  def apply(queryInit: String = "", filterInit: Filter = Filter(), soundInit: ISeq[Sound] = Nil)
-           (implicit client: Client, previewCache: MutableConsumer[URI, File]): FreesoundRetrievalView =
-    impl.FreesoundRetrievalViewImpl(queryInit = queryInit, filterInit = filterInit, soundInit = soundInit)
+  def apply[S <: Sys[S]](queryInit: String = "", filterInit: Filter = Filter(), soundInit: ISeq[Sound] = Nil)
+           (implicit tx: S#Tx, client: Client, previewCache: PreviewsCache,
+            aural: AuralSystem, cursor: stm.Cursor[S]): FreesoundRetrievalView[S] =
+    impl.FreesoundRetrievalViewImpl[S](queryInit = queryInit, filterInit = filterInit, soundInit = soundInit)
 }
-trait FreesoundRetrievalView {
-  def component: Component
-}
+trait FreesoundRetrievalView[S <: stm.Sys[S]] extends View.Cursor[S]

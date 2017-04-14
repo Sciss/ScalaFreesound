@@ -15,16 +15,20 @@ package de.sciss.freesound
 package swing
 package impl
 
-import java.awt.Color
+import java.awt
+import java.awt.{Color, Graphics}
 import java.awt.geom.Path2D
 import java.util.Comparator
 import javax.swing.table.{AbstractTableModel, DefaultTableCellRenderer, TableCellRenderer, TableRowSorter}
 import javax.swing.{Icon, JTable, SwingConstants}
 
 import de.sciss.icons.raphael
+import de.sciss.model.impl.ModelImpl
+import sun.swing.table.DefaultTableCellHeaderRenderer
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.Table.AutoResizeMode
+import scala.swing.event.TableRowsSelected
 import scala.swing.{Component, ScrollPane, Table}
 
 object SoundTableViewImpl {
@@ -82,10 +86,48 @@ object SoundTableViewImpl {
   }
 
   private def mkIconHeader(tt: String, shape: Path2D => Unit): TableCellRenderer = {
-    val res = new DefaultTableCellRenderer
-    res.setIcon(raphael.Icon(extent = 14, fill = Color.black)(shape))
-    res.setHorizontalAlignment(SwingConstants.CENTER)
-    res.setToolTipText(tt)
+    val res = new DefaultTableCellHeaderRenderer {
+      private[this] val mainIcon = raphael.Icon(extent = 14, fill = Color.black)(shape)
+//      override def paintComponent(g: Graphics): Unit =  {
+//        super.paintComponent(g)
+//        val ix = (getWidth  - mainIcon.getIconWidth ) >> 1
+//        val iy = (getHeight - mainIcon.getIconHeight) >> 1
+//        mainIcon.paintIcon(this, g, ix, iy)
+//      }
+      
+      setHorizontalAlignment(SwingConstants.CENTER)
+      setToolTipText(tt)
+      
+      private[this] object comboIcon extends Icon {
+        var otherIcon: Icon = _
+        
+        def getIconWidth : Int = mainIcon.getIconWidth  + 2 + (if (otherIcon == null) 0 else otherIcon.getIconWidth)
+        def getIconHeight: Int = math.max(mainIcon.getIconHeight, if (otherIcon == null) 0 else otherIcon.getIconHeight)
+
+        def paintIcon(c: awt.Component, g: Graphics, x: Int, y: Int): Unit = {
+          val h     = getIconHeight
+          val ym    = y + ((mainIcon.getIconHeight - h) >> 1)
+//          val colr  = g.getColor
+          mainIcon.paintIcon(c, g, x, ym)
+//          g.setColor(colr)
+          if (otherIcon != null) {
+            val xo  = x + mainIcon.getIconWidth + 2
+            val yo  = y + ((otherIcon.getIconHeight - h) >> 1)
+            otherIcon.paintIcon(c, g, xo, yo)
+          }
+        }
+      }
+
+      override def getTableCellRendererComponent(table: JTable, value: scala.Any, isSelected: Boolean, 
+                                                 hasFocus: Boolean, row: Int, column: Int): awt.Component = {
+        setIcon(null)
+        super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
+        comboIcon.otherIcon = getIcon
+        setIcon(comboIcon)
+        this
+      }
+    }
+//    res.setIcon(icon)
     res
   }
 
@@ -165,7 +207,7 @@ object SoundTableViewImpl {
       headerRenderer = Some(CommentsHeaderRenderer))
   )
 
-  private final class Impl extends SoundTableView {
+  private final class Impl extends SoundTableView with ModelImpl[SoundTableView.Update] {
     private[this] var _sounds: ISeq[Sound] = Nil
 
     private object model extends AbstractTableModel {
@@ -187,7 +229,7 @@ object SoundTableViewImpl {
 
     sounds = _sounds  // initializes model
 
-    val table: Table = {
+    lazy val table: Table = {
       val res = new Table {
         // https://github.com/scala/scala-swing/issues/47
         override lazy val peer: JTable = new JTable with SuperMixin
@@ -211,10 +253,18 @@ object SoundTableViewImpl {
       // cf. http://stackoverflow.com/questions/5968355/horizontal-bar-on-jscrollpane/5970400
       res.autoResizeMode = AutoResizeMode.Off
       // resJ.setPreferredScrollableViewportSize(resJ.getPreferredSize)
+
+      res.listenTo(res.selection)
+      res.selection.elementMode
+      res.reactions += {
+        case TableRowsSelected(_, _, false) =>
+          dispatch(SoundTableView.Selection(selection))
+      }
+
       res
     }
 
-    val component: Component = {
+    lazy val component: Component = {
       val res = new ScrollPane(table)
 //      res.horizontalScrollBarPolicy = BarPolicy.Always
 //      res.verticalScrollBarPolicy   = BarPolicy.Always
@@ -231,6 +281,20 @@ object SoundTableViewImpl {
     def sounds_=(xs: ISeq[Sound]): Unit = {
       _sounds = xs
       model.fireTableDataChanged() // setDataVector(toRawData(_sounds), colNames)
+    }
+
+    def selection: ISeq[Sound] = {
+      val xs      = sounds.toIndexedSeq
+      val rows    = table.selection.rows
+      val res     = rows.iterator.map(xs.apply).toIndexedSeq
+      res
+    }
+
+    def selection_=(xs: ISeq[Sound]): Unit = {
+      val indices = xs.iterator.map(sounds.indexOf).filter(_ >= 0).toSet
+      val rows    = table.selection.rows
+      rows.clear()
+      rows ++= indices
     }
   }
 }

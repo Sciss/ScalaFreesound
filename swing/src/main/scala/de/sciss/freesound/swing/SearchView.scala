@@ -45,6 +45,7 @@ trait SearchView extends Model[SearchView.Update] {
   var sort            : Sort
   var groupByPack     : Boolean
   var maxItems        : Int
+  var previews        : Boolean
 
   var maxItemsEditable: Boolean
   /** If `maxItemsEditable` is `true`, this limits the maximum value one can enter. */

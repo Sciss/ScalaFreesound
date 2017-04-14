@@ -120,8 +120,10 @@ object FilterViewImpl {
 
     def fromOption(opt: Option[R]): R.Option = opt.fold[R.Option](R.None)(identity)
 
+    def mkConstPart(s0: String): PartConst[R] = new StringPartConst(s0)
+
     override def mkPart(ex: R): Part[R] = ex match {
-      case StringExpr.Const(s0) => new StringPartConst(s0)
+      case StringExpr.Const(s0) => mkConstPart(s0)
       case _ => mkLogicPart(ex)
     }
   }
@@ -145,7 +147,7 @@ object FilterViewImpl {
       R.to(v)
     }
 
-    private def mkConstPart(i0: Int): PartConst[R] =
+    def mkConstPart(i0: Int): PartConst[R] =
       new UIntPartConstSingle(i0, min = min, max = max, step = step)
 
     override def mkPart(ex: R): Part[R] = ex match {
@@ -185,7 +187,7 @@ object FilterViewImpl {
       R.to(v)
     }
 
-    private def mkConstPart(i0: Double): PartConst[R] =
+    def mkConstPart(i0: Double): PartConst[R] =
       new UDoublePartConstSingle(i0, min = min, max = max, step = step)
 
     override def mkPart(ex: R): Part[R] = ex match {
@@ -371,7 +373,7 @@ object FilterViewImpl {
         case _ =>
           val pos = childPosition(idx)
           component.contents.remove(pos.start, pos.count)
-          setChildrenAndRevalidate(newChildren)
+          setChildrenAndRevalidate(newChildren, fire = true)
       }
     }
 
@@ -388,14 +390,20 @@ object FilterViewImpl {
       compPar.contents.remove(pos.child)
       val compNow = now.component
       compPar.contents.insert(pos.child, compNow)
-      setChildrenAndRevalidate(newChildren)
+      setChildrenAndRevalidate(newChildren, fire = true)
     }
 
-    private def setChildrenAndRevalidate(newChildren: List[Part[Repr]]): Unit = {
+    final protected def setChildrenAndRevalidate(newChildren: List[Part[Repr]], fire: Boolean): Unit = {
       _children = newChildren
-      component.revalidate()
-      component.repaint()
-      fireChange()
+      val box = component
+      box.revalidate()
+      box.repaint()
+//      val p = box.peer.getParent
+//      if (p != null) {
+//        p.revalidate()
+//        p.repaint()
+//      }
+      if (fire) fireChange()
     }
   }
 
@@ -546,13 +554,21 @@ object FilterViewImpl {
     }
 
     private def updateChildren(): Unit = {
-      _children = mkChildren()
+      val newChildren = mkChildren()
       val box = component
       box.contents.remove(2, box.contents.size - 2)
-      box.contents ++ _children.map(_.component)
-      box.contents += HGlue
-      box.revalidate()
-      box.repaint()
+      val childC = newChildren.map { child =>
+        val x = child.component
+//        println(x.preferredSize)
+//        x.peer.setSize(x.preferredSize)
+//        x.border = MatteBorder(2, 2, 2, 2, Color.blue)
+        x
+      }
+      box.contents ++= childC
+//      box.contents += HGlue
+//      box.border = MatteBorder(2, 2, 2, 2, Color.red)
+//      val TEST = box.preferredSize
+      setChildrenAndRevalidate(newChildren, fire = false)
       ggEnabled.selected = _children.nonEmpty
     }
 
@@ -635,7 +651,8 @@ object FilterViewImpl {
     def editor: Component = top.component
   }
 
-  private final class StringPartTop(val get: () => StringExpr.Option, val set: StringExpr.Option => Unit)
+  private final class StringPartTop(val get: () => StringExpr.Option, val set: StringExpr.Option => Unit,
+                                    default: String = "")
     extends PartTop[StringExpr] {
 
     import freesound.{StringExpr => R}
@@ -644,7 +661,7 @@ object FilterViewImpl {
 
     protected def factory: StringPartFactory.type = StringPartFactory
 
-    protected def mkConst(): Part[R] = new StringPartConst("")
+    protected def mkConst(): Part[R] = factory.mkConstPart(default)
   }
 
   private final class UIntPartTop(val get: () => UIntExpr.Option,
@@ -658,7 +675,7 @@ object FilterViewImpl {
 
     protected implicit val factory: UIntPartFactory = new UIntPartFactory(min = min, max = max, step = step)
 
-    protected def mkConst(): Part[R] = new UIntPartConstSingle(init = default, min = min, max = max, step = step)
+    protected def mkConst(): Part[R] = factory.mkConstPart(default)
   }
 
   private final class UDoublePartTop(val get: () => UDoubleExpr.Option,
@@ -672,7 +689,7 @@ object FilterViewImpl {
 
     protected implicit val factory: UDoublePartFactory = new UDoublePartFactory(min = min, max = max, step = step)
 
-    protected def mkConst(): Part[R] = new UDoublePartConstSingle(init = default, min = min, max = max, step = step)
+    protected def mkConst(): Part[R] = factory.mkConstPart(default)
   }
 
   private final class Impl(private var _filter: Filter) extends FilterView with ModelImpl[Filter] {
