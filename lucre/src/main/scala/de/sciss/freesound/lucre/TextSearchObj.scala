@@ -6,13 +6,14 @@ import de.sciss.lucre.event.Targets
 import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.expr.impl.ExprTypeImpl
 import de.sciss.lucre.stm.Sys
+import de.sciss.serial.ImmutableSerializer
 
 object TextSearchObj extends ExprTypeImpl[TextSearch, TextSearchObj] {
   import freesound.lucre.{TextSearchObj => Repr}
 
-  final val typeID          = ??? : Int
+  final val typeID = 200
 
-  final val valueSerializer = TextSearch.serializer
+  final val valueSerializer: ImmutableSerializer[TextSearch] = TextSearch.serializer
 
   protected def mkConst[S <: Sys[S]](id: S#ID, value: A)(implicit tx: S#Tx): Const[S] =
     new _Const[S](id, value)

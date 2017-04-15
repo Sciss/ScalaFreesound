@@ -1,5 +1,5 @@
 /*
- *  FreesoundRetrievalViewImpl.scala
+ *  RetrievalViewImpl.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
@@ -35,17 +35,17 @@ import scala.concurrent.stm.Ref
 import scala.swing.{BorderPanel, BoxPanel, Component, Orientation, Swing, TabbedPane}
 import scala.util.Success
 
-object FreesoundRetrievalViewImpl {
+object RetrievalViewImpl {
   def apply[S <: Sys[S]](queryInit: String, filterInit: Filter, soundInit: ISeq[Sound])
            (implicit tx: S#Tx, client: Client, previewCache: PreviewsCache,
-            aural: AuralSystem, cursor: stm.Cursor[S]): FreesoundRetrievalView[S] = {
+            aural: AuralSystem, cursor: stm.Cursor[S]): RetrievalView[S] = {
     new Impl[S](queryInit, filterInit, soundInit).init()
   }
 
   private final class Impl[S <: Sys[S]](queryInit: String, filterInit: Filter, soundInit: ISeq[Sound])
                                        (implicit client: Client, previewCache: PreviewsCache,
                                         aural: AuralSystem, val cursor: stm.Cursor[S])
-    extends FreesoundRetrievalView[S] with ComponentHolder[Component] {
+    extends RetrievalView[S] with ComponentHolder[Component] {
 
     def init()(implicit tx: S#Tx): this.type = {
       deferTx(guiInit())

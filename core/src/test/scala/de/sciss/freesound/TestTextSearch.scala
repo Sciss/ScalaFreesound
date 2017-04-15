@@ -1,18 +1,22 @@
 package de.sciss.freesound
 
 import de.sciss.file._
+import de.sciss.freesound.impl.FreesoundImpl
 
 import scala.util.{Failure, Success}
 
 object TestTextSearch {
   def main(args: Array[String]): Unit = {
+    FreesoundImpl.DEBUG = true
+
     implicit val client: Client = {
       val f = file("client.json")
       if (f.isFile) Freesound.readClient()
       else sys.error("Need to specify API key")
     }
 //    val fut   = Freesound.textSearch("fish", Filter(duration = 4 to 100, tags = "portugal"))
-    val fut = Freesound.textSearch("water", Filter(numChannels = 2, sampleRate = 44100), maxItems = 12, previews = true)
+    val fut = Freesound.textSearch("", Filter(numChannels = 2, sampleRate = 44100, userName = "undead505"), maxItems = 4,
+      previews = true, images = true)
 
     import dispatch.Defaults.executor
 

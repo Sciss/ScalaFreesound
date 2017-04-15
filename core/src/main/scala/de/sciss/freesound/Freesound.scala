@@ -79,9 +79,10 @@ object Freesound {
     *                     yields more items that this number, only the first `maxItems`
     *                     items will be received.
     */
-  def textSearch(query: String, filter: Filter = Filter(), previews: Boolean = false, sort: Sort = Sort.Score,
-          groupByPack: Boolean = false, maxItems: Int = 100)(implicit client: Client): Future[Vec[Sound]] =
-    Impl.textSearch(query = query, filter = filter, previews = previews,
+  def textSearch(query: String, filter: Filter = Filter(), previews: Boolean = false, images: Boolean = false,
+                 sort: Sort = Sort.Score, groupByPack: Boolean = false, maxItems: Int = 100)
+                (implicit client: Client): Future[Vec[Sound]] =
+    Impl.textSearch(query = query, filter = filter, previews = previews, images = images,
       sort = sort, groupByPack = groupByPack, maxItems = maxItems)
 
   /** Performs a text-based search and returns the total count of matches.
@@ -100,11 +101,11 @@ object Freesound {
   def download(id: Int, out: File)(implicit auth: Auth): Processor[Unit] =
     Impl.download(id = id, out = out)
 
-  /** Downloads a sound file in its reduced preview quality.
+  /** Downloads a file, such as the sound file preview in its reduced preview quality.
     *
-    * @param uri    the URI to the preview file, as obtained from a `Preview` instance.
+    * @param uri    the URI to the file, e.g. as obtained from a `Preview` instance.
     * @param out    the file to write to
     */
-  def downloadPreview(uri: URI, out: File)(implicit client: Client): Processor[Unit] =
-    Impl.downloadPreview(uri = uri, out = out)
+  def downloadUriToFile(uri: URI, out: File)(implicit client: Client): Processor[Unit] =
+    Impl.downloadUriToFile(uri = uri, out = out)
 }

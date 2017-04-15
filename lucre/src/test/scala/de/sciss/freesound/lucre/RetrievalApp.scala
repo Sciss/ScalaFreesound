@@ -35,13 +35,13 @@ object RetrievalApp {
 
       val queryInit   = "water"
       val filterInit  = Filter(numChannels = 2, sampleRate = 44100 to *, duration = 10.0 to *)
-      val view        = FreesoundRetrievalView[S](queryInit = queryInit, filterInit = filterInit)
+      val view        = RetrievalView[S](queryInit = queryInit, filterInit = filterInit)
 
       deferTx(guiInit(view))
     }
   }
 
-  def guiInit(view: FreesoundRetrievalView[S]): Unit = {
+  def guiInit(view: RetrievalView[S]): Unit = {
     val top = new MainFrame {
       title     = "Retrieval Test"
       contents  = view.component

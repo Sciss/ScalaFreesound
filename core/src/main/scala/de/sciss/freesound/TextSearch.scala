@@ -30,10 +30,11 @@ object TextSearch {
       val query       = readUTF()
       val filter      = Filter.serializer.read(in)
       val previews    = readBoolean()
+      val images      = readBoolean()
       val sort        = Sort.serializer.read(in)
       val groupByPack = readBoolean()
       val maxItems    = readInt()
-      TextSearch(query = query, filter = filter, previews = previews, sort = sort,
+      TextSearch(query = query, filter = filter, previews = previews, images = images, sort = sort,
         groupByPack = groupByPack, maxItems = maxItems)
     }
 
@@ -43,13 +44,15 @@ object TextSearch {
       writeUTF(query)
       Filter.serializer.write(filter, out)
       writeBoolean(previews)
+      writeBoolean(images  )
       Sort.serializer.write(sort, out)
       writeBoolean(groupByPack)
       writeInt(maxItems)
     }
   }
 }
-final case class TextSearch(query: String, filter: Filter = Filter(), previews: Boolean = false,
+final case class TextSearch(query: String, filter: Filter = Filter(),
+                            previews: Boolean = false, images: Boolean = false,
                             sort: Sort = Sort.Score,
                             groupByPack: Boolean = false, maxItems: Int = 100) {
   require(maxItems >= 0)
@@ -63,7 +66,7 @@ final case class TextSearch(query: String, filter: Filter = Filter(), previews: 
     if (groupByPack)                     res ::= QueryField("group_by_pack", "1")
     if (sort != Sort.Score)              res ::= QueryField("sort", sort.toProperty)
     filter.toPropertyOption.foreach(f => res ::= QueryField("filter", f))
-    res ::= QueryField("query", query)
+    res                                      ::= QueryField("query", query)
     res
   }
 }

@@ -46,7 +46,7 @@ object PreviewsCacheImpl {
       val uriS    = uri.getPath
       val name    = uriS.substring(uriS.lastIndexOf('/') + 1)
       val out     = config.folder / name
-      val proc    = Freesound.downloadPreview(uri, out = out)
+      val proc    = Freesound.downloadUriToFile(uri, out = out)
       implicit val exec = config.executionContext
       proc.transform[File]((_: Unit) => out, { e: Throwable => config.evict(uri, out); e })
     }

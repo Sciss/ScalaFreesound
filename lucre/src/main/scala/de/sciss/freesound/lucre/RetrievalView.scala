@@ -1,5 +1,5 @@
 /*
- *  FreesoundRetrievalView.scala
+ *  RetrievalView.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
@@ -22,13 +22,13 @@ import de.sciss.synth.proc.AuralSystem
 
 import scala.collection.immutable.{Seq => ISeq}
 
-object FreesoundRetrievalView {
+object RetrievalView {
   def apply[S <: Sys[S]](queryInit: String = "", filterInit: Filter = Filter(), soundInit: ISeq[Sound] = Nil)
            (implicit tx: S#Tx, client: Client, previewCache: PreviewsCache,
-            aural: AuralSystem, cursor: stm.Cursor[S]): FreesoundRetrievalView[S] =
-    impl.FreesoundRetrievalViewImpl[S](queryInit = queryInit, filterInit = filterInit, soundInit = soundInit)
+            aural: AuralSystem, cursor: stm.Cursor[S]): RetrievalView[S] =
+    impl.RetrievalViewImpl[S](queryInit = queryInit, filterInit = filterInit, soundInit = soundInit)
 }
-trait FreesoundRetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
+trait RetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
   /** Swing view; must call on EDT! */
   def searchView    : SearchView
 

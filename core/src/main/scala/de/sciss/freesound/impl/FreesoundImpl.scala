@@ -137,9 +137,9 @@ object FreesoundImpl {
     }
   }
 
-  def textSearch(query: String, filter: Filter, sort: Sort, previews: Boolean, groupByPack: Boolean,
-                 maxItems: Int)(implicit client: Client): Future[Vec[Sound]] = {
-    val options = TextSearch(query = query, filter = filter, previews = previews,
+  def textSearch(query: String, filter: Filter, sort: Sort, previews: Boolean, images: Boolean,
+                 groupByPack: Boolean, maxItems: Int)(implicit client: Client): Future[Vec[Sound]] = {
+    val options = TextSearch(query = query, filter = filter, previews = previews, images = images,
       sort = sort, groupByPack = groupByPack, maxItems = maxItems)
     runTextSearch(options, page = 1, done = Vector.empty)
   }
@@ -192,6 +192,13 @@ object FreesoundImpl {
           case ("preview-lq-ogg", v1) => ("oggLow" , v1)
           case other => other
         }
+        case (k1 @ "images" , v) => k1 -> v.mapField {
+          case ("waveform_m", v1) => ("waveLow"     , v1)
+          case ("waveform_l", v1) => ("waveHigh"    , v1)
+          case ("spectral_m", v1) => ("spectralLow" , v1)
+          case ("spectral_l", v1) => ("spectralHigh", v1)
+          case other => other
+        }
         case other => other
       }
 
@@ -219,7 +226,7 @@ object FreesoundImpl {
   private[this] final val defaultFields =
     "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth," +
     "bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
-  private[this] final val fieldsWithPreview = defaultFields + ",previews"
+//  private[this] final val fieldsWithPreview = defaultFields + ",previews"
 
   private def runTextSearch(options: TextSearch, page: Int, done: Vec[Sound])
                            (implicit client: Client): Future[Vec[Sound]] = {
@@ -228,7 +235,8 @@ object FreesoundImpl {
 
     val remain  = options.maxItems - done.size
     var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
-    val fields  = if (options.previews) fieldsWithPreview else defaultFields
+    val fields0 = if (options.previews) defaultFields + ",previews" else defaultFields
+    val fields  = if (options.images  ) fields0       + ",images"   else fields0
     params += "token"  -> client.secret
     params += "fields" -> fields
     val pageSize0 = 50
@@ -254,7 +262,7 @@ object FreesoundImpl {
   def download(id: Int, out: File)(implicit auth: Auth): Processor[Unit] =
     DownloadImpl.sound(id = id, out = out, access = auth.accessToken)
 
-  def downloadPreview(uri: URI, out: File)(implicit client: Client): Processor[Unit] = {
+  def downloadUriToFile(uri: URI, out: File)(implicit client: Client): Processor[Unit] = {
     import dispatch._
     val uriS    = uri.toString
     val req0    = url(uriS)

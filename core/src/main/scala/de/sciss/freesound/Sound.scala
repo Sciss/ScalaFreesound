@@ -18,6 +18,10 @@ import java.util.Date
 
 import scala.util.Try
 
+object Sound {
+
+}
+
 /** Database record of a sound.
   *
   * @param id           the unique identifier on the Freesound platform
@@ -37,7 +41,8 @@ import scala.util.Try
   * @param numDownloads number of times the sound has been downloaded
   * @param avgRating    average rating of the second (0 to 5)
   * @param numRatings   number of times the sound has been rated
-  * @param numComments  number of comments made by users on the sound
+  * @param previews     links to low resolution sound previews (if requested)
+  * @param images       links to waveform and spectrogram renderings (if requested)
   */
 final case class Sound(
     id          : Int,
@@ -60,7 +65,8 @@ final case class Sound(
     avgRating   : Double,
     numRatings  : Int,
     numComments : Int,
-    previews    : Option[Previews]
+    previews    : Option[Previews],
+    images      : Option[Images]
   ) {
 
   def packId: Option[Int] = pack.flatMap { uri =>
@@ -94,7 +100,8 @@ final case class Sound(
        |  avgRating   = $avgRating%1.1f,
        |  numRatings  = $numRatings,
        |  numComments = $numComments,
-       |  previews    = $previews
+       |  previews    = $previews,
+       |  images      = $images
        |)""".stripMargin
 
   /** Constructs a new file name based on the `id` and `fileType` of this sound.
@@ -104,5 +111,4 @@ final case class Sound(
   def uniqueFileName: String = s"$id.${fileType.toProperty}"
 }
 
-//- images 	object 	Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields waveform_l and waveform_m (for large and medium waveform images respectively), and spectral_l and spectral_m (for large and medium spectrogram images respectively).
 //- analysis 	object 	Object containing requested descriptors information according to the descriptors request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.

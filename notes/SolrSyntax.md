@@ -31,7 +31,7 @@ id,name,tags,license,username
 - samplerate 	number 	The samplerate of the sound.
 - username 	string 	The username of the uploader of the sound.
 - pack 	URI 	If the sound is part of a pack, this URI points to that pack’s API resource.
-- images 	object 	Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dinctionary includes the fields waveform_l and waveform_m (for large and medium waveform images respectively), and spectral_l and spectral_m (for large and medium spectrogram images respectively).
+- images 	object 	Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields waveform_l and waveform_m (for large and medium waveform images respectively), and spectral_l and spectral_m (for large and medium spectrogram images respectively).
 - num_downloads 	number 	The number of times the sound was downloaded.
 - avg_rating 	number 	The average rating of the sound.
 - num_ratings 	number 	The number of times the sound was rated.
