@@ -1,5 +1,5 @@
 /*
- *  TextSearchObj.scala
+ *  SoundObj.scala
  *  (ScalaFreesound)
  *
  *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
@@ -21,12 +21,12 @@ import de.sciss.lucre.expr.impl.ExprTypeImpl
 import de.sciss.lucre.stm.Sys
 import de.sciss.serial.ImmutableSerializer
 
-object TextSearchObj extends ExprTypeImpl[TextSearch, TextSearchObj] {
-  import freesound.lucre.{TextSearchObj => Repr}
+object SoundObj extends ExprTypeImpl[Sound, SoundObj] {
+  import freesound.lucre.{SoundObj => Repr}
 
-  final val typeID = 200
+  final val typeID = 201
 
-  final val valueSerializer: ImmutableSerializer[TextSearch] = TextSearch.serializer
+  final val valueSerializer: ImmutableSerializer[Sound] = Sound.serializer
 
   protected def mkConst[S <: Sys[S]](id: S#ID, value: A)(implicit tx: S#Tx): Const[S] =
     new _Const[S](id, value)
@@ -44,4 +44,4 @@ object TextSearchObj extends ExprTypeImpl[TextSearch, TextSearchObj] {
   private[this] final class _Var[S <: Sys[S]](val targets: Targets[S], val ref: S#Var[Ex[S]])
     extends VarImpl[S] with Repr[S]
 }
-trait TextSearchObj[S <: Sys[S]] extends Expr[S, TextSearch]
+trait SoundObj[S <: Sys[S]] extends Expr[S, Sound]

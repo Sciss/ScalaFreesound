@@ -16,13 +16,28 @@ package lucre
 
 import de.sciss.lucre.artifact.ArtifactLocation
 import de.sciss.lucre.stm.{Obj, Sys}
+import de.sciss.serial.DataInput
 import de.sciss.synth.proc.Folder
 
-object Retrieval {
+object Retrieval extends Obj.Type {
+  final val typeID = 202
+
   def apply[S <: Sys[S]]: Retrieval[S] = ???
+
+  def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] = ???
+
+  final val attrFreesound = "freesound"
 }
 trait Retrieval[S <: Sys[S]] extends Obj[S] {
-  def textSearch      : TextSearchObj.Var[S]
+  /** Last performed text search settings. */
+  def textSearch: TextSearchObj.Var[S]
+
+  /** Base directory used by the GUI for downloads. */
   def downloadLocation: ArtifactLocation.Var[S]
-  def downloads       : Folder[S]
+
+  /** A folder containing all the downloaded sounds.
+    * Each sound (`AudioCue`) has in its attribute dictionary
+    * at key `Retrieval.attrFreesound` and instance of `SoundObj`.
+    */
+  def downloads: Folder[S]
 }

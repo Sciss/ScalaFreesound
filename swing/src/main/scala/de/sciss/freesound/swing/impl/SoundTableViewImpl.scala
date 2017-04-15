@@ -18,12 +18,14 @@ package impl
 import java.awt
 import java.awt.{Color, Graphics}
 import java.awt.geom.Path2D
-import java.util.Comparator
+import java.text.SimpleDateFormat
+import java.util.{Comparator, Date}
 import javax.swing.table.{AbstractTableModel, DefaultTableCellRenderer, TableCellRenderer, TableRowSorter}
 import javax.swing.{Icon, JTable, SwingConstants}
 
 import de.sciss.icons.raphael
 import de.sciss.model.impl.ModelImpl
+import org.json4s.DefaultFormats
 import sun.swing.table.DefaultTableCellHeaderRenderer
 
 import scala.collection.immutable.{Seq => ISeq}
@@ -143,6 +145,19 @@ object SoundTableViewImpl {
     }
   }
 
+  private object DateRenderer extends DefaultTableCellRenderer {
+    private[this] val df = {
+      val res = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss")
+      res.setTimeZone(DefaultFormats.UTC)
+      res
+    }
+
+    override def setValue(value: AnyRef): Unit = value match {
+      case d: Date => setText(df.format(d))
+      case _ => super.setValue(value)
+    }
+  }
+
   private object PackRenderer extends DefaultTableCellRenderer {
     setHorizontalAlignment(SwingConstants.TRAILING)
 
@@ -186,7 +201,7 @@ object SoundTableViewImpl {
     Column( 2, "Tags"           , 64, 144, 256, _.tags            , Some(TagsRenderer), None),
     Column( 3, "Description"    , 64, 160, 384, _.description     , None, None),
     Column( 4, "User"           , 56,  72, 128, _.userName        , None, None),
-    Column( 5, "Created"        , 64,  96, 152, _.created         , None, None),
+    Column( 5, "Created"        , 64,  96, 152, _.created         , Some(DateRenderer), Some(Ordering.by((d: Date) => d.getTime))),
     Column( 6, "License"        , 64,  96, 360, _.license         , None, None),
     Column( 7, "Pack"           , 48,  52,  64, _.packId          , Some(PackRenderer), Some(Ordering.Option[Int /* URI */])),
     Column( 8, "Geo"            , 48,  60, 160, _.geoTag          , Some(GeoTagRenderer), Some(Ordering.Option[GeoTag])),
