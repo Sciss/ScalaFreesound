@@ -18,13 +18,15 @@ import de.sciss.lucre.artifact.ArtifactLocation
 import de.sciss.lucre.stm.{Obj, Sys}
 import de.sciss.serial.DataInput
 import de.sciss.synth.proc.Folder
+import impl.{RetrievalImpl => Impl}
 
 object Retrieval extends Obj.Type {
   final val typeID = 202
 
-  def apply[S <: Sys[S]]: Retrieval[S] = ???
+  def apply[S <: Sys[S]]: Retrieval[S] = Impl[S]
 
-  def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] = ???
+  def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] =
+    Impl.readIdentifiedObj(in, access)
 
   final val attrFreesound = "freesound"
 }
