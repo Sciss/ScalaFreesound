@@ -56,12 +56,12 @@ object PreviewsCacheImpl {
   private final class Impl(cons: TxnConsumer[URI, File])
     extends PreviewsCache {
 
-    private def key(p: Previews): URI = p.uri(ogg = true, hq = false)
+    private def key(sound: Sound): URI = sound.previewUri(ogg = true, hq = false)
 
-    def acquire(previews: Previews)(implicit tx: TxnLike): Future[File] =
-      cons.acquire(key(previews))
+    def acquire(sound: Sound)(implicit tx: TxnLike): Future[File] =
+      cons.acquire(key(sound))
 
-    def release(previews: Previews)(implicit tx: TxnLike): Unit =
-      cons.release(key(previews))
+    def release(sound: Sound)(implicit tx: TxnLike): Unit =
+      cons.release(key(sound))
   }
 }

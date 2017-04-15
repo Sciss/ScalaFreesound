@@ -66,8 +66,8 @@ object RetrievalViewImpl {
 
     private def selectionUpdated(): Unit = ()
 
-    private[this] val acquired  = Ref(Option.empty[Previews])
-    private[this] val synth     = Ref(Option.empty[Synth   ])
+    private[this] val acquired  = Ref(Option.empty[Sound])
+    private[this] val synth     = Ref(Option.empty[Synth])
     private[this] val isLooping = Ref(true)
 
     private[this] var timerPrepare: Timer = _
@@ -133,7 +133,7 @@ object RetrievalViewImpl {
       if (filterInit.nonEmpty) _searchView    .filter = filterInit
       if (soundInit .nonEmpty) _soundTableView.sounds = soundInit
 
-      _searchView.previews = true
+//      _searchView.previews = true
 
 //      def previewRtz(): Unit = {
 //        val isPlaying = synth.single().isDefined
@@ -151,22 +151,22 @@ object RetrievalViewImpl {
 
       def previewPlay(): Unit =
         for {
-          sound    <- selected
-          previews <- sound.previews
+          sound <- selected
+//          previews <- sound.previews
         } {
           unmarkT(Stop)
 
           val fut = cursor.step { implicit tx =>
             stopAndRelease()
-            acquired() = Some(previews)
-            previewCache.acquire(previews)
+            acquired() = Some   (sound)
+            previewCache.acquire(sound)
           }
           import SoundProcesses.executionContext
 
           timerPrepare.restart()
           fut.onComplete { tr =>
             cursor.step { implicit tx =>
-              if (acquired().contains(previews)) {
+              if (acquired().contains(sound)) {
                 deferTx(timerPrepare.stop())
                 (tr, aural.serverOption) match {
                   case (Success(f), Some(s)) =>

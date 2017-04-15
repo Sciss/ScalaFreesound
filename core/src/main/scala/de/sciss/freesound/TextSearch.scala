@@ -29,12 +29,12 @@ object TextSearch {
       require(c == COOKIE, s"Unexpected cookie (found ${c.toHexString}, expected ${COOKIE.toHexString})")
       val query       = readUTF()
       val filter      = Filter.serializer.read(in)
-      val previews    = readBoolean()
-      val images      = readBoolean()
+//      val previews    = readBoolean()
+//      val images      = readBoolean()
       val sort        = Sort.serializer.read(in)
       val groupByPack = readBoolean()
       val maxItems    = readInt()
-      TextSearch(query = query, filter = filter, previews = previews, images = images, sort = sort,
+      TextSearch(query = query, filter = filter, /* previews = previews, images = images, */ sort = sort,
         groupByPack = groupByPack, maxItems = maxItems)
     }
 
@@ -43,8 +43,8 @@ object TextSearch {
       writeInt(COOKIE)
       writeUTF(query)
       Filter.serializer.write(filter, out)
-      writeBoolean(previews)
-      writeBoolean(images  )
+//      writeBoolean(previews)
+//      writeBoolean(images  )
       Sort.serializer.write(sort, out)
       writeBoolean(groupByPack)
       writeInt(maxItems)
@@ -52,7 +52,7 @@ object TextSearch {
   }
 }
 final case class TextSearch(query: String, filter: Filter = Filter(),
-                            previews: Boolean = false, images: Boolean = false,
+                            /* previews: Boolean = false, images: Boolean = false, */
                             sort: Sort = Sort.Score,
                             groupByPack: Boolean = false, maxItems: Int = 100) {
   require(maxItems >= 0)

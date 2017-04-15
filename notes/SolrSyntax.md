@@ -31,12 +31,16 @@ id,name,tags,license,username
 - samplerate 	number 	The samplerate of the sound.
 - username 	string 	The username of the uploader of the sound.
 - pack 	URI 	If the sound is part of a pack, this URI points to that pack’s API resource.
-- images 	object 	Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields waveform_l and waveform_m (for large and medium waveform images respectively), and spectral_l and spectral_m (for large and medium spectrogram images respectively).
 - num_downloads 	number 	The number of times the sound was downloaded.
 - avg_rating 	number 	The average rating of the sound.
 - num_ratings 	number 	The number of times the sound was rated.
 - num_comments 	number 	The number of comments.
 - analysis 	object 	Object containing requested descriptors information according to the descriptors request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.
+
+## these we can reconstruct if we have the user-id
+
+- previews 	object 	Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields preview-hq-mp3 and preview-lq-mp3 (for ~128kbps quality and ~64kbps quality mp3 respectively), and preview-hq-ogg and preview-lq-ogg (for ~192kbps quality and ~80kbps quality ogg respectively). API authentication is required for retrieving sound previews (Token or OAuth2).
+- images 	object 	Dictionary including the URIs for spectrogram and waveform visualizations of the sound. The dictionary includes the fields waveform_l and waveform_m (for large and medium waveform images respectively), and spectral_l and spectral_m (for large and medium spectrogram images respectively).
 
 ## never we want
 
@@ -53,5 +57,4 @@ id,name,tags,license,username
 
 ## optionally we want
 
-- previews 	object 	Dictionary containing the URIs for mp3 and ogg versions of the sound. The dictionary includes the fields preview-hq-mp3 and preview-lq-mp3 (for ~128kbps quality and ~64kbps quality mp3 respectively), and preview-hq-ogg and preview-lq-ogg (for ~192kbps quality and ~80kbps quality ogg respectively). API authentication is required for retrieving sound previews (Token or OAuth2).
 - analysis_frames 	URI 	The URI for retrieving a JSON file with analysis information for each frame of the sound (see Analysis Descriptor Documentation).

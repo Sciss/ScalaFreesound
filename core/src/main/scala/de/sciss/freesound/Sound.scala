@@ -41,8 +41,7 @@ object Sound {
   * @param numDownloads number of times the sound has been downloaded
   * @param avgRating    average rating of the second (0 to 5)
   * @param numRatings   number of times the sound has been rated
-  * @param previews     links to low resolution sound previews (if requested)
-  * @param images       links to waveform and spectrogram renderings (if requested)
+  * @param userId       the unique identifier on the user that uploaded the sound
   */
 final case class Sound(
     id          : Int,
@@ -65,8 +64,7 @@ final case class Sound(
     avgRating   : Double,
     numRatings  : Int,
     numComments : Int,
-    previews    : Option[Previews],
-    images      : Option[Images]
+    userId      : Int
   ) {
 
   def packId: Option[Int] = pack.flatMap { uri =>
@@ -100,8 +98,7 @@ final case class Sound(
        |  avgRating   = $avgRating%1.1f,
        |  numRatings  = $numRatings,
        |  numComments = $numComments,
-       |  previews    = $previews,
-       |  images      = $images
+       |  userId      = $userId
        |)""".stripMargin
 
   /** Constructs a new file name based on the `id` and `fileType` of this sound.
@@ -109,6 +106,18 @@ final case class Sound(
     * returns `1234.aif`.
     */
   def uniqueFileName: String = s"$id.${fileType.toProperty}"
+
+  def previewUri(ogg: Boolean, hq: Boolean): URI = {
+    val s = Freesound.urlSoundPreview.format(id / 1000, id, userId, if (hq) "hq" else "lq", if (ogg) "ogg" else "mp3")
+    new URI(s)
+  }
+
+  def imageUri(spectral: Boolean, hq: Boolean): URI = {
+    val suf = if (spectral) { if (hq) "spec_L.jpg" else "spec_M.jpg" }
+              else          { if (hq) "wave_L.png" else "wave_M.png" }
+    val s = Freesound.urlImage.format(id / 1000, id, userId, if (hq) "hq" else "lq", suf)
+    new URI(s)
+  }
 }
 
 //- analysis 	object 	Object containing requested descriptors information according to the descriptors request parameter (see below). This field will be null if no descriptors were specified (or invalid descriptor names specified) or if the analysis data for the sound is not available.

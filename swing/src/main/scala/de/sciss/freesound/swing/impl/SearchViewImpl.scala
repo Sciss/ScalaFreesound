@@ -38,7 +38,6 @@ object SearchViewImpl {
 
     var sort            : Sort    = Sort.Score
     var groupByPack     : Boolean = false
-    var previews        : Boolean = false
 
     private[this] var _maxItemsEditable = true
 
@@ -162,7 +161,7 @@ object SearchViewImpl {
     private[this] val searchTimeout = Collapse(delay = 30 * 1000).set(actionSearch.enabled = true)
 
     private def runSearch(q: String, f: Filter): Unit = {
-      val fut = Freesound.textSearch(query = q, filter = f, previews = previews, sort = sort,
+      val fut = Freesound.textSearch(query = q, filter = f, sort = sort,
         groupByPack = groupByPack, maxItems = maxItems)
       futSearch = fut
       import ExecutionContext.Implicits.global

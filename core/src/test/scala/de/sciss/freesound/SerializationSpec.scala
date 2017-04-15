@@ -38,7 +38,7 @@ class SerializationSpec extends FunSpec {
         avgRating = 3.0, numRatings = 5, comment = "hello" & "mello",
         numComments = * to 10, isRemix = false, wasRemixed = true,
         md5 = "egal"
-      ), previews = true, sort = Sort.CreatedNewest, groupByPack = true, maxItems = 101)
+      ), sort = Sort.CreatedNewest, groupByPack = true, maxItems = 101)
       val ts2T = trip(ts2)
       assert(ts2 === ts2T)
       assert(ts2 !== ts2T.copy(filter=ts2T.filter.copy(md5="hello")))

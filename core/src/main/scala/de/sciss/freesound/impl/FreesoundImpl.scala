@@ -137,9 +137,9 @@ object FreesoundImpl {
     }
   }
 
-  def textSearch(query: String, filter: Filter, sort: Sort, previews: Boolean, images: Boolean,
+  def textSearch(query: String, filter: Filter, sort: Sort, /* previews: Boolean, images: Boolean, */
                  groupByPack: Boolean, maxItems: Int)(implicit client: Client): Future[Vec[Sound]] = {
-    val options = TextSearch(query = query, filter = filter, previews = previews, images = images,
+    val options = TextSearch(query = query, filter = filter, /* previews = previews, images = images, */
       sort = sort, groupByPack = groupByPack, maxItems = maxItems)
     runTextSearch(options, page = 1, done = Vector.empty)
   }
@@ -185,20 +185,30 @@ object FreesoundImpl {
         case ("avg_rating"    , v) => ("avgRating"    , v)
         case ("num_ratings"   , v) => ("numRatings"   , v)
         case ("num_comments"  , v) => ("numComments"  , v)
-        case (k1 @ "previews" , v) => k1 -> v.mapField {
-          case ("preview-hq-mp3", v1) => ("mp3High", v1)
-          case ("preview-lq-mp3", v1) => ("mp3Low" , v1)
-          case ("preview-hq-ogg", v1) => ("oggHigh", v1)
-          case ("preview-lq-ogg", v1) => ("oggLow" , v1)
-          case other => other
-        }
-        case (k1 @ "images" , v) => k1 -> v.mapField {
-          case ("waveform_m", v1) => ("waveLow"     , v1)
-          case ("waveform_l", v1) => ("waveHigh"    , v1)
-          case ("spectral_m", v1) => ("spectralLow" , v1)
-          case ("spectral_l", v1) => ("spectralHigh", v1)
-          case other => other
-        }
+//        case (k1 @ "previews" , v) => k1 -> v.mapField {
+//          case ("preview-hq-mp3", v1) => ("mp3High", v1)
+//          case ("preview-lq-mp3", v1) => ("mp3Low" , v1)
+//          case ("preview-hq-ogg", v1) => ("oggHigh", v1)
+//          case ("preview-lq-ogg", v1) => ("oggLow" , v1)
+//          case other => other
+//        }
+//        case (k1 @ "images" , v) => k1 -> v.mapField {
+//          case ("waveform_m", v1) => ("waveLow"     , v1)
+//          case ("waveform_l", v1) => ("waveHigh"    , v1)
+//          case ("spectral_m", v1) => ("spectralLow" , v1)
+//          case ("spectral_l", v1) => ("spectralHigh", v1)
+//          case other => other
+//        }
+        case ("previews", JObject(entries)) =>
+          val opt = entries.collectFirst {
+            case ("preview-lq-ogg", JString(s)) =>
+              val i       = s.lastIndexOf('_') + 1
+              val j       = s.indexOf('-', i)
+              val userId  = s.substring(i, j).toInt
+              "userId" -> JInt(userId)
+          }
+          opt.get
+
         case other => other
       }
 
@@ -207,7 +217,7 @@ object FreesoundImpl {
     mapped.extract[ResultPage]
   }
 
-  var DEBUG = false
+  var DEBUG = true
 
   private def runJSON(req: dispatch.Req): Future[JValue] = {
     if (DEBUG) println(s"req: ${req.url}")
@@ -225,7 +235,7 @@ object FreesoundImpl {
 
   private[this] final val defaultFields =
     "id,name,tags,description,username,created,license,pack,geotag,type,duration,channels,samplerate,bitdepth," +
-    "bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments"
+    "bitrate,filesize,num_downloads,avg_rating,num_ratings,num_comments,previews"
 //  private[this] final val fieldsWithPreview = defaultFields + ",previews"
 
   private def runTextSearch(options: TextSearch, page: Int, done: Vec[Sound])
@@ -235,8 +245,9 @@ object FreesoundImpl {
 
     val remain  = options.maxItems - done.size
     var params  = options.toFields.iterator.map { case QueryField(key, value) => (key, value) } .toMap
-    val fields0 = if (options.previews) defaultFields + ",previews" else defaultFields
-    val fields  = if (options.images  ) fields0       + ",images"   else fields0
+//    val fields0 = if (options.previews) defaultFields + ",previews" else defaultFields
+//    val fields  = if (options.images  ) fields0       + ",images"   else fields0
+    val fields  = defaultFields
     params += "token"  -> client.secret
     params += "fields" -> fields
     val pageSize0 = 50

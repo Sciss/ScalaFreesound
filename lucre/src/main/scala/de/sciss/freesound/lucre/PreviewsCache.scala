@@ -26,6 +26,6 @@ object PreviewsCache {
     impl.PreviewsCacheImpl(dir, capacity)
 }
 trait PreviewsCache {
-  def acquire(previews: Previews)(implicit tx: TxnLike): Future[File]
-  def release(previews: Previews)(implicit tx: TxnLike): Unit
+  def acquire(sound: Sound)(implicit tx: TxnLike): Future[File]
+  def release(sound: Sound)(implicit tx: TxnLike): Unit
 }

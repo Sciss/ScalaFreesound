@@ -43,6 +43,16 @@ object Freesound {
 
   var urlGetAuth        = s"$urlApiBase/oauth2/access_token/"
 
+  /** URL for sound previews. Contains five `%s` placeholders:
+    * sound-id.div(1000), sound-id, user-id, lq-vs-hq, ogg-vs-mp3
+    */
+  var urlSoundPreview   = s"$urlHome/data/previews/%s/%s_%s-%s.%s"
+
+  /** URL for image renderings. Contains four `%s` placeholders:
+    * sound-id.div(1000), sound-id, user-id, wave_L.png-vs-wave_M.png-vs-spec_L.jpg-vs-spec_M.jpg
+    */
+  var urlImage          = s"$urlHome/data/displays/%s/%s_%s_%s"
+
   /** Reads a Json file containing an object with fields
     * `id` and `secret`, specifying a client or application's
     * access keys to Freesound (http://www.freesound.org/apiv2/apply).
@@ -72,17 +82,16 @@ object Freesound {
     *
     * @param query        the query term(s)
     * @param filter       a filter definition constraining the search results
-    * @param previews     whether the results should include URLs for the sound preview links
     * @param sort         the order in which the results will be sorted
     * @param groupByPack  if `true`, groups results by sound pack (collection)
     * @param maxItems     the maximum number of result items to obtain. If the search
     *                     yields more items that this number, only the first `maxItems`
     *                     items will be received.
     */
-  def textSearch(query: String, filter: Filter = Filter(), previews: Boolean = false, images: Boolean = false,
+  def textSearch(query: String, filter: Filter = Filter(), /* previews: Boolean = false, images: Boolean = false, */
                  sort: Sort = Sort.Score, groupByPack: Boolean = false, maxItems: Int = 100)
                 (implicit client: Client): Future[Vec[Sound]] =
-    Impl.textSearch(query = query, filter = filter, previews = previews, images = images,
+    Impl.textSearch(query = query, filter = filter, /* previews = previews, images = images, */
       sort = sort, groupByPack = groupByPack, maxItems = maxItems)
 
   /** Performs a text-based search and returns the total count of matches.
