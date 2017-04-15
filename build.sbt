@@ -39,6 +39,7 @@ val fileCacheVersion      = "0.3.4"
 //val scoptVersion         = "3.5.0"
 val subminVersion         = "0.2.1"
 val slf4jVersion          = "1.7.7"
+val scalaTestVersion      = "3.0.1"
 
 // ---- modules ----
 
@@ -57,7 +58,8 @@ lazy val core = project.in(file("core"))
       "de.sciss"                %% "fileutil"               % fileUtilVersion,
       "de.sciss"                %% "serial"                 % serialVersion,
       //  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
-      "org.slf4j"               %  "slf4j-nop"              % slf4jVersion    % "test"
+      "org.scalatest"           %% "scalatest"              % scalaTestVersion % "test",
+      "org.slf4j"               %  "slf4j-nop"              % slf4jVersion     % "test"
     ),
     initialCommands in (Test, console) := initialCmd()
   )

@@ -17,6 +17,7 @@ import de.sciss.freesound.QueryExpr.{Base, Factory}
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
 import scala.annotation.switch
+import scala.collection.immutable.NumericRange
 import scala.language.implicitConversions
 
 object UDoubleExpr extends Factory[UDoubleExpr] {
@@ -35,6 +36,13 @@ object UDoubleExpr extends Factory[UDoubleExpr] {
   }
 
   implicit def fromRangeOption (opt: scala.Option[Range ]): Option = opt.fold[Option](None)(fromRange )
+
+  implicit def fromPartialRange(r: Range.Partial[Double, NumericRange[Double]]): ConstRange = {
+    val r1 = r.by(1.0)
+    require(r1.nonEmpty  , "Range must be non-empty")
+    require(r1.start >= 0, s"Unsigned range must have start value >=0: $r")
+    ConstRange(start = r1.start, end = r1.end)
+  }
 
   // avoid overloading here, so we can infer implicit conversion for `None`
 //  implicit def fromDoubleOption(opt: scala.Option[Double]): Option = opt.fold[Option](None)(fromDouble)
