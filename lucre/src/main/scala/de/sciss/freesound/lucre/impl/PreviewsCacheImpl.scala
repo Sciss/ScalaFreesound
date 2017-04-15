@@ -25,7 +25,6 @@ import de.sciss.lucre.stm.TxnLike.peer
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 object PreviewsCacheImpl {
   implicit private object uriSerializer extends ImmutableSerializer[URI] {
@@ -49,10 +48,7 @@ object PreviewsCacheImpl {
       val out     = config.folder / name
       val proc    = Freesound.downloadPreview(uri, out = out)
       implicit val exec = config.executionContext
-      proc.transform {
-        case Success(())  => Success(out)
-        case Failure(e)   => config.evict(uri, out); Failure(e)
-      }
+      proc.transform[File]((_: Unit) => out, { e: Throwable => config.evict(uri, out); e })
     }
     new Impl(cons)
   }

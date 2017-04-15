@@ -14,7 +14,9 @@
 package de.sciss.freesound
 
 import de.sciss.freesound.QueryExpr.{Base, Factory}
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
+import scala.annotation.switch
 import scala.language.implicitConversions
 
 object UIntExpr extends Factory[UIntExpr] {
@@ -73,10 +75,43 @@ object UIntExpr extends Factory[UIntExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
+  object Option {
+    import UIntExpr.{serializer => valueSerializer}
+
+    implicit object serializer extends ImmutableSerializer[Option] {
+      def read(in: DataInput): Option = in.readByte() match {
+        case 0 => None
+        case 1 => valueSerializer.read(in)
+      }
+
+      def write(v: Option, out: DataOutput): Unit = v match {
+        case None       => out.writeByte(0)
+        case some: Repr => out.writeByte(1); valueSerializer.write(some, out)
+      }
+    }
+  }
   sealed trait Option extends QueryExpr.Option {
     final type Repr = UIntExpr
   }
   case object None extends Option with QueryExpr.None
+
+  implicit object serializer extends ImmutableSerializer[Repr] {
+    def read(in: DataInput): Repr = (in.readByte(): @switch) match {
+      case 0 => val i = in.readInt(); ConstSingle(i)
+      case 1 => val start = in.readInt(); val end = in.readInt(); ConstRange(start, end)
+      case 2 => val a = read(in); val b = read(in); And(a, b)
+      case 3 => val a = read(in); val b = read(in); Or (a, b)
+      case 4 => val a = read(in);                   Not(a)
+    }
+
+    def write(v: Repr, out: DataOutput): Unit = v match {
+      case ConstSingle(i)         => out.writeByte(0); out.writeInt(i)
+      case ConstRange(start, end) => out.writeByte(1); out.writeInt(start); out.writeInt(end)
+      case And(a, b)              => out.writeByte(2); write(a, out); write(b, out)
+      case Or (a, b)              => out.writeByte(3); write(a, out); write(b, out)
+      case Not(a)                 => out.writeByte(4); write(a, out)
+    }
+  }
 }
 sealed trait UIntExpr extends QueryExpr with UIntExpr.Option {
   _: Base[UIntExpr] =>

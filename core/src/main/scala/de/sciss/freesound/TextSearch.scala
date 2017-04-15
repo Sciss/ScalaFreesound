@@ -11,19 +11,43 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound.impl
+package de.sciss.freesound
 
-import de.sciss.freesound.{Filter, QueryField, Sort}
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
 import scala.language.implicitConversions
 
 object TextSearch {
-//  object Query {
-//    implicit def fromString(s: String): Query = Query(s)
-//  }
-//  final case class Query(value: String) extends AnyVal
-
   implicit def fromString(s: String): TextSearch = TextSearch(s)
+
+  implicit object serializer extends ImmutableSerializer[TextSearch] {
+    private[this] val COOKIE = 0x46535453  // "FSTS" - freesound text search
+
+    def read(in: DataInput): TextSearch = {
+      import in._
+      val c = readInt()
+      require(c == COOKIE, s"Unexpected cookie (found ${c.toHexString}, expected ${COOKIE.toHexString})")
+      val query       = readUTF()
+      val filter      = Filter.serializer.read(in)
+      val previews    = readBoolean()
+      val sort        = Sort.serializer.read(in)
+      val groupByPack = readBoolean()
+      val maxItems    = readInt()
+      TextSearch(query = query, filter = filter, previews = previews, sort = sort,
+        groupByPack = groupByPack, maxItems = maxItems)
+    }
+
+    def write(v: TextSearch, out: DataOutput): Unit = {
+      import v._; import out._
+      writeInt(COOKIE)
+      writeUTF(query)
+      Filter.serializer.write(filter, out)
+      writeBoolean(previews)
+      Sort.serializer.write(sort, out)
+      writeBoolean(groupByPack)
+      writeInt(maxItems)
+    }
+  }
 }
 final case class TextSearch(query: String, filter: Filter = Filter(), previews: Boolean = false,
                             sort: Sort = Sort.Score,

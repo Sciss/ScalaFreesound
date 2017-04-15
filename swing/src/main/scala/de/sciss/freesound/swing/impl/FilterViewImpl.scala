@@ -749,7 +749,7 @@ object FilterViewImpl {
     private[this] lazy val entryTags  = mkS("tags"            )(_filter.tags       )(v => _filter.copy(tags        = v))
     private[this] lazy val entryDescr = mkS("description"     )(_filter.description)(v => _filter.copy(description = v))
     private[this] lazy val entryFile  = mkS("file name"       )(_filter.fileName   )(v => _filter.copy(fileName    = v))
-    private[this] lazy val entryLic   = mkS("license"         )(_filter.license    )(v => _filter.copy(license     = v))
+//    private[this] lazy val entryLic   = mkS("license"         )(_filter.license    )(v => _filter.copy(license     = v))
     private[this] lazy val entryDur   = mkD("duration [s]", df = 2, min = 1, max = 8192)(_filter.duration)(v => _filter.copy(duration = v))
     private[this] lazy val entryChan  = mkI("num-channels", df = 2, min = 1, max = 8192)(_filter.numChannels)(v => _filter.copy(numChannels = v))
     private[this] lazy val entrySr    = mkI("sample-rate [Hz]", df = 44100, min = 0, max = 96000 * 4)(_filter.sampleRate)(v => _filter.copy(sampleRate = v))
@@ -763,7 +763,7 @@ object FilterViewImpl {
       entryTags,
       entryDescr,
       entryFile,
-      entryLic,
+//      entryLic,
       entryDur,
       entryChan,
       entrySr,

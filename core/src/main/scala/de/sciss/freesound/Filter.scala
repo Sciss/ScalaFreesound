@@ -15,6 +15,7 @@ package de.sciss.freesound
 
 import de.sciss.freesound.Filter.StringTokens
 import de.sciss.optional.Optional
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
 import scala.language.implicitConversions
 
@@ -29,6 +30,91 @@ object Filter {
 
   // XXX TODO --- how are tokenized strings different?
   type StringTokens = StringExpr.Option
+
+  implicit object serializer extends ImmutableSerializer[Filter] {
+    private[this] val COOKIE = 0x46534669  // "FSFi" - freesound filter
+
+    private[this] val BooleanS = ImmutableSerializer.option[Boolean]
+
+    def read(in: DataInput): Filter = {
+      val c = in.readInt()
+      require(c == COOKIE, s"Unexpected cookie (found ${c.toHexString}, expected ${COOKIE.toHexString})")
+      val StringS   = StringExpr  .Option.serializer
+      val UIntS     = UIntExpr    .Option.serializer
+      val UDoubleS  = UDoubleExpr .Option.serializer
+      import FileTypeExpr.Option.{serializer => FileTypeS}
+      import DateExpr    .Option.{serializer => DateS}
+      import LicenseExpr .Option.{serializer => LicenseS}
+      val id            = UIntS     .read(in)
+      val fileName      = StringS   .read(in)
+      val tags          = StringS   .read(in)
+      val description   = StringS   .read(in)
+      val userName      = StringS   .read(in)
+      val created       = DateS     .read(in)
+      val license       = LicenseS  .read(in)
+      val pack          = StringS   .read(in)
+      val packTokens    = StringS   .read(in)
+      val geoTag        = BooleanS  .read(in)
+      val fileType      = FileTypeS .read(in)
+      val duration      = UDoubleS  .read(in)
+      val numChannels   = UIntS     .read(in)
+      val sampleRate    = UIntS     .read(in)
+      val bitDepth      = UIntS     .read(in)
+      val bitRate       = UIntS     .read(in)
+      val fileSize      = UIntS     .read(in)
+      val numDownloads  = UIntS     .read(in)
+      val avgRating     = UDoubleS  .read(in)
+      val numRatings    = UIntS     .read(in)
+      val comment       = StringS   .read(in)
+      val numComments   = UIntS     .read(in)
+      val isRemix       = BooleanS  .read(in)
+      val wasRemixed    = BooleanS  .read(in)
+      val md5           = StringS   .read(in)
+
+      Filter(id = id, fileName = fileName, tags = tags, description = description, userName = userName,
+        created = created, license = license, pack = pack, packTokens = packTokens, geoTag = geoTag,
+        fileType = fileType, duration = duration, numChannels = numChannels, sampleRate = sampleRate,
+        bitDepth = bitDepth, bitRate = bitRate, fileSize = fileSize, numDownloads = numDownloads,
+        avgRating = avgRating, numRatings = numRatings, comment = comment, numComments = numComments,
+        isRemix = isRemix, wasRemixed = wasRemixed, md5 = md5)
+    }
+
+    def write(v: Filter, out: DataOutput): Unit = {
+      out.writeInt(COOKIE)
+      import v._
+      val StringS   = StringExpr  .Option.serializer
+      val UIntS     = UIntExpr    .Option.serializer
+      val UDoubleS  = UDoubleExpr .Option.serializer
+      import FileTypeExpr.Option.{serializer => FileTypeS}
+      import DateExpr    .Option.{serializer => DateS}
+      import LicenseExpr .Option.{serializer => LicenseS}
+      UIntS     .write(id           , out)
+      StringS   .write(fileName     , out)
+      StringS   .write(tags         , out)
+      StringS   .write(description  , out)
+      StringS   .write(userName     , out)
+      DateS     .write(created      , out)
+      LicenseS  .write(license      , out)
+      StringS   .write(pack         , out)
+      StringS   .write(packTokens   , out)
+      BooleanS  .write(geoTag       , out)
+      FileTypeS .write(fileType     , out)
+      UDoubleS  .write(duration     , out)
+      UIntS     .write(numChannels  , out)
+      UIntS     .write(sampleRate   , out)
+      UIntS     .write(bitDepth     , out)
+      UIntS     .write(bitRate      , out)
+      UIntS     .write(fileSize     , out)
+      UIntS     .write(numDownloads , out)
+      UDoubleS  .write(avgRating    , out)
+      UIntS     .write(numRatings   , out)
+      StringS   .write(comment      , out)
+      UIntS     .write(numComments  , out)
+      BooleanS  .write(isRemix      , out)
+      BooleanS  .write(wasRemixed   , out)
+      StringS   .write(md5          , out)
+    }
+  }
 }
 
 /** The definition of a search filter. By default, all fields
@@ -41,7 +127,7 @@ object Filter {
   * @param description        string, tokenized
   * @param userName           string, not tokenized
   * @param created            date
-  * @param license            string (“Attribution”, “Attribution Noncommercial” or “Creative Commons 0”)
+  * @param license            license restriction
   * @param pack               string
   * @param packTokens         string, tokenized
   * @param geoTag             boolean
@@ -68,7 +154,7 @@ final case class Filter(
     description : StringTokens        = None,
     userName    : StringExpr  .Option = None,
     created     : DateExpr    .Option = None,
-    license     : StringExpr  .Option = None,
+    license     : LicenseExpr .Option = None,
     pack        : StringExpr  .Option = None,
     packTokens  : StringTokens        = None,
     geoTag      : Optional[Boolean]   = None,
@@ -77,7 +163,6 @@ final case class Filter(
     numChannels : UIntExpr    .Option = None,
     sampleRate  : UIntExpr    .Option = None,
     bitDepth    : UIntExpr    .Option = None,
-//    bitRate     : UDoubleExpr .Option = None,
     bitRate     : UIntExpr    .Option = None,
     fileSize    : UIntExpr    .Option = None,
     numDownloads: UIntExpr    .Option = None,

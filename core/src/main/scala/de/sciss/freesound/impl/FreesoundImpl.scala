@@ -205,6 +205,7 @@ object FreesoundImpl {
   }
 
   private def runJSON(req: dispatch.Req): Future[JValue] = {
+    println(s"req: ${req.url}")
     // Netty connect may block even before the future is spun up.
     // Therefore add another layer of wrapping!
     // Cf. http://stackoverflow.com/questions/43391769

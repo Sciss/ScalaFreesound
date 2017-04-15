@@ -13,6 +13,8 @@
 
 package de.sciss.freesound
 
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+
 import scala.collection.immutable.{Seq => ISeq}
 import scala.language.implicitConversions
 
@@ -37,6 +39,12 @@ object FileType {
     case FLAC.toProperty  => FLAC
     case _                =>
       throw new IllegalArgumentException(s"Unsupported file type '$s' (must be one of ${all.mkString(", ")})")
+  }
+
+  implicit object serializer extends ImmutableSerializer[FileType] {
+    def read(in: DataInput): FileType = fromString(in.readUTF())
+
+    def write(v: FileType, out: DataOutput): Unit = out.writeUTF(v.toProperty)
   }
 }
 sealed trait FileType {

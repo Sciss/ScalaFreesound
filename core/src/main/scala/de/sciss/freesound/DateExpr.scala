@@ -17,7 +17,9 @@ import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 
 import de.sciss.freesound.QueryExpr.{Base, Factory}
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
+import scala.annotation.switch
 import scala.language.implicitConversions
 
 object DateExpr extends Factory[DateExpr] {
@@ -57,8 +59,46 @@ object DateExpr extends Factory[DateExpr] {
   def or (a: Repr, b: Repr): Repr = Or (a, b)
   def not(a: Repr         ): Repr = Not(a)
 
+  object Option {
+    import DateExpr.{serializer => valueSerializer}
+
+    implicit object serializer extends ImmutableSerializer[Option] {
+      def read(in: DataInput): Option = in.readByte() match {
+        case 0 => None
+        case 1 => valueSerializer.read(in)
+      }
+
+      def write(v: Option, out: DataOutput): Unit = v match {
+        case None       => out.writeByte(0)
+        case some: Repr => out.writeByte(1); valueSerializer.write(some, out)
+      }
+    }
+  }
   sealed trait Option extends QueryExpr.Option
   case object None extends Option with QueryExpr.None
+
+  implicit object serializer extends ImmutableSerializer[Repr] {
+    def read(in: DataInput): Repr = (in.readByte(): @switch) match {
+      case 0 => val d = in.readInt(); ConstSingle(new Date(d))
+      case 1 =>
+        val startL  = in.readLong()
+        val endL    = in.readLong()
+        val start   = if (startL == 0L) scala.None else scala.Some(new Date(startL))
+        val end     = if (endL   == 0L) scala.None else scala.Some(new Date(endL))
+        ConstRange(start, end)
+      case 2 => val a = read(in); val b = read(in); And(a, b)
+      case 3 => val a = read(in); val b = read(in); Or (a, b)
+      case 4 => val a = read(in);                   Not(a)
+    }
+
+    def write(v: Repr, out: DataOutput): Unit = v match {
+      case ConstSingle(d)         => out.writeByte(0); out.writeLong(d.getTime)
+      case ConstRange(start, end) => out.writeByte(1); out.writeLong(start.fold(0L)(_.getTime)); out.writeLong(end.fold(0L)(_.getTime))
+      case And(a, b)              => out.writeByte(2); write(a, out); write(b, out)
+      case Or (a, b)              => out.writeByte(3); write(a, out); write(b, out)
+      case Not(a)                 => out.writeByte(4); write(a, out)
+    }
+  }
 }
 sealed trait DateExpr extends QueryExpr with DateExpr.Option {
   _: Base[DateExpr] =>

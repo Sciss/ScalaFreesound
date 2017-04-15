@@ -12,7 +12,32 @@
  */
 package de.sciss.freesound
 
+import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+
+import scala.annotation.switch
+
 object Sort {
+  implicit object serializer extends ImmutableSerializer[Sort] {
+    def read(in: DataInput): Sort = {
+      val id = in.readByte()
+      (id: @switch) match {
+        case 0 => Score
+        case 1 => val asc = in.readBoolean(); Duration (asc)
+        case 2 => val asc = in.readBoolean(); Created  (asc)
+        case 3 => val asc = in.readBoolean(); Downloads(asc)
+        case 4 => val asc = in.readBoolean(); Rating   (asc)
+      }
+    }
+
+    def write(v: Sort, out: DataOutput): Unit = v match {
+      case Score          => out.writeByte(0)
+      case Duration (asc) => out.writeByte(1); out.writeBoolean(asc)
+      case Created  (asc) => out.writeByte(2); out.writeBoolean(asc)
+      case Downloads(asc) => out.writeByte(3); out.writeBoolean(asc)
+      case Rating   (asc) => out.writeByte(4); out.writeBoolean(asc)
+    }
+  }
+
   /** Sort by a relevance score returned by our search engine (default). */
   case object Score extends Sort {
     def toProperty = "score"

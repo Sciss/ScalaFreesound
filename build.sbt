@@ -22,6 +22,7 @@ val optionalVersion       = "1.0.0"
 val processorVersion      = "0.4.1"
 val dispatchVersion       = "0.12.0"
 val fileUtilVersion       = "1.1.2"
+val serialVersion         = "1.0.3"
 
 // ---- swing dependencies ----
 
@@ -54,6 +55,7 @@ lazy val core = project.in(file("core"))
       "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
       "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
       "de.sciss"                %% "fileutil"               % fileUtilVersion,
+      "de.sciss"                %% "serial"                 % serialVersion,
       //  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
       "org.slf4j"               %  "slf4j-nop"              % slf4jVersion    % "test"
     ),
