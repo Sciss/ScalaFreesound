@@ -17,17 +17,17 @@ package impl
 
 import javax.swing.Timer
 
+import de.sciss.audiowidgets.Transport
 import de.sciss.audiowidgets.Transport.{ButtonStrip, Loop, Play, Stop}
-import de.sciss.audiowidgets.{Axis, AxisFormat, Transport}
 import de.sciss.file._
 import de.sciss.freesound.swing.{SearchView, SoundTableView}
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.TxnLike.peer
-import de.sciss.lucre.swing.deferTx
+import de.sciss.lucre.swing.{deferTx, requireEDT}
 import de.sciss.lucre.swing.impl.ComponentHolder
 import de.sciss.lucre.synth.{Buffer, Server, Synth, Sys}
-import de.sciss.synth.{ControlSet, SynthGraph}
 import de.sciss.synth.proc.{AuralSystem, SoundProcesses}
+import de.sciss.synth.{ControlSet, SynthGraph}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref
@@ -110,15 +110,28 @@ object FreesoundRetrievalViewImpl {
       gg.selected = !gg.selected
     }
 
+    private[this] var _searchView     : SearchView      = _
+    private[this] var _soundTableView : SoundTableView  = _
+
+    def searchView: SearchView = {
+      requireEDT()
+      _searchView
+    }
+
+    def soundTableView: SoundTableView = {
+      requireEDT()
+      _soundTableView
+    }
+
     private def guiInit(): Unit = {
-      val searchView      = SearchView    ()
-      val soundTableView  = SoundTableView()
+      _searchView      = SearchView    ()
+      _soundTableView  = SoundTableView()
 
-      if (queryInit .nonEmpty) searchView    .query  = queryInit
-      if (filterInit.nonEmpty) searchView    .filter = filterInit
-      if (soundInit .nonEmpty) soundTableView.sounds = soundInit
+      if (queryInit .nonEmpty) _searchView    .query  = queryInit
+      if (filterInit.nonEmpty) _searchView    .filter = filterInit
+      if (soundInit .nonEmpty) _soundTableView.sounds = soundInit
 
-      searchView.previews = true
+      _searchView.previews = true
 
 //      def previewRtz(): Unit = {
 //        val isPlaying = synth.single().isDefined
@@ -204,25 +217,25 @@ object FreesoundRetrievalViewImpl {
       }
 
       val resultsPane = new BorderPanel {
-        add(soundTableView.component, BorderPanel.Position.Center)
+        add(_soundTableView.component, BorderPanel.Position.Center)
         add(bottomPane              , BorderPanel.Position.South )
       }
 
       val tabs        = new TabbedPane
       tabs.peer.putClientProperty("styleId", "attached")
       tabs.focusable  = false
-      val pageSearch  = new TabbedPane.Page("Search" , searchView.component)
+      val pageSearch  = new TabbedPane.Page("Search" , _searchView.component)
       val pageResults = new TabbedPane.Page("Results", resultsPane)
       tabs.pages     += pageSearch
       tabs.pages     += pageResults
 
-      searchView.addListener {
+      _searchView.addListener {
         case SearchView.SearchResult(_, _, Success(xs)) =>
-          soundTableView.sounds = xs
+          _soundTableView.sounds = xs
           tabs.selection.page   = pageResults
       }
 
-      soundTableView.addListener {
+      _soundTableView.addListener {
         case SoundTableView.Selection(xs) =>
           selected = xs match {
             case Seq(x) => Some(x)

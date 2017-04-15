@@ -14,6 +14,7 @@
 package de.sciss.freesound
 package lucre
 
+import de.sciss.freesound.swing.{SearchView, SoundTableView}
 import de.sciss.lucre.stm
 import de.sciss.lucre.swing.View
 import de.sciss.lucre.synth.Sys
@@ -27,4 +28,10 @@ object FreesoundRetrievalView {
             aural: AuralSystem, cursor: stm.Cursor[S]): FreesoundRetrievalView[S] =
     impl.FreesoundRetrievalViewImpl[S](queryInit = queryInit, filterInit = filterInit, soundInit = soundInit)
 }
-trait FreesoundRetrievalView[S <: stm.Sys[S]] extends View.Cursor[S]
+trait FreesoundRetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
+  /** Swing view; must call on EDT! */
+  def searchView    : SearchView
+
+  /** Swing view; must call on EDT! */
+  def soundTableView: SoundTableView
+}
