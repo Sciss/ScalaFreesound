@@ -15,6 +15,7 @@ package de.sciss.freesound
 package lucre
 package impl
 
+import java.awt.Toolkit
 import javax.swing.Timer
 
 import de.sciss.audiowidgets.Transport
@@ -108,6 +109,7 @@ object FreesoundRetrievalViewImpl {
     private def toggleT(element: Transport.Element): Unit = {
       val gg = transPane.button(element).get
       gg.selected = !gg.selected
+      Toolkit.getDefaultToolkit.sync()
     }
 
     private[this] var _searchView     : SearchView      = _

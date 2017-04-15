@@ -18,8 +18,9 @@ import java.util.Date
 import scala.language.implicitConversions
 
 object Implicits {
-  implicit def intExprOps   (i: Int   ): IntExprOps     = new IntExprOps(i)
-  implicit def doubleExprOps(d: Double): DoubleExprOps  = new DoubleExprOps(d)
-  implicit def dateExprOps  (d: Date  ): DateExprOps    = new DateExprOps(d)
-  implicit def stringExprOps(s: String): StringExprOps  = new StringExprOps(s)
+  implicit def intExprOps    (i: Int              ): IntExprOps     = new IntExprOps(i)
+  implicit def doubleExprOps (d: Double           ): DoubleExprOps  = new DoubleExprOps(d)
+  implicit def dateExprOps   (d: Date             ): DateExprOps    = new DateExprOps(d)
+  implicit def stringExprOps (s: String           ): StringExprOps  = new StringExprOps(s)
+//  implicit def licenseExprOps(l: License.CanFilter): LicenseExprOps = new LicenseExprOps(l)
 }

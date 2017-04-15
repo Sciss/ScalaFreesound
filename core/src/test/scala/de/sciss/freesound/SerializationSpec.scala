@@ -42,6 +42,14 @@ class SerializationSpec extends FunSpec {
       val ts2T = trip(ts2)
       assert(ts2 === ts2T)
       assert(ts2 !== ts2T.copy(filter=ts2T.filter.copy(md5="hello")))
+
+      val f1  = Filter(geoTag = GeoTag.Distance(GeoTag(12.34, 56.78), 9.10))
+      val f1T = trip(f1)
+      assert(f1 === f1T)
+
+      val f2  = Filter(geoTag = GeoTag.Disjunction(GeoTag(12.34, 56.78), GeoTag(-1.234, -5.678)))
+      val f2T = trip(f2)
+      assert(f2 === f2T)
     }
   }
 }

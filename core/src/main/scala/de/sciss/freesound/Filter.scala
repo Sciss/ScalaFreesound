@@ -25,7 +25,11 @@ object Filter {
   }
 
   private final implicit class QueryExprOps(private val opt: QueryExpr.Option) extends AnyVal {
-    def mkParam(key: String): Option[String] = opt.toQueryOption.map(expr => expr.toQueryString(key))
+    def mkParam(key: String): Option[String] = opt.toQueryOption.map(_.toQueryString(key))
+  }
+
+  private final implicit class GeoTagExprOps(private val opt: GeoTag.Expr) extends AnyVal {
+    def mkParam: Option[String] = opt.toOption.map(_.toQueryString)
   }
 
   // XXX TODO --- how are tokenized strings different?
@@ -45,6 +49,7 @@ object Filter {
       import FileTypeExpr.Option.{serializer => FileTypeS}
       import DateExpr    .Option.{serializer => DateS}
       import LicenseExpr .Option.{serializer => LicenseS}
+      import GeoTag.Expr        .{serializer => GeoTagS}
       val id            = UIntS     .read(in)
       val fileName      = StringS   .read(in)
       val tags          = StringS   .read(in)
@@ -54,7 +59,8 @@ object Filter {
       val license       = LicenseS  .read(in)
       val pack          = StringS   .read(in)
       val packTokens    = StringS   .read(in)
-      val geoTag        = BooleanS  .read(in)
+//      val geoTag        = BooleanS  .read(in)
+      val geoTag        = GeoTagS   .read(in)
       val fileType      = FileTypeS .read(in)
       val duration      = UDoubleS  .read(in)
       val numChannels   = UIntS     .read(in)
@@ -88,6 +94,7 @@ object Filter {
       import FileTypeExpr.Option.{serializer => FileTypeS}
       import DateExpr    .Option.{serializer => DateS}
       import LicenseExpr .Option.{serializer => LicenseS}
+      import GeoTag.Expr        .{serializer => GeoTagS}
       UIntS     .write(id           , out)
       StringS   .write(fileName     , out)
       StringS   .write(tags         , out)
@@ -97,7 +104,7 @@ object Filter {
       LicenseS  .write(license      , out)
       StringS   .write(pack         , out)
       StringS   .write(packTokens   , out)
-      BooleanS  .write(geoTag       , out)
+      GeoTagS   .write(geoTag       , out)
       FileTypeS .write(fileType     , out)
       UDoubleS  .write(duration     , out)
       UIntS     .write(numChannels  , out)
@@ -157,7 +164,7 @@ final case class Filter(
     license     : LicenseExpr .Option = None,
     pack        : StringExpr  .Option = None,
     packTokens  : StringTokens        = None,
-    geoTag      : Optional[Boolean]   = None,
+    geoTag      : GeoTag.Expr         = GeoTag.Ignore,
     fileType    : FileTypeExpr.Option = None,
     duration    : UDoubleExpr .Option = None,
     numChannels : UIntExpr    .Option = None,
@@ -186,7 +193,7 @@ final case class Filter(
 //    s"avgRating out of range: $avgRating")
 
   def toPropertyOption: Option[String] = {
-    import Filter.{OptionalBooleanOps, QueryExprOps}
+    import Filter.{OptionalBooleanOps, QueryExprOps, GeoTagExprOps}
     val options = Seq(
       id            .mkParam("id"),
       fileName      .mkParam("original_filename"),
@@ -197,7 +204,7 @@ final case class Filter(
       license       .mkParam("license"),
       pack          .mkParam("pack"),
       packTokens    .mkParam("pack_tokenized"),
-      geoTag        .mkParam("is_geotagged"),
+      geoTag        .mkParam,
       fileType      .mkParam("type"),
       duration      .mkParam("duration"),
       numChannels   .mkParam("channels"),

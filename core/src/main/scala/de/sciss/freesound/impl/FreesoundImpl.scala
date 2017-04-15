@@ -68,11 +68,7 @@ object FreesoundImpl {
     private[this] val Clazz = classOf[GeoTag]
 
     def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), GeoTag] = {
-      case (TypeInfo(Clazz, _), JString(s)) =>
-        val Array(latS, lonS) = s.split(' ')
-        val lat = if (latS == "nan") Double.NaN else latS.toDouble
-        val lon = if (lonS == "nan") Double.NaN else lonS.toDouble
-        GeoTag(lat = lat, lon = lon)
+      case (TypeInfo(Clazz, _), JString(GeoTag(geo))) => geo
     }
   }
 
@@ -204,8 +200,10 @@ object FreesoundImpl {
     mapped.extract[ResultPage]
   }
 
+  var DEBUG = false
+
   private def runJSON(req: dispatch.Req): Future[JValue] = {
-    println(s"req: ${req.url}")
+    if (DEBUG) println(s"req: ${req.url}")
     // Netty connect may block even before the future is spun up.
     // Therefore add another layer of wrapping!
     // Cf. http://stackoverflow.com/questions/43391769

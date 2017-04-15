@@ -45,6 +45,11 @@ object License {
   }
   sealed trait CanFilter extends CC {
     def toProperty: String
+
+    final def | (that: LicenseExpr): LicenseExpr = LicenseExpr.fromLicense(this) | that
+    final def & (that: LicenseExpr): LicenseExpr = LicenseExpr.fromLicense(this) & that
+
+    final def unary_! : LicenseExpr = !LicenseExpr.fromLicense(this)
   }
 
   case object CC0_1_0 extends CanFilter {

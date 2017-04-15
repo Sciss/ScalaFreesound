@@ -43,3 +43,10 @@ final class StringExprOps(private val s: String) extends AnyVal {
 
   def unary_! : StringExpr = !StringExpr.fromString(s)
 }
+
+//final class LicenseExprOps(private val lic: License.CanFilter) extends AnyVal {
+//  def | (that: LicenseExpr): LicenseExpr = LicenseExpr.fromLicense(lic) | that
+//  def & (that: LicenseExpr): LicenseExpr = LicenseExpr.fromLicense(lic) & that
+//
+//  def unary_! : LicenseExpr = !LicenseExpr.fromLicense(lic)
+//}
