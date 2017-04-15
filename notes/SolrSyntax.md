@@ -17,7 +17,7 @@ id,name,tags,license,username
 
 - id 	number 	The sound’s unique identifier.
 - name 	string 	The name user gave to the sound.
-- tags 	array[strings] 	An array of tags the user gave to the sound.
+- tags 	array of strings 	An array of tags the user gave to the sound.
 - description 	string 	The description the user gave to the sound.
 - geotag 	string 	Latitude and longitude of the geotag separated by spaces (e.g. “41.0082325664 28.9731252193”, only for sounds that have been geotagged).
 - created 	string 	The date when the sound was uploaded (e.g. “2014-04-16T20:07:11.145”).

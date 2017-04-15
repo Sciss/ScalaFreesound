@@ -16,6 +16,7 @@ package impl
 
 import java.io.FileOutputStream
 import java.net.URI
+import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import com.ning.http.client.Response
@@ -29,6 +30,7 @@ import org.json4s.{DefaultFormats, Formats, Serializer, StringInput, TypeInfo}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.{Future, blocking}
+import scala.util.Try
 
 object FreesoundImpl {
   // def apply(apiKey: String): Freesound = new Impl(apiKey)
@@ -72,8 +74,26 @@ object FreesoundImpl {
     }
   }
 
-  private final implicit val jsonFormats: Formats =
-    DefaultFormats ++ (URISerializer :: LicenseSerializer :: FileTypeSerializer :: GeoTagSerializer :: Nil)
+  private object Fmt {
+    implicit val default: Formats = DefaultFormats
+
+    private object MyDefault extends DefaultFormats {
+      override protected def dateFormatter: SimpleDateFormat = {
+        // time zone is not give; seconds are given as decimal
+        // number with six fractional digits which cannot be parsed (?)
+        // by SimpleDateFormat, so we drop the millis.
+        val f = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        f.setTimeZone(DefaultFormats.UTC)
+        f
+      }
+    }
+
+    implicit val page: Formats =
+      MyDefault ++ (URISerializer :: LicenseSerializer :: FileTypeSerializer :: GeoTagSerializer :: Nil)
+  }
+
+//  private final implicit val jsonFormats: Formats =
+//    DefaultFormats ++ (URISerializer :: LicenseSerializer :: FileTypeSerializer :: GeoTagSerializer :: Nil)
 
   // default `json4.Json` uses `as.String` which in turn takes charset
   // from content-type, and if not provided (which I guess is the case?),
@@ -84,18 +104,21 @@ object FreesoundImpl {
   }
 
   def readClient(f: File = file("client.json")): Client = {
+    import Fmt.default
     val json = JsonMethods.parse(f)
     json.extract[Client]
   }
 
   def readAuth(f: File = file("auth.json")): Auth = {
+    import Fmt.default
     val json0 = JsonMethods.parse(f)
     val json  = json0.camelizeKeys
     json.extract[Auth]
   }
 
   def writeAuth(f: File = file("auth.json"))(implicit auth: Auth): Unit = {
-    val expiresS = jsonFormats.dateFormat.format(auth.expires)
+    import Fmt.default
+    val expiresS = default.dateFormat.format(auth.expires)
 
     val json = JObject("access_token"  -> JString(auth.accessToken),
                        "expires"       -> JString(expiresS),
@@ -115,6 +138,7 @@ object FreesoundImpl {
   private def getToken(code: String, isRefresh: Boolean)(implicit client: Client): Future[Auth] = {
     import dispatch._
     import Defaults._
+    import Fmt.default
 
     val req0    = url(Freesound.urlGetAuth)
       .addParameter("client_id", client.id)
@@ -129,7 +153,7 @@ object FreesoundImpl {
       val json1 = json0.mapField {
         case ("expires_in", JInt(expiresIn)) =>
           now.add(Calendar.SECOND, expiresIn.intValue())
-          "expires" -> JString(jsonFormats.dateFormat.format(now.getTime))
+          "expires" -> JString(default.dateFormat.format(now.getTime))
         case other => other
       }
       val json = json1.camelizeKeys
@@ -185,6 +209,15 @@ object FreesoundImpl {
         case ("avg_rating"    , v) => ("avgRating"    , v)
         case ("num_ratings"   , v) => ("numRatings"   , v)
         case ("num_comments"  , v) => ("numComments"  , v)
+        case ("pack", JString(uri)) =>
+          val i  = uri.lastIndexOf('/')
+          val j  = uri.lastIndexOf('/', i - 1) + 1
+          val packId = if (j >= i) 0 else {
+            val s = uri.substring(j, i)
+            Try(s.toInt).getOrElse(0)
+          }
+          ("packId", JInt(packId))
+
 //        case (k1 @ "previews" , v) => k1 -> v.mapField {
 //          case ("preview-hq-mp3", v1) => ("mp3High", v1)
 //          case ("preview-lq-mp3", v1) => ("mp3Low" , v1)
@@ -214,10 +247,12 @@ object FreesoundImpl {
 
       case other => other
     }
+
+    import Fmt.page
     mapped.extract[ResultPage]
   }
 
-  var DEBUG = true
+  var DEBUG = false
 
   private def runJSON(req: dispatch.Req): Future[JValue] = {
     if (DEBUG) println(s"req: ${req.url}")

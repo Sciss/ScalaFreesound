@@ -50,6 +50,57 @@ class SerializationSpec extends FunSpec {
       val f2  = Filter(geoTag = GeoTag.Disjunction(GeoTag(12.34, 56.78), GeoTag(-1.234, -5.678)))
       val f2T = trip(f2)
       assert(f2 === f2T)
+
+      val s1 = Sound(328168,
+          fileName    = "Footsteps, Puddles, A.wav",
+          tags        = List("Water", "Splosh", "Footstep"),
+          description = "Raw audio of footsteps splashing in small puddles and some mud. \nPlease comment...",
+          userName    = "InspectorJ",
+          created     = new Date, // Sat Nov 07 02:50:56 CET 2015,
+          license     = License.CC_BY_3_0,
+          packId      = 18727,
+          geoTag      = None,
+          fileType    = FileType.Wave,
+          duration    = 12.936,
+          numChannels = 2,
+          sampleRate  = 44100.0,
+          bitDepth    = 16,
+          bitRate     = 1378,
+          fileSize    = 2281950,
+          numDownloads= 3347,
+          avgRating   = 3.8,
+          numRatings  = 10,
+          numComments = 8,
+          userId      = 5121236
+      )
+      val s1T = trip(s1)
+      assert(s1 === s1T)
+      
+      val s2 = Sound(271145,
+        fileName    = "Blackberry Creek 2-15-15.aif",
+        tags        = List("Cupertino", "water", "Creek", "Stream", "Water", "California", "Flowing"),
+        description = "Creek at Blackberry Farm in Cupertino, California.  AIF file, untreated, recorded on iPhone on 2/15/2015.",
+        userName    = "mcushman1969",
+        created     = new Date, // Sun Apr 19 22:53:49 CEST 2015,
+        license     = License.CC0_1_0,
+        packId      = 0,
+        geoTag      = Some(GeoTag(37.3197, -122.0617)),
+        fileType    = FileType.AIFF,
+        duration    = 20.802,
+        numChannels = 2,
+        sampleRate  = 44100.0,
+        bitDepth    = 24,
+        bitRate     = 2070,
+        fileSize    = 5511952,
+        numDownloads= 695,
+        avgRating   = 4.8,
+        numRatings  = 4,
+        numComments = 2,
+        userId      = 3984671
+      )
+      val s2T = trip(s2)
+      assert(s2 === s2T)
+      assert(s2 !== s2T.copy(userId = -1))
     }
   }
 }
