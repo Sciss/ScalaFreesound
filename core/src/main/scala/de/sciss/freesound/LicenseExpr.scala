@@ -22,14 +22,14 @@ import scala.language.implicitConversions
 object LicenseExpr extends Factory[LicenseExpr] {
   type Repr = LicenseExpr
 
-  implicit def fromLicense (tpe: License.CanFilter): Const = Const(tpe)
+  implicit def fromLicense (tpe: License.CC): Const = Const(tpe)
 
-  implicit def fromLicenseSeq(xs: Seq[License.CanFilter]): Option =
+  implicit def fromLicenseSeq(xs: Seq[License.CC]): Option =
     if (xs.isEmpty) None else xs.map(Const(_): Repr).reduce(_ | _)
 
-  implicit def fromLicenseOption(opt: scala.Option[License.CanFilter]): Option = opt.fold[Option](None)(fromLicense)
+  implicit def fromLicenseOption(opt: scala.Option[License.CC]): Option = opt.fold[Option](None)(fromLicense)
 
-  final case class Const(a: License.CanFilter) extends LicenseExpr with QueryExpr.Const[Repr] {
+  final case class Const(a: License.CC) extends LicenseExpr with QueryExpr.Const[Repr] {
     def constString: String = a.toProperty
   }
 
@@ -61,14 +61,14 @@ object LicenseExpr extends Factory[LicenseExpr] {
 
   implicit object serializer extends ImmutableSerializer[Repr] {
     def read(in: DataInput): Repr = (in.readByte(): @switch) match {
-      case 0 => val f = License.CanFilter.serializer.read(in); Const(f)
+      case 0 => val f = License.CC.serializer.read(in); Const(f)
       case 2 => val a = read(in); val b = read(in); And(a, b)
       case 3 => val a = read(in); val b = read(in); Or (a, b)
       case 4 => val a = read(in);                   Not(a)
     }
 
     def write(v: Repr, out: DataOutput): Unit = v match {
-      case Const(f)  => out.writeByte(0); License.CanFilter.serializer.write(f, out)
+      case Const(f)  => out.writeByte(0); License.CC.serializer.write(f, out)
       case And(a, b) => out.writeByte(2); write(a, out); write(b, out)
       case Or (a, b) => out.writeByte(3); write(a, out); write(b, out)
       case Not(a)    => out.writeByte(4); write(a, out)
