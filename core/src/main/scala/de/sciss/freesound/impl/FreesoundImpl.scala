@@ -148,7 +148,7 @@ object FreesoundImpl {
 
     val req   = req0.POST
     val now   = Calendar.getInstance
-    val futJson = Http(req.OK(JsonUTF))
+    val futJson = runJSON(req)
     futJson.map { json0 =>
       val json1 = json0.mapField {
         case ("expires_in", JInt(expiresIn)) =>

@@ -19,14 +19,27 @@ import scala.collection.immutable.{Seq => ISeq}
 import scala.language.implicitConversions
 
 object FileType {
-  case object Wave extends FileType { final val toProperty = "wav"  }
+  case object Wave extends FileType {
+    final val toProperty = "wav"
+    def isCompressed = false
+  }
   case object AIFF extends FileType {
     final val toProperty  = "aif"
     final val alternative = "aiff"
+    def isCompressed = false
   }
-  case object Ogg  extends FileType { final val toProperty = "ogg"  }
-  case object MP3  extends FileType { final val toProperty = "mp3"  }
-  case object FLAC extends FileType { final val toProperty = "flac" }
+  case object Ogg  extends FileType {
+    final val toProperty = "ogg"
+    def isCompressed = true
+  }
+  case object MP3  extends FileType {
+    final val toProperty = "mp3"
+    def isCompressed = true
+  }
+  case object FLAC extends FileType {
+    final val toProperty = "flac"
+    def isCompressed = true
+  }
 
   val all: ISeq[FileType] = ISeq(Wave, AIFF, Ogg, MP3, FLAC)
 
@@ -49,6 +62,8 @@ object FileType {
 }
 sealed trait FileType {
   def toProperty: String
+
+  def isCompressed: Boolean
 
   def unary_! : FileTypeExpr = !FileTypeExpr.Const(this)
 }

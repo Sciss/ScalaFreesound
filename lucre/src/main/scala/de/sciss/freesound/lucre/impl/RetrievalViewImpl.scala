@@ -32,7 +32,7 @@ import de.sciss.synth.{ControlSet, SynthGraph}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref
-import scala.swing.{BorderPanel, BoxPanel, Component, Orientation, Swing, TabbedPane}
+import scala.swing.{BorderPanel, BoxPanel, Component, Orientation, Panel, SequentialContainer, Swing, TabbedPane}
 import scala.util.Success
 
 object RetrievalViewImpl {
@@ -52,7 +52,10 @@ object RetrievalViewImpl {
       this
     }
 
+    private[this] val _disposed = Ref(false)
+
     def dispose()(implicit tx: S#Tx): Unit = {
+      _disposed() = true
       stopAndRelease()
     }
 
@@ -114,6 +117,12 @@ object RetrievalViewImpl {
 
     private[this] var _searchView     : SearchView      = _
     private[this] var _soundTableView : SoundTableView  = _
+    private[this] var _bottomPane     : BoxPanel        = _
+    private[this] var _tabs           : TabbedPane      = _
+
+    def resultBottomComponent: Panel with SequentialContainer = _bottomPane
+
+    def tabbedPane: TabbedPane = _tabs
 
     def searchView: SearchView = {
       requireEDT()
@@ -174,7 +183,7 @@ object RetrievalViewImpl {
           timerPrepare.restart()
           fut.onComplete { tr =>
             cursor.step { implicit tx =>
-              if (acquired().contains(sound)) {
+              if (acquired().contains(sound) && _disposed()) {
                 deferTx(timerPrepare.stop())
                 (tr, aural.serverOption) match {
                   case (Success(f), Some(s)) =>
@@ -220,29 +229,34 @@ object RetrievalViewImpl {
 //      axis.fixedBounds  = true
 //      axis.format       = AxisFormat.Time()
 
-      val bottomPane = new BoxPanel(Orientation.Vertical) {
+      _bottomPane = new BoxPanel(Orientation.Horizontal) {
+        contents += Swing.HStrut(4)
+        contents += transPane
+        contents += Swing.HStrut(4)
+      }
+      val box = new BoxPanel(Orientation.Vertical) {
 //        contents += axis
         contents += Swing.VStrut(4)
-        contents += transPane
+        contents += _bottomPane
       }
 
       val resultsPane = new BorderPanel {
         add(_soundTableView.component, BorderPanel.Position.Center)
-        add(bottomPane              , BorderPanel.Position.South )
+        add(box              , BorderPanel.Position.South )
       }
 
-      val tabs        = new TabbedPane
-      tabs.peer.putClientProperty("styleId", "attached")
-      tabs.focusable  = false
-      val pageSearch  = new TabbedPane.Page("Search" , _searchView.component)
-      val pageResults = new TabbedPane.Page("Results", resultsPane)
-      tabs.pages     += pageSearch
-      tabs.pages     += pageResults
+      _tabs        = new TabbedPane
+      _tabs.peer.putClientProperty("styleId", "attached")
+      _tabs.focusable  = false
+      val pageSearch  = new TabbedPane.Page("Search" , _searchView.component, null)
+      val pageResults = new TabbedPane.Page("Results", resultsPane          , null)
+      _tabs.pages     += pageSearch
+      _tabs.pages     += pageResults
 
       _searchView.addListener {
         case SearchView.SearchResult(_, _, Success(xs)) =>
           _soundTableView.sounds = xs
-          tabs.selection.page   = pageResults
+          _tabs.selection.page   = pageResults
       }
 
       _soundTableView.addListener {
@@ -254,7 +268,7 @@ object RetrievalViewImpl {
           selectionUpdated()
       }
 
-      component = tabs
+      component = _tabs
     }
   }
 }
