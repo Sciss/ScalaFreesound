@@ -16,9 +16,10 @@ package lucre
 package impl
 
 import de.sciss.lucre.artifact.ArtifactLocation
-import de.sciss.lucre.stm.{Copy, Elem, Obj, Sys}
+import de.sciss.lucre.stm.impl.ObjSerializer
+import de.sciss.lucre.stm.{Copy, Elem, NoSys, Obj, Sys}
 import de.sciss.lucre.{event => evt}
-import de.sciss.serial.{DataInput, DataOutput}
+import de.sciss.serial.{DataInput, DataOutput, Serializer}
 import de.sciss.synth.proc.Folder
 
 object RetrievalImpl {
@@ -33,10 +34,20 @@ object RetrievalImpl {
 
   def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] = {
     val targets           = evt.Targets.read(in, access)
+    val c                 = in.readInt()
+    require(c == COOKIE, s"Unexpected cookie (found ${c.toHexString}, expected ${COOKIE.toHexString})")
     val textSearch        = TextSearchObj   .readVar[S](in, access)
     val downloadLocation  = ArtifactLocation.readVar[S](in, access)
     val downloads         = Folder          .read   [S](in, access)
     new Impl[S](targets, textSearch, downloadLocation, downloads)
+  }
+
+  def serializer[S <: Sys[S]]: Serializer[S#Tx, S#Acc, Retrieval[S]] = anySer.asInstanceOf[Ser[S]]
+
+  private val anySer = new Ser[NoSys]
+
+  private class Ser[S <: Sys[S]] extends ObjSerializer[S, Retrieval[S]] {
+    def tpe: Obj.Type = Retrieval
   }
 
   private final val COOKIE = 0x46535265

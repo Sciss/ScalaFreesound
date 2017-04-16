@@ -19,7 +19,7 @@ import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
 import de.sciss.lucre.event.Publisher
 import de.sciss.lucre.stm.{Obj, Sys}
 import de.sciss.model
-import de.sciss.serial.DataInput
+import de.sciss.serial.{DataInput, Serializer}
 import de.sciss.synth.proc.Folder
 
 import scala.collection.immutable.{IndexedSeq => Vec}
@@ -37,6 +37,8 @@ object Retrieval extends Obj.Type {
   def apply[S <: Sys[S]](initSearch: TextSearchObj[S], initLocation: ArtifactLocation[S])
                         (implicit tx: S#Tx): Retrieval[S] =
     Impl[S](initSearch = initSearch, initLocation = initLocation)
+
+  implicit def serializer[S <: Sys[S]]: Serializer[S#Tx, S#Acc, Retrieval[S]] = Impl.serializer[S]
 
   def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] =
     Impl.readIdentifiedObj(in, access)

@@ -35,7 +35,8 @@ object RetrievalApp {
 
       val queryInit   = "water"
       val filterInit  = Filter(numChannels = 2, sampleRate = 44100 to *, duration = 10.0 to *)
-      val view        = RetrievalView[S](queryInit = queryInit, filterInit = filterInit)
+      val tsInit      = TextSearch(queryInit, filterInit)
+      val view        = RetrievalView[S](tsInit)
 
       deferTx(guiInit(view))
     }

@@ -36,13 +36,13 @@ import scala.swing.{BorderPanel, BoxPanel, Component, Orientation, Swing, Tabbed
 import scala.util.Success
 
 object RetrievalViewImpl {
-  def apply[S <: Sys[S]](queryInit: String, filterInit: Filter, soundInit: ISeq[Sound])
-           (implicit tx: S#Tx, client: Client, previewCache: PreviewsCache,
+  def apply[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
+           (implicit tx: S#Tx, client: Client, previewsCache: PreviewsCache,
             aural: AuralSystem, cursor: stm.Cursor[S]): RetrievalView[S] = {
-    new Impl[S](queryInit, filterInit, soundInit).init()
+    new Impl[S](searchInit, soundInit).init()
   }
 
-  private final class Impl[S <: Sys[S]](queryInit: String, filterInit: Filter, soundInit: ISeq[Sound])
+  private final class Impl[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
                                        (implicit client: Client, previewCache: PreviewsCache,
                                         aural: AuralSystem, val cursor: stm.Cursor[S])
     extends RetrievalView[S] with ComponentHolder[Component] {
@@ -125,13 +125,21 @@ object RetrievalViewImpl {
       _soundTableView
     }
 
+    def search: TextSearch = TextSearch(
+      query = _searchView.query, filter = _searchView.filter, sort =_searchView.sort,
+      groupByPack = _searchView.groupByPack, maxItems = _searchView.maxItems)
+
     private def guiInit(): Unit = {
       _searchView      = SearchView    ()
       _soundTableView  = SoundTableView()
 
-      if (queryInit .nonEmpty) _searchView    .query  = queryInit
-      if (filterInit.nonEmpty) _searchView    .filter = filterInit
-      if (soundInit .nonEmpty) _soundTableView.sounds = soundInit
+      _searchView.query       = searchInit.query
+      _searchView.groupByPack = searchInit.groupByPack
+      _searchView.maxItems    = searchInit.maxItems
+      _searchView.sort        = searchInit.sort
+
+      if (searchInit.filter.nonEmpty) _searchView    .filter = searchInit.filter
+      if (soundInit        .nonEmpty) _soundTableView.sounds = soundInit
 
 //      _searchView.previews = true
 

@@ -23,10 +23,10 @@ import de.sciss.synth.proc.AuralSystem
 import scala.collection.immutable.{Seq => ISeq}
 
 object RetrievalView {
-  def apply[S <: Sys[S]](queryInit: String = "", filterInit: Filter = Filter(), soundInit: ISeq[Sound] = Nil)
-           (implicit tx: S#Tx, client: Client, previewCache: PreviewsCache,
+  def apply[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound] = Nil)
+           (implicit tx: S#Tx, client: Client, previewsCache: PreviewsCache,
             aural: AuralSystem, cursor: stm.Cursor[S]): RetrievalView[S] =
-    impl.RetrievalViewImpl[S](queryInit = queryInit, filterInit = filterInit, soundInit = soundInit)
+    impl.RetrievalViewImpl[S](searchInit = searchInit, soundInit = soundInit)
 }
 trait RetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
   /** Swing view; must call on EDT! */
@@ -34,4 +34,6 @@ trait RetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
 
   /** Swing view; must call on EDT! */
   def soundTableView: SoundTableView
+
+  def search: TextSearch
 }

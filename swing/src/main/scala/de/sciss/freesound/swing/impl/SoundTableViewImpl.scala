@@ -301,12 +301,21 @@ object SoundTableViewImpl {
     def selection: ISeq[Sound] = {
       val xs      = sounds.toIndexedSeq
       val rows    = table.selection.rows
-      val res     = rows.iterator.map(xs.apply).toIndexedSeq
+      val tableJ  = table.peer
+      val res     = rows.iterator.map { vi =>
+        val mi = tableJ.convertRowIndexToModel(vi)
+        xs(mi)
+      } .toIndexedSeq
       res
     }
 
     def selection_=(xs: ISeq[Sound]): Unit = {
-      val indices = xs.iterator.map(sounds.indexOf).filter(_ >= 0).toSet
+      val tableJ  = table.peer
+      val indices = xs.iterator.map { s =>
+        val mi = sounds.indexOf(s)
+        val vi = if (mi < 0) mi else tableJ.convertRowIndexToView(mi)
+        vi
+      }.filter(_ >= 0).toSet
       val rows    = table.selection.rows
       rows.clear()
       rows ++= indices

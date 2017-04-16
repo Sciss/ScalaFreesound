@@ -33,12 +33,13 @@ object PreviewsCacheImpl {
   }
 
   def apply(dir: File, capacity: filecache.Limit)(implicit tx: TxnLike, client: Client): PreviewsCache = {
-    val config = filecache.Config[URI, File]()
-    config.capacity = capacity
-    config.evict    = (_ /* uri */, f) => if (!f.delete()) f.deleteOnExit()
-    config.space    = (_ /* uri */, f) => f.length()
-    config.accept   = (_ /* uri */, f) => f.length() > 0L
-    config.folder   = dir
+    val config        = filecache.Config[URI, File]()
+    config.capacity   = capacity
+    config.evict      = (_ /* uri */, f) => if (!f.delete()) f.deleteOnExit()
+    config.space      = (_ /* uri */, f) => f.length()
+    config.accept     = (_ /* uri */, f) => f.length() > 0L
+    config.folder     = dir
+    config.extension  = "freesound"
     config.folder.mkdirs()
 
     val prod: TxnProducer[URI, File] = TxnProducer(config)
