@@ -14,23 +14,46 @@
 package de.sciss.freesound
 package lucre
 
-import de.sciss.lucre.artifact.ArtifactLocation
+import de.sciss.freesound.lucre.impl.{RetrievalImpl => Impl}
+import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
+import de.sciss.lucre.event.Publisher
 import de.sciss.lucre.stm.{Obj, Sys}
+import de.sciss.model
 import de.sciss.serial.DataInput
 import de.sciss.synth.proc.Folder
-import impl.{RetrievalImpl => Impl}
+
+import scala.collection.immutable.{IndexedSeq => Vec}
 
 object Retrieval extends Obj.Type {
   final val typeID = 202
 
-  def apply[S <: Sys[S]]: Retrieval[S] = Impl[S]
+  /** Initializes all objects related to Freesound. */
+  override def init(): Unit = {
+    super         .init()
+    SoundObj      .init()
+    TextSearchObj .init()
+  }
+
+  def apply[S <: Sys[S]](initSearch: TextSearchObj[S], initLocation: ArtifactLocation[S])
+                        (implicit tx: S#Tx): Retrieval[S] =
+    Impl[S](initSearch = initSearch, initLocation = initLocation)
 
   def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] =
     Impl.readIdentifiedObj(in, access)
 
+  /** An update is a sequence of changes */
+  final case class Update[S <: Sys[S]](r: Retrieval[S], changes: Vec[Change[S]])
+
+  /** A change is either a state change, or a scan or a grapheme change */
+  sealed trait Change[S <: Sys[S]]
+
+  final case class TextSearchChange      [S <: Sys[S]](change: model.Change[TextSearch    ]) extends Change[S]
+  final case class DownloadLocationChange[S <: Sys[S]](change: model.Change[Artifact.Value]) extends Change[S]
+  final case class DownloadsChange       [S <: Sys[S]](change: Folder.Update[S])             extends Change[S]
+
   final val attrFreesound = "freesound"
 }
-trait Retrieval[S <: Sys[S]] extends Obj[S] {
+trait Retrieval[S <: Sys[S]] extends Obj[S] with Publisher[S, Retrieval.Update[S]] {
   /** Last performed text search settings. */
   def textSearch: TextSearchObj.Var[S]
 

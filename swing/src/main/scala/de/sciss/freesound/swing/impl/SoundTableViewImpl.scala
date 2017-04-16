@@ -203,7 +203,7 @@ object SoundTableViewImpl {
     Column( 4, "User"           , 56,  72, 128, _.userName        , None, None),
     Column( 5, "Created"        , 64,  96, 152, _.created         , Some(DateRenderer), Some(Ordering.by((d: Date) => d.getTime))),
     Column( 6, "License"        , 64,  96, 360, _.license         , None, None),
-    Column( 7, "Pack"           , 48,  52,  64, _.packId          , Some(PackRenderer), Some(Ordering.Option[Int /* URI */])),
+    Column( 7, "Pack"           , 48,  52,  64, _.packId          , Some(PackRenderer)        , Some(Ordering.Int   )),
     Column( 8, "Geo"            , 48,  60, 160, _.geoTag          , Some(GeoTagRenderer), Some(Ordering.Option[GeoTag])),
     Column( 9, "Type"           , 48,  52,  56, _.fileType        , None, None),
     Column(10, null             , 48,  52,  64, _.duration        , Some(DurationRenderer    ), Some(Ordering.Double),
