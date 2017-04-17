@@ -178,12 +178,13 @@ object RetrievalViewImpl {
             acquired() = Some   (sound)
             previewCache.acquire(sound)
           }
-          import SoundProcesses.executionContext
 
           timerPrepare.restart()
+
+          import previewCache.executionContext
           fut.onComplete { tr =>
-            cursor.step { implicit tx =>
-              if (acquired().contains(sound) && _disposed()) {
+            SoundProcesses.atomic[S, Unit] { implicit tx =>
+              if (acquired().contains(sound) && !_disposed()) {
                 deferTx(timerPrepare.stop())
                 (tr, aural.serverOption) match {
                   case (Success(f), Some(s)) =>

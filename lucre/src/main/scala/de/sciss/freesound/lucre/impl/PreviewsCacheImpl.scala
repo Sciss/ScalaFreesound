@@ -24,7 +24,7 @@ import de.sciss.lucre.stm.TxnLike
 import de.sciss.lucre.stm.TxnLike.peer
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object PreviewsCacheImpl {
   implicit private object uriSerializer extends ImmutableSerializer[URI] {
@@ -51,10 +51,10 @@ object PreviewsCacheImpl {
       implicit val exec = config.executionContext
       proc.transform[File]((_: Unit) => out, { e: Throwable => config.evict(uri, out); e })
     }
-    new Impl(cons)
+    new Impl(cons, config.executionContext)
   }
 
-  private final class Impl(cons: TxnConsumer[URI, File])
+  private final class Impl(cons: TxnConsumer[URI, File], val executionContext: ExecutionContext)
     extends PreviewsCache {
 
     private def key(sound: Sound): URI = sound.previewUri(ogg = true, hq = false)

@@ -18,7 +18,7 @@ import de.sciss.file.File
 import de.sciss.filecache.Limit
 import de.sciss.lucre.stm.TxnLike
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object PreviewsCache {
   def apply(dir: File, capacity: Limit = Limit(count = 100, space = 50L * 1024 * 1024))
@@ -28,4 +28,6 @@ object PreviewsCache {
 trait PreviewsCache {
   def acquire(sound: Sound)(implicit tx: TxnLike): Future[File]
   def release(sound: Sound)(implicit tx: TxnLike): Unit
+
+  implicit def executionContext: ExecutionContext
 }

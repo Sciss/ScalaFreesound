@@ -3,6 +3,7 @@ package lucre
 
 import de.sciss.file._
 import de.sciss.freesound.Implicits._
+import de.sciss.freesound.impl.FreesoundImpl
 import de.sciss.lucre.swing.deferTx
 import de.sciss.lucre.synth.InMemory
 import de.sciss.submin.Submin
@@ -19,6 +20,7 @@ object RetrievalApp {
 
   def run(): Unit = {
     Submin.install(true)
+    FreesoundImpl.DEBUG = true
 
     val baseDir   = file("/") / "data" / "temp"
     require(baseDir.isDirectory)

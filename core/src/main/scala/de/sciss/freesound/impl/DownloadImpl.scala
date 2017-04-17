@@ -43,7 +43,7 @@ object DownloadImpl {
       var progress: Double = 0.0
 
       private[this] val handler = FileWithProgress(out) { (pos, size) =>
-        val p = (pos * 100) / size
+        val p = pos.toDouble / size
         // println(s"progress: $p% ($pos of $size)")
         progress = p
         dispatch(Processor.Progress(this, p))
