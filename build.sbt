@@ -4,7 +4,7 @@ val baseNameL = baseName.toLowerCase
 val baseDescr = "A library for accessing freesound.org from Scala."
 
 lazy val commonSettings = Seq(
-  version               := "1.0.0-SNAPSHOT",
+  version               := "1.0.0",
   organization          := "de.sciss",
   scalaVersion          := "2.12.1",
   crossScalaVersions    := Seq("2.12.1", "2.11.8" /* , "2.10.6" */),
@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
   scalacOptions ++= {
     if (scalaVersion.value.startsWith("2.12")) Seq("-Xlint") else Nil
   }
-)
+) ++ publishSettings
 
 // ---- core dependencies ----
 
@@ -36,7 +36,6 @@ val fileCacheVersion      = "0.3.4"
 
 // ---- test dependencies ----
 
-//val scoptVersion         = "3.5.0"
 val subminVersion         = "0.2.1"
 val slf4jVersion          = "1.7.7"
 val scalaTestVersion      = "3.0.1"
@@ -45,7 +44,6 @@ val scalaTestVersion      = "3.0.1"
 
 lazy val core = project.in(file("core"))
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     name        := s"$baseName-core",
     moduleName  := s"$baseNameL-core",
@@ -57,7 +55,6 @@ lazy val core = project.in(file("core"))
       "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
       "de.sciss"                %% "fileutil"               % fileUtilVersion,
       "de.sciss"                %% "serial"                 % serialVersion,
-      //  "com.github.scopt"        %% "scopt"                  % scoptVersion    % "test",
       "org.scalatest"           %% "scalatest"              % scalaTestVersion % "test",
       "org.slf4j"               %  "slf4j-nop"              % slf4jVersion     % "test"
     ),
@@ -67,7 +64,6 @@ lazy val core = project.in(file("core"))
 lazy val swing = project.in(file("swing"))
   .dependsOn(core)
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     name        := s"$baseName-swing",
     moduleName  := s"$baseNameL-swing",
@@ -82,7 +78,6 @@ lazy val swing = project.in(file("swing"))
 lazy val lucre = project.in(file("lucre"))
   .dependsOn(swing)
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     name        := s"$baseName-lucre",
     moduleName  := s"$baseNameL-lucre",
@@ -95,7 +90,7 @@ lazy val lucre = project.in(file("lucre"))
   )
 
 lazy val root = project.in(file("."))
-  .dependsOn(core, swing, lucre)
+  // .dependsOn(core, swing, lucre)
   .aggregate(core, swing, lucre)
   .settings(commonSettings)
   .settings(

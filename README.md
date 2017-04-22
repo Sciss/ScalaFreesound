@@ -16,7 +16,7 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound" % v
 
-The current version `v` is `"1.0.0-SNAPSHOT"`
+The current version `v` is `"1.0.0"`
 
 ## contributing
 
