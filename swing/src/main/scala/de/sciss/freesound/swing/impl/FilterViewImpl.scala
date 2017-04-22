@@ -107,8 +107,8 @@ object FilterViewImpl {
   }
 
   private trait NumberPartFactory[R <: Expr[R]] extends PartFactory[R] {
-    def from(ex: R with QueryExpr.Const[R]): R
-    def to  (ex: R with QueryExpr.Const[R]): R
+    def from(ex: R with QueryExpr.Const[R]): R with QueryExpr.Const[R]
+    def to  (ex: R with QueryExpr.Const[R]): R with QueryExpr.Const[R]
   }
 
   private implicit object StringPartFactory extends PartFactory[StringExpr] {
@@ -137,28 +137,26 @@ object FilterViewImpl {
 
     def fromOption(opt: Option[R]): R.Option = opt.fold[R.Option](R.None)(identity)
 
-    def from(ex: R with QueryExpr.Const[R]): R = {
+    def from(ex: R with QueryExpr.Const[R]): R with QueryExpr.Const[R] = {
       val R.ConstSingle(v) = ex
       R.from(v)
     }
 
-    def to  (ex: R with QueryExpr.Const[R]): R = {
+    def to  (ex: R with QueryExpr.Const[R]): R with QueryExpr.Const[R] = {
       val R.ConstSingle(v) = ex
       R.to(v)
     }
 
-    def mkConstPart(i0: Int): PartConst[R] =
-      new UIntPartConstSingle(i0, min = min, max = max, step = step)
+    def mkConstPart(relation: NumberPartRel, i0: Int): PartConst[R] =
+      new UIntPartConst(relation, i0, min = min, max = max, step = step)
 
     override def mkPart(ex: R): Part[R] = ex match {
-      case R.ConstSingle(i0) => mkConstPart(i0)
+      case R.ConstSingle(i0) => mkConstPart(NumberPartEq, i0)
       case R.ConstRange (start, end)  =>
         if (start == -1) {
-          val endP = mkConstPart(end)
-          PartLtEq[R](endP)
+          mkConstPart(NumberPartLtEq, end)
         } else if (end == -1) {
-          val startP = mkConstPart(start)
-          PartGtEq[R](startP)
+          mkConstPart(NumberPartGtEq, start)
         } else {
           ??? // new UIntPartConst(s0)
         }
@@ -177,28 +175,26 @@ object FilterViewImpl {
 
     def fromOption(opt: Option[R]): R.Option = opt.fold[R.Option](R.None)(identity)
 
-    def from(ex: R with QueryExpr.Const[R]): R = {
+    def from(ex: R with QueryExpr.Const[R]): R with QueryExpr.Const[R] = {
       val R.ConstSingle(v) = ex
       R.from(v)
     }
 
-    def to  (ex: R with QueryExpr.Const[R]): R = {
+    def to  (ex: R with QueryExpr.Const[R]): R with QueryExpr.Const[R] = {
       val R.ConstSingle(v) = ex
       R.to(v)
     }
 
-    def mkConstPart(i0: Double): PartConst[R] =
-      new UDoublePartConstSingle(i0, min = min, max = max, step = step)
+    def mkConstPart(relation: NumberPartRel, i0: Double): PartConst[R] =
+      new UDoublePartConst(relation, i0, min = min, max = max, step = step)
 
     override def mkPart(ex: R): Part[R] = ex match {
-      case R.ConstSingle(i0) => mkConstPart(i0)
+      case R.ConstSingle(i0) => mkConstPart(NumberPartEq, i0)
       case R.ConstRange (start, end)  =>
         if (start == -1) {
-          val endP = mkConstPart(end)
-          PartLtEq[R](endP)
+          mkConstPart(NumberPartLtEq, end)
         } else if (end == -1) {
-          val startP = mkConstPart(start)
-          PartGtEq[R](startP)
+          mkConstPart(NumberPartGtEq, start)
         } else {
           ??? // new UDoublePartConst(s0)
         }
@@ -206,12 +202,20 @@ object FilterViewImpl {
     }
   }
 
-  private def mkMenuItemRemove[R <: Expr[R]](p: PartConst[R]): MenuItem =
+  private def mkMenuItemRemove[R <: Expr[R]](p: Part[R]): MenuItem =
     new MenuItem(Action("\u00d7 remove") {
       p.parent.remove(p)
     })
 
-  private def mkMenuItemOr[R <: Expr[R]](p: PartConst[R])(implicit factory: PartFactory[R]): MenuItem =
+  private def mkMenuItemPop[R <: Expr[R]](p: ParentContainer[R]): MenuItem =
+    new MenuItem(Action("\u00d7 remove") {
+      val c   = p.pop
+      val rep = p.factory.mkPart(c)
+      val par = p.parent
+      par.replace(p, rep)
+    })
+
+  private def mkMenuItemOr[R <: Expr[R]](p: Part[R])(implicit factory: PartFactory[R]): MenuItem =
     new MenuItem(Action("\u22c1 or") {
       val app = factory.mkPart(factory.zero) // new StringPartConst("")
       val par = p.parent  // catch it early!
@@ -219,7 +223,7 @@ object FilterViewImpl {
       par.replace(p, or)
     })
 
-  private def mkMenuItemAnd[R <: Expr[R]](p: PartConst[R])(implicit factory: PartFactory[R]): MenuItem =
+  private def mkMenuItemAnd[R <: Expr[R]](p: Part[R])(implicit factory: PartFactory[R]): MenuItem =
     new MenuItem(Action("\u22c0 and") {
       val app = factory.mkPart(factory.zero)
       val par = p.parent  // catch it early!
@@ -227,25 +231,37 @@ object FilterViewImpl {
       par.replace(p, or)
     })
 
-  private def mkMenuItemNot[R <: Expr[R]](p: PartConst[R])(implicit factory: PartFactory[R]): MenuItem =
+  private def mkMenuItemNot[R <: Expr[R]](p: Part[R])(implicit factory: PartFactory[R]): MenuItem =
     new MenuItem(Action("\u00ac not") {
       val par = p.parent  // catch it early!
       val not = PartNot(p)
       par.replace(p, not)
     })
 
-  private def mkMenuItemLtEq[R <: Expr[R]](p: PartConst[R])(implicit factory: NumberPartFactory[R]): MenuItem =
-    new MenuItem(Action("\u2264") {
+  private def mkMenuItemEq[R <: Expr[R]](p: NumberPartConst[R]): MenuItem =
+    new MenuItem(Action("=") {
+      val c   = p.toSingleExpr
+      val rep = p.factory.mkPart(c)
       val par = p.parent
-      val or  = PartLtEq(p)
-      par.replace(p, or)
+      par.replace(p, rep)
     })
 
-  private def mkMenuItemGtEq[R <: Expr[R]](p: PartConst[R])(implicit factory: NumberPartFactory[R]): MenuItem =
-    new MenuItem(Action("\u2265") {
+  private def mkMenuItemLtEq[R <: Expr[R]](p: NumberPartConst[R]): MenuItem =
+    new MenuItem(Action("\u2264") {
+      val c   = p.toSingleExpr
+      val gt  = p.factory.to(c)
+      val rep = p.factory.mkPart(gt)
       val par = p.parent
-      val or  = PartGtEq(p)
-      par.replace(p, or)
+      par.replace(p, rep)
+    })
+
+  private def mkMenuItemGtEq[R <: Expr[R]](p: NumberPartConst[R]): MenuItem =
+    new MenuItem(Action("\u2265") {
+      val c   = p.toSingleExpr
+      val gt  = p.factory.from(c)
+      val rep = p.factory.mkPart(gt)
+      val par = p.parent
+      par.replace(p, rep)
     })
 
   private trait PartConst[Repr] extends Part[Repr] {
@@ -273,26 +289,8 @@ object FilterViewImpl {
         contents += mkMenuItemAnd   (part)
         contents += mkMenuItemNot   (part)
       }
-      val ggEdit = new EditButton(pop)
-      val box = new BoxPanel(Orientation.Horizontal)
-//      {
-//        override lazy val peer: JPanel with SuperMixin = {
-//          val p = new javax.swing.JPanel with SuperMixin {
-////            override def getBaselineResizeBehavior: java.awt.Component.BaselineResizeBehavior =
-////              BaselineResizeBehavior.CONSTANT_ASCENT
-//            override def getBaseline(width: Int, height: Int): Int = {
-//              doLayout()
-//              val size = ggText.preferredSize
-//              val res = ggText.peer.getY + ggText.peer.getBaseline(size.width, size.height)
-//              println(s"getBaseline($width, $height) = $res")
-//              res
-//            }
-//          }
-//          val l = new javax.swing.BoxLayout(p, Orientation.Horizontal.id)
-//          p.setLayout(l)
-//          p
-//        }
-//      }
+      val ggEdit    = new EditButton(pop)
+      val box       = new BoxPanel(Orientation.Horizontal)
       box.contents += ggText
       box.contents += ggEdit
       box
@@ -301,10 +299,24 @@ object FilterViewImpl {
     def toExpr: StringExpr.Const = ggText.text
   }
 
-  private trait NumberPartConstSingle[R <: Expr[R]] extends PartConst[R] { part =>
+  private sealed trait NumberPartRel
+  private case object  NumberPartEq   extends NumberPartRel
+  private case object  NumberPartLtEq extends NumberPartRel
+  private case object  NumberPartGtEq extends NumberPartRel
+
+  private trait NumberPartConst[R <: Expr[R]] extends PartConst[R] { part =>
+
+    // ---- abstract ----
 
     protected def model: SpinnerNumberModel
-    implicit protected def factory: NumberPartFactory[R]
+
+    implicit def factory: NumberPartFactory[R]
+
+    protected def relation: NumberPartRel
+
+    def toSingleExpr: R with QueryExpr.Const[R]
+
+    // ---- impl ----
 
     private[this] lazy val ggSpinner = new Spinner(model)
 
@@ -315,38 +327,55 @@ object FilterViewImpl {
       }
       val pop = new PopupMenu {
         contents += mkMenuItemRemove(part)
-        contents += mkMenuItemLtEq  (part)
-        contents += mkMenuItemGtEq  (part)
+        if (relation != NumberPartEq  ) contents += mkMenuItemEq    (part)
+        if (relation != NumberPartLtEq) contents += mkMenuItemLtEq  (part)
+        if (relation != NumberPartGtEq) contents += mkMenuItemGtEq  (part)
         contents += mkMenuItemOr    (part)
         contents += mkMenuItemAnd   (part)
         contents += mkMenuItemNot   (part)
       }
       val ggEdit = new EditButton(pop)
       val box = new BoxPanel(Orientation.Horizontal)
+      if (relation != NumberPartEq) {
+        val lbRel     = if (relation == NumberPartGtEq) "\u2265" else "\u2264"
+        box.contents += HStrut(4)
+        box.contents += new Label(lbRel)
+      }
       box.contents += ggSpinner
       box.contents += ggEdit
       box
     }
+
+    final def toExpr: R with QueryExpr.Const[R] = {
+      val s = toSingleExpr
+      relation match {
+        case NumberPartEq   => s
+        case NumberPartGtEq => factory.from(s)
+        case NumberPartLtEq => factory.to  (s)
+      }
+    }
   }
 
-  private final class UIntPartConstSingle(init: Int, min: Int, max: Int, step: Int)
-                                         (implicit protected val factory: NumberPartFactory[UIntExpr])
-    extends NumberPartConstSingle[UIntExpr] {
+  private final class UIntPartConst(protected val relation: NumberPartRel,
+                                    init: Int, min: Int, max: Int, step: Int)
+                                   (implicit val factory: NumberPartFactory[UIntExpr])
+    extends NumberPartConst[UIntExpr] {
     part =>
 
     protected val model = new SpinnerNumberModel(init, min, max, step)
 
-    def toExpr: UIntExpr.ConstSingle = model.getNumber.intValue()
+    def toSingleExpr: UIntExpr.ConstSingle = model.getNumber.intValue()
   }
 
-  private final class UDoublePartConstSingle(init: Double, min: Double, max: Double, step: Double)
-                                         (implicit protected val factory: NumberPartFactory[UDoubleExpr])
-    extends NumberPartConstSingle[UDoubleExpr] {
+  private final class UDoublePartConst(protected val relation: NumberPartRel,
+                                       init: Double, min: Double, max: Double, step: Double)
+                                      (implicit val factory: NumberPartFactory[UDoubleExpr])
+    extends NumberPartConst[UDoubleExpr] {
     part =>
 
     protected val model = new SpinnerNumberModel(init, min, max, step)
 
-    def toExpr: UDoubleExpr.ConstSingle = model.getNumber.doubleValue()
+    def toSingleExpr: UDoubleExpr.ConstSingle = model.getNumber.doubleValue()
   }
 
   private final case class ChildPosition(child: Int, start: Int, count: Int)
@@ -398,24 +427,27 @@ object FilterViewImpl {
       val box = component
       box.revalidate()
       box.repaint()
-//      val p = box.peer.getParent
-//      if (p != null) {
-//        p.revalidate()
-//        p.repaint()
-//      }
       if (fire) fireChange()
     }
   }
 
-  private sealed abstract class ParentContainer[Repr](protected var _children: List[Part[Repr]])
-    extends Part[Repr] with ParentContainerBase[Repr] {
+  private sealed abstract class ParentContainer[R <: Expr[R]](protected var _children: List[Part[R]])
+    extends Part[R] with ParentContainerBase[R] {
+
+    // ---- abstract ----
+
+    def pop: R
+
+    implicit def factory: PartFactory[R]
+
+    // ---- impl ----
 
     _children.foreach(_.parent = this)
 
     final def fireChange(): Unit = parent.fireChange()
 
-    protected def becameEmpty()                   : Unit = parent.remove (this)
-    protected def becameSingle(child: Part[Repr]) : Unit = parent.replace(this, child)
+    protected def becameEmpty()                : Unit = parent.remove (this)
+    protected def becameSingle(child: Part[R]) : Unit = parent.replace(this, child)
 
     protected def childPosition(idx: Int): ChildPosition = {
       val start = idx * 2 + 1
@@ -425,16 +457,26 @@ object FilterViewImpl {
     }
   }
 
-  private trait AndOrLike[Repr] {
-    _: ParentContainer[Repr] =>
+  private trait AndOrLike[R <: Expr[R]] extends ParentContainer[R] {
+    part =>
+
+    // ---- abstract ----
 
     protected def opString: String
 
-    protected def mkOp(a: Repr, b: Repr): Repr
+    protected def mkOp(a: R, b: R): R
+
+    // ---- impl ----
 
     lazy val component: Component with SequentialContainer.Wrapper = {
       val childViews  = _children.map(_.component)
-      val ggEdit      = new EditButton(new PopupMenu)
+      val pop = new PopupMenu {
+        contents += mkMenuItemPop (part)
+        contents += mkMenuItemOr  (part)
+        contents += mkMenuItemAnd (part)
+        contents += mkMenuItemNot (part)
+      }
+      val ggEdit      = new EditButton(pop)
       val ggAll       = childViews.zipWithIndex.flatMap { case (view, i) =>
         new Label(if (i == 0) "(" else s" $opString ") :: view :: Nil
       }
@@ -447,35 +489,41 @@ object FilterViewImpl {
       box
     }
 
-    def toExpr: Repr = _children.map(_.toExpr).reduceLeft(mkOp)
+    def toExpr: R = _children.map(_.toExpr).reduceLeft(mkOp)
   }
 
   type Expr[R] = QueryExpr { type Repr = R }
 
-  private final case class PartOr[R <: Expr[R]](children: List[Part[R]])
+  private final case class PartOr[R <: Expr[R]](children: List[Part[R]])(implicit val factory: PartFactory[R])
     extends ParentContainer(children) with AndOrLike[R] {
 
     protected def opString = "\u22c1"
 
     protected def mkOp(a: R, b: R): R = a | b
+
+    def pop: R = children.head.toExpr
   }
 
-  private final case class PartAnd[R <: Expr[R]](children: List[Part[R]])
+  private final case class PartAnd[R <: Expr[R]](children: List[Part[R]])(implicit val factory: PartFactory[R])
     extends ParentContainer(children) with AndOrLike[R] {
 
     protected def opString = "\u22c0"
 
     protected def mkOp(a: R, b: R): R = a & b
+
+    def pop: R = children.head.toExpr
   }
 
-  private final case class PartNot[R <: Expr[R]](child: Part[R])
-    extends ParentContainer(child :: Nil) {
-
-    //    override protected def childPosition(idx: Int): ChildPosition =
-    //      ChildPosition(child = 1, start = 0, count = 2)
+  private final case class PartNot[R <: Expr[R]](child: Part[R])(implicit val factory: PartFactory[R])
+    extends ParentContainer(child :: Nil) { part =>
 
     lazy val component: Component with SequentialContainer.Wrapper = {
-      val ggEdit = new EditButton(new PopupMenu)
+      val pop = new PopupMenu {
+        contents += mkMenuItemPop (part)
+        contents += mkMenuItemOr  (part)
+        contents += mkMenuItemAnd (part)
+      }
+      val ggEdit = new EditButton(pop)
       val box = new BoxPanel(Orientation.Horizontal)
       box.contents ++= Seq(
         HStrut(4), new Label("¬("), child.component, new Label(")"), ggEdit
@@ -484,36 +532,8 @@ object FilterViewImpl {
     }
 
     def toExpr: R = !child.toExpr
-  }
 
-  private final case class PartGtEq[R <: Expr[R]](child: PartConst[R])(implicit factory: NumberPartFactory[R])
-    extends ParentContainer(child :: Nil) {
-
-    lazy val component: Component with SequentialContainer.Wrapper = {
-      val ggEdit = new EditButton(new PopupMenu)
-      val box = new BoxPanel(Orientation.Horizontal)
-      box.contents ++= Seq(
-        HStrut(4), new Label("\u2265"), child.component, ggEdit
-      )
-      box
-    }
-
-    def toExpr: R = factory.from(child.toExpr)
-  }
-
-  private final case class PartLtEq[R <: Expr[R]](child: PartConst[R])(implicit factory: NumberPartFactory[R])
-    extends ParentContainer(child :: Nil) {
-
-    lazy val component: Component with SequentialContainer.Wrapper = {
-      val ggEdit = new EditButton(new PopupMenu)
-      val box = new BoxPanel(Orientation.Horizontal)
-      box.contents ++= Seq(
-        HStrut(4), new Label("\u2264"), child.component, ggEdit
-      )
-      box
-    }
-
-    def toExpr: R = factory.to(child.toExpr)
+    def pop: R = child.toExpr
   }
 
   private trait PartTop[R <: Expr[R]] extends ParentContainerBase[R] { self =>
@@ -675,7 +695,7 @@ object FilterViewImpl {
 
     protected implicit val factory: UIntPartFactory = new UIntPartFactory(min = min, max = max, step = step)
 
-    protected def mkConst(): Part[R] = factory.mkConstPart(default)
+    protected def mkConst(): Part[R] = factory.mkConstPart(NumberPartEq, default)
   }
 
   private final class UDoublePartTop(val get: () => UDoubleExpr.Option,
@@ -689,7 +709,7 @@ object FilterViewImpl {
 
     protected implicit val factory: UDoublePartFactory = new UDoublePartFactory(min = min, max = max, step = step)
 
-    protected def mkConst(): Part[R] = factory.mkConstPart(default)
+    protected def mkConst(): Part[R] = factory.mkConstPart(NumberPartEq, default)
   }
 
   private final class Impl(private var _filter: Filter) extends FilterView with ModelImpl[Filter] {
