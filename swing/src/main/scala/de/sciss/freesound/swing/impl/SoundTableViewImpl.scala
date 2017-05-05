@@ -16,16 +16,14 @@ package swing
 package impl
 
 import java.awt
-import java.awt.{Color, Graphics}
 import java.awt.geom.Path2D
-import java.text.SimpleDateFormat
+import java.awt.{Color, Graphics}
 import java.util.{Comparator, Date}
 import javax.swing.table.{AbstractTableModel, DefaultTableCellRenderer, TableCellRenderer, TableRowSorter}
 import javax.swing.{Icon, JTable, SwingConstants}
 
 import de.sciss.icons.raphael
 import de.sciss.model.impl.ModelImpl
-import org.json4s.DefaultFormats
 import sun.swing.table.DefaultTableCellHeaderRenderer
 
 import scala.collection.immutable.{Seq => ISeq}
@@ -146,14 +144,8 @@ object SoundTableViewImpl {
   }
 
   private object DateRenderer extends DefaultTableCellRenderer {
-    private[this] val df = {
-      val res = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss")
-      res.setTimeZone(DefaultFormats.UTC)
-      res
-    }
-
     override def setValue(value: AnyRef): Unit = value match {
-      case d: Date => setText(df.format(d))
+      case d: Date => setText(SoundView.createdString(d))
       case _ => super.setValue(value)
     }
   }
@@ -179,16 +171,7 @@ object SoundTableViewImpl {
 
     override def setValue(value: AnyRef): Unit = value match {
       case d: java.lang.Long =>
-        val si    = true
-        val unit  = if (si) 1000 else 1024
-        val bytes = d.longValue()
-        val s =
-          if (bytes < unit) bytes + " B"
-          else {
-            val exp = (math.log(bytes) / math.log(unit)).toInt
-            val pre = (if (si) "kMGTPE" else "KMGTPE").charAt(exp - 1) + (if (si) "" else "i")
-            String.format("%.1f %sB", (bytes / math.pow(unit, exp)).asInstanceOf[java.lang.Double], pre)
-          }
+        val s = SoundView.fileSizeString(d)
         setText(s)
 
       case _ => super.setValue(value)

@@ -3,11 +3,14 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
+lazy val projectVersion = "1.1.0-SNAPSHOT"
+lazy val mimaVersion    = "1.0.0" // used for migration-manager
+
 lazy val commonSettings = Seq(
-  version               := "1.0.0",
+  version               := projectVersion,
   organization          := "de.sciss",
-  scalaVersion          := "2.12.1",
-  crossScalaVersions    := Seq("2.12.1", "2.11.8" /* , "2.10.6" */),
+  scalaVersion          := "2.12.2",
+  crossScalaVersions    := Seq("2.12.2", "2.11.11" /* , "2.10.6" */),
   homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint"),
@@ -37,8 +40,8 @@ val fileCacheVersion      = "0.3.4"
 // ---- test dependencies ----
 
 val subminVersion         = "0.2.1"
-val slf4jVersion          = "1.7.7"
-val scalaTestVersion      = "3.0.1"
+val slf4jVersion          = "1.7.25"
+val scalaTestVersion      = "3.0.3"
 
 // ---- modules ----
 
@@ -58,6 +61,7 @@ lazy val core = project.in(file("core"))
       "org.scalatest"           %% "scalatest"              % scalaTestVersion % "test",
       "org.slf4j"               %  "slf4j-nop"              % slf4jVersion     % "test"
     ),
+    mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-core" % mimaVersion),
     initialCommands in (Test, console) := initialCmd()
   )
 
@@ -72,7 +76,8 @@ lazy val swing = project.in(file("swing"))
       "de.sciss" %% "swingplus"     % swingPlusVersion,
       "de.sciss" %% "raphael-icons" % raphaelVersion,
       "de.sciss" %  "submin"        % subminVersion % "test"
-    )
+    ),
+    mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-swing" % mimaVersion)
   )
 
 lazy val lucre = project.in(file("lucre"))
@@ -86,7 +91,8 @@ lazy val lucre = project.in(file("lucre"))
       "de.sciss" %% "soundprocesses-views" % soundProcessesVersion,
       "de.sciss" %% "filecache-txn"        % fileCacheVersion,
       "de.sciss" %  "submin"               % subminVersion % "test"
-    )
+    ),
+    mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
 
 lazy val root = project.in(file("."))
@@ -136,7 +142,7 @@ lazy val publishSettings = Seq(
   },
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
-  pomExtra := { val n = name.value
+  pomExtra := { val n = baseName
 <scm>
   <url>git@github.com:Sciss/{n}.git</url>
   <connection>scm:git:git@github.com:Sciss/{n}.git</connection>

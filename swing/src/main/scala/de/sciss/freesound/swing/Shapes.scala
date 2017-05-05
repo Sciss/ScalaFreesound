@@ -126,7 +126,6 @@ object Shapes {
     p.lineTo(4.0839844f, 1.1660156f)
   }
 
-
   def SoundInfo(p: Path2D): Unit = {
     p.moveTo(15.052734f, 1.0722656f)
     p.curveTo(12.807239f, 1.1615516f, 11.552734f, 2.639269f, 11.552734f, 4.5722656f)

@@ -17,8 +17,6 @@ import de.sciss.freesound.Filter.StringTokens
 import de.sciss.optional.Optional
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
-import scala.language.implicitConversions
-
 object Filter {
   private final implicit class OptionalBooleanOps(private val opt: Optional[Boolean]) /* extends AnyVal */ {
     def mkParam(key: String): Option[String] = opt.map(value => s"$key:$value")

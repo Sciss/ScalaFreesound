@@ -14,14 +14,14 @@
 package de.sciss.freesound
 package lucre
 
-import de.sciss.freesound.swing.{SearchView, SoundTableView}
+import de.sciss.freesound.swing.{SearchView, SoundTableView, SoundView}
 import de.sciss.lucre.stm
 import de.sciss.lucre.swing.View
 import de.sciss.lucre.synth.Sys
 import de.sciss.synth.proc.AuralSystem
 
 import scala.collection.immutable.{Seq => ISeq}
-import scala.swing.{Component, Panel, SequentialContainer, TabbedPane}
+import scala.swing.{Component, SequentialContainer, TabbedPane}
 
 object RetrievalView {
   def apply[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound] = Nil)
@@ -36,6 +36,9 @@ trait RetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
   /** Swing view; must call on EDT! */
   def soundTableView: SoundTableView
 
+  /** Swing view; must call on EDT! */
+  def soundView: SoundView
+
   /** Swing view -- clients can append their own components. */
   def resultBottomComponent: Component with SequentialContainer
 
@@ -43,4 +46,13 @@ trait RetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
   def tabbedPane: TabbedPane
 
   def search: TextSearch
+
+  /** Shows the tab for the search settings. */
+  def showSearch    (): Unit
+
+  /** Shows the tab for the search results. */
+  def showResults   (): Unit
+
+  /** Shows the tab for the sound information. */
+  def showInfo      (): Unit
 }

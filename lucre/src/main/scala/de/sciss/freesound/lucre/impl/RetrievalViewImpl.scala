@@ -16,23 +16,26 @@ package lucre
 package impl
 
 import java.awt.Toolkit
-import javax.swing.Timer
+import java.awt.geom.Path2D
+import javax.swing.{Icon, JComponent, KeyStroke, Timer}
 
 import de.sciss.audiowidgets.Transport
 import de.sciss.audiowidgets.Transport.{ButtonStrip, Loop, Play, Stop}
 import de.sciss.file._
-import de.sciss.freesound.swing.{SearchView, SoundTableView}
+import de.sciss.freesound.swing.{SearchView, Shapes, SoundTableView, SoundView}
+import de.sciss.icons.raphael
 import de.sciss.lucre.stm
 import de.sciss.lucre.stm.TxnLike.peer
-import de.sciss.lucre.swing.{deferTx, requireEDT}
 import de.sciss.lucre.swing.impl.ComponentHolder
+import de.sciss.lucre.swing.{deferTx, requireEDT}
 import de.sciss.lucre.synth.{Buffer, Server, Synth, Sys}
 import de.sciss.synth.proc.{AuralSystem, SoundProcesses}
 import de.sciss.synth.{ControlSet, SynthGraph}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.stm.Ref
-import scala.swing.{BorderPanel, BoxPanel, Component, Orientation, Panel, SequentialContainer, Swing, TabbedPane}
+import scala.swing.event.Key
+import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Component, Orientation, Panel, SequentialContainer, Swing, TabbedPane}
 import scala.util.Success
 
 object RetrievalViewImpl {
@@ -40,6 +43,33 @@ object RetrievalViewImpl {
            (implicit tx: S#Tx, client: Client, previewsCache: PreviewsCache,
             aural: AuralSystem, cursor: stm.Cursor[S]): RetrievalView[S] = {
     new Impl[S](searchInit, soundInit).init()
+  }
+
+  private def iconNormal  (fun: Path2D => Unit): Icon = raphael.TexturedIcon        (20)(fun)
+  private def iconDisabled(fun: Path2D => Unit): Icon = raphael.TexturedDisabledIcon(20)(fun)
+
+  private def toolButton(action: Action, iconFun: Path2D => Unit, tooltip: String = ""): Button = {
+    val res           = new Button(action)
+    res.peer.putClientProperty("styleId", "icon-space")
+    res.icon          = iconNormal  (iconFun)
+    res.disabledIcon  = iconDisabled(iconFun)
+    // res.peer.putClientProperty("JButton.buttonType", "textured")
+    if (!tooltip.isEmpty) res.tooltip = tooltip
+    res
+  }
+
+  private def addGlobalKeyWhenVisible(b: AbstractButton, keyStroke: KeyStroke): Unit = {
+    val click = Action(null) {
+      if (b.showing) b.doClick()
+    }
+    b.peer.getActionMap.put("click", click.peer)
+    b.peer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, "click")
+  }
+
+  private def addGlobalAction(c: Component, name: String, keyStroke: KeyStroke)(body: => Unit): Unit = {
+    val a = Action(null)(body)
+    c.peer.getActionMap.put(name, a.peer)
+    c.peer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, name)
   }
 
   private final class Impl[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
@@ -65,9 +95,15 @@ object RetrievalViewImpl {
       deferTx(timerPrepare.stop())
     }
 
-    private[this] var selected = Option.empty[Sound]
+    private[this] var selected = ISeq.empty[Sound]
 
-    private def selectionUpdated(): Unit = ()
+    private def updateSelection(xs: ISeq[Sound]): Unit = {
+      selected        = xs
+      val isSingle    = xs.size == 1
+      val ggPlay      = transPane.button(Play).get
+      ggPlay.enabled  = isSingle
+      ggView.enabled  = xs.nonEmpty
+    }
 
     private[this] val acquired  = Ref(Option.empty[Sound])
     private[this] val synth     = Ref(Option.empty[Synth])
@@ -75,6 +111,7 @@ object RetrievalViewImpl {
 
     private[this] var timerPrepare: Timer = _
     private[this] var transPane   : Component with ButtonStrip = _
+    private[this] var ggView      : Button = _
 
     private def play(s: Server, f: File, sampleRate: Double, numChannels: Int)(implicit tx: S#Tx): Unit = {
       val buf = Buffer.diskIn(s)(path = f.path, startFrame = 0L, numChannels = numChannels)
@@ -117,8 +154,13 @@ object RetrievalViewImpl {
 
     private[this] var _searchView     : SearchView      = _
     private[this] var _soundTableView : SoundTableView  = _
+    private[this] var _soundView      : SoundView       = _
     private[this] var _bottomPane     : BoxPanel        = _
     private[this] var _tabs           : TabbedPane      = _
+
+    private[this] var pageSearch  : TabbedPane.Page = _
+    private[this] var pageResults : TabbedPane.Page = _
+    private[this] var pageInfo    : TabbedPane.Page = _
 
     def resultBottomComponent: Panel with SequentialContainer = _bottomPane
 
@@ -134,13 +176,23 @@ object RetrievalViewImpl {
       _soundTableView
     }
 
+    def soundView: SoundView = {
+      requireEDT()
+      _soundView
+    }
+
+    def showSearch  (): Unit = _tabs.selection.page = pageSearch
+    def showResults (): Unit = _tabs.selection.page = pageResults
+    def showInfo    (): Unit = _tabs.selection.page = pageInfo
+
     def search: TextSearch = TextSearch(
       query = _searchView.query, filter = _searchView.filter, sort =_searchView.sort,
       groupByPack = _searchView.groupByPack, maxItems = _searchView.maxItems)
 
     private def guiInit(): Unit = {
-      _searchView      = SearchView    ()
-      _soundTableView  = SoundTableView()
+      _searchView       = SearchView    ()
+      _soundTableView   = SoundTableView()
+      _soundView        = SoundView     ()
 
       _searchView.query       = searchInit.query
       _searchView.groupByPack = searchInit.groupByPack
@@ -166,43 +218,44 @@ object RetrievalViewImpl {
         markT  (Stop)
       }
 
-      def previewPlay(): Unit =
-        for {
-          sound <- selected
-//          previews <- sound.previews
-        } {
-          unmarkT(Stop)
+      def previewPlay(): Unit = selected match {
+        case ISeq(single) => previewPlay1(single)
+        case _ =>
+      }
 
-          val fut = cursor.step { implicit tx =>
-            stopAndRelease()
-            acquired() = Some   (sound)
-            previewCache.acquire(sound)
-          }
+      def previewPlay1(sound: Sound): Unit = {
+        unmarkT(Stop)
 
-          timerPrepare.restart()
+        val fut = cursor.step { implicit tx =>
+          stopAndRelease()
+          acquired() = Some   (sound)
+          previewCache.acquire(sound)
+        }
 
-          import previewCache.executionContext
-          fut.onComplete { tr =>
-            SoundProcesses.atomic[S, Unit] { implicit tx =>
-              if (acquired().contains(sound) && !_disposed()) {
-                deferTx(timerPrepare.stop())
-                (tr, aural.serverOption) match {
-                  case (Success(f), Some(s)) =>
-                    val sampleRate  = sound.sampleRate                // this seems to be preserved
-                    val numChannels = math.min(2, sound.numChannels)  // this seems to be constrained
-                    play(s, f, sampleRate = sampleRate, numChannels = numChannels)
-                    deferTx(markT(Play))
+        timerPrepare.restart()
 
-                  case _ =>
-                    deferTx {
-                      unmarkT(Play)
-                      markT  (Stop)
-                    }
-                }
+        import previewCache.executionContext
+        fut.onComplete { tr =>
+          SoundProcesses.atomic[S, Unit] { implicit tx =>
+            if (acquired().contains(sound) && !_disposed()) {
+              deferTx(timerPrepare.stop())
+              (tr, aural.serverOption) match {
+                case (Success(f), Some(s)) =>
+                  val sampleRate  = sound.sampleRate                // this seems to be preserved
+                  val numChannels = math.min(2, sound.numChannels)  // this seems to be constrained
+                  play(s, f, sampleRate = sampleRate, numChannels = numChannels)
+                  deferTx(markT(Play))
+
+                case _ =>
+                  deferTx {
+                    unmarkT(Play)
+                    markT  (Stop)
+                  }
               }
             }
           }
         }
+      }
 
       def previewLoop(): Unit = {
         val gg = transPane.button(Loop).get
@@ -230,7 +283,22 @@ object RetrievalViewImpl {
 //      axis.fixedBounds  = true
 //      axis.format       = AxisFormat.Time()
 
+      pageInfo    = new TabbedPane.Page("Sound"  , _soundView.component , null)
+
+      def viewSounds(): Unit = selected match {
+        case ISeq(single) =>
+          _soundView.sound = Some(single)
+          showInfo()
+        case _ =>
+      }
+
+      ggView = toolButton(Action(null)(viewSounds()), Shapes.SoundInfo /* raphael.Shapes.View */, tooltip = "View Sound Information")
+      val menu1 = Toolkit.getDefaultToolkit.getMenuShortcutKeyMask
+      addGlobalKeyWhenVisible(ggView, KeyStroke.getKeyStroke(Key.I.id, menu1))
+
       _bottomPane = new BoxPanel(Orientation.Horizontal) {
+        contents += Swing.HStrut(4)
+        contents += ggView
         contents += Swing.HStrut(4)
         contents += transPane
         contents += Swing.HStrut(4)
@@ -249,24 +317,36 @@ object RetrievalViewImpl {
       _tabs        = new TabbedPane
       _tabs.peer.putClientProperty("styleId", "attached")
       _tabs.focusable  = false
-      val pageSearch  = new TabbedPane.Page("Search" , _searchView.component, null)
-      val pageResults = new TabbedPane.Page("Results", resultsPane          , null)
+      pageSearch  = new TabbedPane.Page("Search" , _searchView.component, null)
+      pageResults = new TabbedPane.Page("Results", resultsPane          , null)
       _tabs.pages     += pageSearch
       _tabs.pages     += pageResults
+      _tabs.pages     += pageInfo
+
+      addGlobalAction(_tabs, "prev", KeyStroke.getKeyStroke(Key.Left.id, Key.Modifier.Alt)) {
+        val sel   = _tabs.selection
+        val idx   = sel.index - 1
+        sel.index = if (idx >= 0) idx else _tabs.pages.size - 1
+      }
+      addGlobalAction(_tabs, "next", KeyStroke.getKeyStroke(Key.Right.id, Key.Modifier.Alt)) {
+        val sel   = _tabs.selection
+        val idx   = sel.index + 1
+        sel.index = if (idx < _tabs.pages.size) idx else 0
+      }
+      addGlobalAction(_tabs, "play-stop", KeyStroke.getKeyStroke(Key.Space.id, 0)) {
+        if (transPane.showing) {
+          if (synth.single.get.isDefined) previewStop() else previewPlay()
+        }
+      }
 
       _searchView.addListener {
         case SearchView.SearchResult(_, _, Success(xs)) =>
           _soundTableView.sounds = xs
-          _tabs.selection.page   = pageResults
+          showResults()
       }
 
       _soundTableView.addListener {
-        case SoundTableView.Selection(xs) =>
-          selected = xs match {
-            case Seq(x) => Some(x)
-            case _      => None
-          }
-          selectionUpdated()
+        case SoundTableView.Selection(xs) => updateSelection(xs)
       }
 
       component = _tabs
