@@ -18,7 +18,7 @@ To link to it:
     libraryDependencies += "de.sciss" %% "scalafreesound-swing" % v
     libraryDependencies += "de.sciss" %% "scalafreesound-lucre" % v
 
-The current version `v` is `"1.1.0-SNAPSHOT"`
+The current version `v` is `"1.1.0"`
 
 ## contributing
 
