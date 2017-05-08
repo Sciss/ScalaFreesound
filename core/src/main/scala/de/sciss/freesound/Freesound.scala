@@ -53,6 +53,11 @@ object Freesound {
     */
   var urlImage          = s"$urlHome/data/displays/%s/%s_%s_%s"
 
+  /** URL for web-based application authorization by user. Contains one `%s` placeholder:
+    * The public client id (`client.id`).
+    */
+  var urlWebAuthorize   = s"$urlApiBase/oauth2/authorize/?client_id=%&response_type=code"
+
   /** Reads a Json file containing an object with fields
     * `id` and `secret`, specifying a client or application's
     * access keys to Freesound (http://www.freesound.org/apiv2/apply).

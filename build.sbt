@@ -3,7 +3,7 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.1.0"
+lazy val projectVersion = "1.1.1-SNAPSHOT"
 lazy val mimaVersion    = "1.1.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
@@ -42,6 +42,7 @@ val fileCacheVersion      = "0.3.4"
 val subminVersion         = "0.2.1"
 val slf4jVersion          = "1.7.25"
 val scalaTestVersion      = "3.0.3"
+val jFLACVersion          = "1.5.1"
 
 // ---- modules ----
 
@@ -59,7 +60,8 @@ lazy val core = project.in(file("core"))
       "de.sciss"                %% "fileutil"               % fileUtilVersion,
       "de.sciss"                %% "serial"                 % serialVersion,
       "org.scalatest"           %% "scalatest"              % scalaTestVersion % "test",
-      "org.slf4j"               %  "slf4j-nop"              % slf4jVersion     % "test"
+      "org.slf4j"               %  "slf4j-nop"              % slf4jVersion     % "test",
+      "org.jflac"               %  "jflac-codec"            % jFLACVersion     % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-core" % mimaVersion),
     initialCommands in (Test, console) := initialCmd()

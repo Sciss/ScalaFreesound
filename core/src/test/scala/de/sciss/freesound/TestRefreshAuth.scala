@@ -13,11 +13,14 @@ object TestRefreshAuth {
       else sys.error("Need to specify access token")
     }
 
+    // prevent JVM from instantly exiting
+    new Thread { override def run(): Unit = this.synchronized(this.wait()) }.start()
+
     import dispatch.Defaults.executor
     Freesound.refreshAuth().onComplete {
-      case Success(auth) =>
+      case Success(authNew) =>
         println("Writing...")
-        Freesound.writeAuth()(auth)
+        Freesound.writeAuth()(authNew)
         sys.exit()
       case Failure(ex) =>
         println("refreshAuth failed:")

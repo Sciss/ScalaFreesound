@@ -48,7 +48,7 @@ object RetrievalViewImpl {
   private def iconNormal  (fun: Path2D => Unit): Icon = raphael.TexturedIcon        (20)(fun)
   private def iconDisabled(fun: Path2D => Unit): Icon = raphael.TexturedDisabledIcon(20)(fun)
 
-  private def toolButton(action: Action, iconFun: Path2D => Unit, tooltip: String = ""): Button = {
+  private def toolButton(action: Action, iconFun: Path2D => Unit, tooltip: String): Button = {
     val res           = new Button(action)
     res.peer.putClientProperty("styleId", "icon-space")
     res.icon          = iconNormal  (iconFun)
