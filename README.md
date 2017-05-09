@@ -14,11 +14,15 @@ ScalaOSC currently builds against Scala 2.12, 2.11 using sbt 0.13.
 
 To link to it:
 
-    libraryDependencies += "de.sciss" %% "scalafreesound-core"  % v
-    libraryDependencies += "de.sciss" %% "scalafreesound-swing" % v
-    libraryDependencies += "de.sciss" %% "scalafreesound-lucre" % v
+    libraryDependencies += "de.sciss" %% "scalafreesound"  % v
+    
+Or to link to an individual module
 
-The current version `v` is `"1.1.0"`
+    libraryDependencies += "de.sciss" %% "scalafreesound-core"        % v
+    libraryDependencies += "de.sciss" %% "scalafreesound-swing"       % v
+    libraryDependencies += "de.sciss" %% "scalafreesound-compression" % v
+
+The current version `v` is `"1.1.2"`
 
 ## contributing
 

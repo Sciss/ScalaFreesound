@@ -1,15 +1,10 @@
 package de.sciss.freesound
 
-import java.io.{FileInputStream, FileOutputStream}
-
 import de.sciss.file._
-import org.jflac.metadata.StreamInfo
-import org.jflac.util.{ByteData, WavWriter}
-import org.jflac.{FLACDecoder, PCMProcessor}
 
 import scala.concurrent.blocking
 
-object TestDownloadAndConvert {
+object TestDownloadFLACAndConvert {
   def main(args: Array[String]): Unit = {
     implicit val auth: Auth = {
       val f = file("auth.json")
@@ -29,23 +24,7 @@ object TestDownloadAndConvert {
 
     val futRes = futDL.map { _ =>
       blocking {
-        val is = new FileInputStream(fOut)
-        try {
-          val os = new FileOutputStream(fOutD)
-          try {
-            val d = new FLACDecoder(is)
-            val w = new WavWriter  (os)
-            d.addPCMProcessor(new PCMProcessor {
-              def processStreamInfo(info: StreamInfo): Unit = w.writeHeader(info)
-              def processPCM       (data: ByteData  ): Unit = w.writePCM   (data)
-            })
-            d.decode()
-          } finally {
-            os.close()
-          }
-        } finally {
-          is.close()
-        }
+        Codec.convertFLACToWave(fOut, fOutD)
       }
     }
 

@@ -745,7 +745,7 @@ object FilterViewImpl {
       EntryView(mkLabel(name), top)
     }
 
-    private def mkI(name: String, df: Int = 0, min: Int = 0, max: Int = Int.MaxValue,
+    private def mkI(name: String, df: Int, min: Int = 0, max: Int,
                     step: Int = 1)(init: => UIntExpr.Option)
                    (copy: UIntExpr.Option => Filter): EntryView[UIntExpr] = {
       val top = new UIntPartTop(() => init, default = df, min = min, max = max, step = step, set = { v =>
@@ -755,8 +755,7 @@ object FilterViewImpl {
       EntryView(mkLabel(name), top)
     }
 
-    private def mkD(name: String, df: Double = 0.0,
-                    min: Double = 0.0, max: Double = Double.MaxValue, step: Double = 0.1)
+    private def mkD(name: String, df: Double, min: Double, max: Double, step: Double = 0.1)
                    (init: => UDoubleExpr.Option)
                    (copy: UDoubleExpr.Option => Filter): EntryView[UDoubleExpr] = {
       val top = new UDoublePartTop(() => init, default = df, min = min, max = max, step = step, set = { v =>

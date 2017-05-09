@@ -3,7 +3,7 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.1.1-SNAPSHOT"
+lazy val projectVersion = "1.1.2"
 lazy val mimaVersion    = "1.1.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
@@ -43,6 +43,7 @@ val subminVersion         = "0.2.1"
 val slf4jVersion          = "1.7.25"
 val scalaTestVersion      = "3.0.3"
 val jFLACVersion          = "1.5.1"
+val jump3rVersion         = "1.0.4"
 
 // ---- modules ----
 
@@ -59,9 +60,7 @@ lazy val core = project.in(file("core"))
       "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
       "de.sciss"                %% "fileutil"               % fileUtilVersion,
       "de.sciss"                %% "serial"                 % serialVersion,
-      "org.scalatest"           %% "scalatest"              % scalaTestVersion % "test",
-      "org.slf4j"               %  "slf4j-nop"              % slf4jVersion     % "test",
-      "org.jflac"               %  "jflac-codec"            % jFLACVersion     % "test"
+      "org.scalatest"           %% "scalatest"              % scalaTestVersion % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-core" % mimaVersion),
     initialCommands in (Test, console) := initialCmd()
@@ -97,16 +96,33 @@ lazy val lucre = project.in(file("lucre"))
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
 
+lazy val compression = project.in(file("compression"))
+  .dependsOn(core)
+  .settings(commonSettings)
+  .settings(
+    name        := s"$baseName-compression",
+    moduleName  := s"$baseNameL-compression",
+    description := s"$baseDescr (decompression for FLAC and mp3)",
+    libraryDependencies ++= Seq(
+      "org.jflac" %  "jflac-codec" % jFLACVersion,
+      "de.sciss"  %  "jump3r"      % jump3rVersion,
+      "org.slf4j" %  "slf4j-nop"   % slf4jVersion % "test"
+    ),
+    mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-compression" % mimaVersion)
+  )
+
 lazy val root = project.in(file("."))
-  // .dependsOn(core, swing, lucre)
-  .aggregate(core, swing, lucre)
+  .aggregate(core, swing, lucre, compression)
+  .dependsOn(core, swing, lucre, compression)
   .settings(commonSettings)
   .settings(
     name        := baseName,
     moduleName  := baseNameL,
     description := baseDescr,
     initialCommands in (Test, console) := initialCmd(),
-    packagedArtifacts := Map.empty           // prevent publishing anything!
+    publishArtifact in (Compile, packageBin) := false, // there are no binaries
+    publishArtifact in (Compile, packageDoc) := false, // there are no javadocs
+    publishArtifact in (Compile, packageSrc) := false  // there are no sources
   )
 
 def initialCmd(): String = {
