@@ -17,6 +17,7 @@ import java.io.{FileInputStream, FileOutputStream}
 
 import de.sciss.file._
 import de.sciss.jump3r
+import de.sciss.synth.io.{AudioFileType, SampleFormat}
 import org.jflac.metadata.StreamInfo
 import org.jflac.util.{ByteData, WavWriter}
 import org.jflac.{FLACDecoder, PCMProcessor}
@@ -26,6 +27,7 @@ object Codec {
   def convertToWave(in: File, inType: FileType, out: File): Unit = inType match {
     case FileType.FLAC  => convertFLACToWave(in = in, out = out)
     case FileType.MP3   => convertMP3ToWave (in = in, out = out)
+    case FileType.Ogg   => convertOggToWave (in = in, out = out)
     case _              => throw new UnsupportedOperationException(s"Codec conversion from $inType")
   }
 
@@ -52,6 +54,15 @@ object Codec {
       }
     } finally {
       is.close()
+    }
+  }
+
+  def convertOggToWave(in: File, out: File): Unit = {
+    val fis = new FileInputStream(in)
+    try {
+      OggDecoder.decode(fis, out, AudioFileType.Wave, SampleFormat.Int16)
+    } finally {
+      fis.close()
     }
   }
 }
