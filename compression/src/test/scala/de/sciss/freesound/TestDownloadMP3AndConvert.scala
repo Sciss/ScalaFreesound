@@ -1,7 +1,6 @@
 package de.sciss.freesound
 
 import de.sciss.file._
-import de.sciss.jump3r
 
 import scala.concurrent.blocking
 

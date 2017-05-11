@@ -3,7 +3,7 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.1.2"
+lazy val projectVersion = "1.1.3-SNAPSHOT"
 lazy val mimaVersion    = "1.1.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
@@ -37,13 +37,18 @@ val raphaelVersion        = "1.0.4"
 val soundProcessesVersion = "3.11.0"
 val fileCacheVersion      = "0.3.4"
 
+// ---- compression dependencies ----
+
+val audioFileVersion      = "1.4.6"   // PCM support
+val jFLACVersion          = "1.5.1"   // FLAC support
+val jump3rVersion         = "1.0.4"   // mp3 support
+val jOrbisVersion         = "0.0.17"  // Ogg Vorbis support
+
 // ---- test dependencies ----
 
 val subminVersion         = "0.2.1"
 val slf4jVersion          = "1.7.25"
 val scalaTestVersion      = "3.0.3"
-val jFLACVersion          = "1.5.1"
-val jump3rVersion         = "1.0.4"
 
 // ---- modules ----
 
@@ -102,11 +107,13 @@ lazy val compression = project.in(file("compression"))
   .settings(
     name        := s"$baseName-compression",
     moduleName  := s"$baseNameL-compression",
-    description := s"$baseDescr (decompression for FLAC and mp3)",
+    description := s"$baseDescr (decompression for FLAC, mp3, ogg)",
     libraryDependencies ++= Seq(
-      "org.jflac" %  "jflac-codec" % jFLACVersion,
-      "de.sciss"  %  "jump3r"      % jump3rVersion,
-      "org.slf4j" %  "slf4j-nop"   % slf4jVersion % "test"
+      "de.sciss"    %% "scalaaudiofile" % audioFileVersion,
+      "org.jflac"   %  "jflac-codec"    % jFLACVersion,
+      "de.sciss"    %  "jump3r"         % jump3rVersion,
+      "org.jcraft"  %  "jorbis"         % jOrbisVersion,
+      "org.slf4j"   %  "slf4j-nop"      % slf4jVersion % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-compression" % mimaVersion)
   )
