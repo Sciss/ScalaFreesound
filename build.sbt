@@ -3,14 +3,14 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.3.0"
+lazy val projectVersion = "1.3.1"
 lazy val mimaVersion    = "1.3.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
-  scalaVersion          := "2.12.2",
-  crossScalaVersions    := Seq("2.12.2", "2.11.11" /* , "2.10.6" */),
+  scalaVersion          := "2.12.3",
+  crossScalaVersions    := Seq("2.12.3", "2.11.11" /* , "2.10.6" */),
   homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint"),
@@ -25,12 +25,12 @@ lazy val commonSettings = Seq(
 val optionalVersion       = "1.0.0"
 val processorVersion      = "0.4.1"
 val dispatchVersion       = "0.12.3"
-val fileUtilVersion       = "1.1.2"
+val fileUtilVersion       = "1.1.3"
 val serialVersion         = "1.0.3"
 
 // ---- swing dependencies ----
 
-val swingPlusVersion      = "0.2.3"
+val swingPlusVersion      = "0.2.4"
 val raphaelVersion        = "1.0.4"
 
 // ---- lucre dependencies ---

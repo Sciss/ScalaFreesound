@@ -33,10 +33,12 @@ import de.sciss.synth.proc.{AuralSystem, SoundProcesses}
 import de.sciss.synth.{ControlSet, SynthGraph}
 
 import scala.collection.immutable.{Seq => ISeq}
+import scala.concurrent.Future
 import scala.concurrent.stm.Ref
 import scala.swing.event.Key
 import scala.swing.{AbstractButton, Action, BorderPanel, BoxPanel, Button, Component, Orientation, Panel, SequentialContainer, Swing, TabbedPane}
 import scala.util.Success
+import scala.util.control.NonFatal
 
 object RetrievalViewImpl {
   def apply[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
@@ -91,7 +93,14 @@ object RetrievalViewImpl {
 
     private def stopAndRelease()(implicit tx: S#Tx): Unit = {
       synth   .swap(None).foreach(_.dispose())
-      acquired.swap(None).foreach(previewCache.release)
+      acquired.swap(None).foreach { sound =>
+        // XXX TODO - workaround for https://github.com/Sciss/FileCache/issues/5
+        try {
+          previewCache.release(sound)
+        } catch {
+          case NonFatal(_) => // ignored
+        }
+      }
       deferTx(timerPrepare.stop())
     }
 
@@ -228,8 +237,15 @@ object RetrievalViewImpl {
 
         val fut = cursor.step { implicit tx =>
           stopAndRelease()
-          acquired() = Some   (sound)
-          previewCache.acquire(sound)
+          // XXX TODO - workaround for https://github.com/Sciss/FileCache/issues/5
+          try {
+            val _fut = previewCache.acquire(sound)
+            acquired() = Some(sound)
+            _fut
+          } catch {
+            case NonFatal(ex) =>
+              Future.failed(ex)
+          }
         }
 
         timerPrepare.restart()
