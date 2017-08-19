@@ -44,9 +44,13 @@ object Freesound {
   var urlGetAuth        = s"$urlApiBase/oauth2/access_token/"
 
   /** URL for sound previews. Contains five `%s` placeholders:
-    * sound-id.div(1000), sound-id, user-id, lq-vs-hq, ogg-vs-mp3
+    * sound-id.div(1000), sound-id, user-id, lq-vs-hq, ogg-vs-mp3.
+    *
+    * Note: this should be removed, as the server organisation seems
+    * to be a moving target; instead we need the indirection via `previews` query field.
     */
-  var urlSoundPreview   = s"$urlHome/data/previews/%s/%s_%s-%s.%s"
+//  var urlSoundPreview   = s"$urlHome/data/previews/%s/%s_%s-%s.%s"
+  var urlSoundPreview   = "http://freesound.org/data/previews/%s/%s_%s-%s.%s"
 
   /** URL for image renderings. Contains four `%s` placeholders:
     * sound-id.div(1000), sound-id, user-id, wave_L.png-vs-wave_M.png-vs-spec_L.jpg-vs-spec_M.jpg

@@ -16,7 +16,7 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"1.3.1"`
+The current version `v` is `"1.3.2"`
 
 Or to link to an individual module
 
@@ -36,7 +36,7 @@ Please see the file [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## overview
 
-The easiest to play around is to run `sbt test:console` which will import useful symbols
+    The easiest to play around is to run `sbt test:console` which will import useful symbols
 and also load the files `client.json` and `access_token` if found. An implicit `Client` is required
 for searches, and an implicit `AccessToken` is required for downloading sounds.
 
