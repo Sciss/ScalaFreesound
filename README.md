@@ -1,6 +1,5 @@
 # ScalaFreesound
 
-[![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=sciss&url=https%3A%2F%2Fgithub.com%2FSciss%2FScalaFreesound&title=ScalaFreesound&language=Scala&tags=github&category=software)
 [![Build Status](https://travis-ci.org/Sciss/ScalaFreesound.svg?branch=master)](https://travis-ci.org/Sciss/ScalaFreesound)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound-core_2.12)
 
