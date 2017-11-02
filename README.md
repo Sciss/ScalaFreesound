@@ -9,7 +9,7 @@ ScalaFreesound is a library to query the [Freesound audio database](https://free
 
 ## requirements / installation
 
-ScalaOSC currently builds against Scala 2.12, 2.11 using sbt 0.13.
+ScalaOSC currently builds against Scala 2.12, 2.11 using sbt.
 
 To link to it:
 
