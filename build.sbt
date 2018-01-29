@@ -3,8 +3,8 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.6.0"
-lazy val mimaVersion    = "1.6.0" // used for migration-manager
+lazy val projectVersion = "1.7.0-SNAPSHOT"
+lazy val mimaVersion    = "1.7.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
@@ -20,36 +20,34 @@ lazy val commonSettings = Seq(
   }
 ) ++ publishSettings
 
-// ---- core dependencies ----
-
-val optionalVersion       = "1.0.0"
-val processorVersion      = "0.4.1"
-val dispatchVersion       = "0.12.3" // note -- API changed: 0.13.1
-val fileUtilVersion       = "1.1.3"
-val serialVersion         = "1.0.3"
-
-// ---- swing dependencies ----
-
-val swingPlusVersion      = "0.2.4"
-val raphaelVersion        = "1.0.4"
-
-// ---- lucre dependencies ---
-
-val soundProcessesVersion = "3.16.1"
-val fileCacheVersion      = "0.3.4"
-
-// ---- compression dependencies ----
-
-val audioFileVersion      = "1.4.6"   // PCM support
-val jFLACVersion          = "1.5.2"   // FLAC support
-val jump3rVersion         = "1.0.4"   // mp3 support
-val jOrbisVersion         = "0.0.17"  // Ogg Vorbis support
-
-// ---- test dependencies ----
-
-val subminVersion         = "0.2.2"
-val slf4jVersion          = "1.7.25"
-val scalaTestVersion      = "3.0.4"
+lazy val deps = new {
+  val core = new {
+    val optional       = "1.0.0"
+    val processor      = "0.4.1"
+    val dispatch       = "0.12.3" // note -- API changed: 0.13.1
+    val fileUtil       = "1.1.3"
+    val serial         = "1.0.3"
+  }
+  val swing = new {
+    val swingPlus      = "0.2.4"
+    val raphael        = "1.0.4"
+  }
+  val lucre = new {
+    val soundProcesses = "3.17.0-SNAPSHOT"
+    val fileCache      = "0.3.4"
+  }
+  val compression = new {
+    val audioFile      = "1.4.6"   // PCM support
+    val jFLAC          = "1.5.2"   // FLAC support
+    val jump3r         = "1.0.4"   // mp3 support
+    val jOrbis         = "0.0.17"  // Ogg Vorbis support
+  }
+  val test = new {
+    val submin         = "0.2.2"
+    val slf4j          = "1.7.25"
+    val scalaTest      = "3.0.4"
+  }
+}
 
 // ---- modules ----
 
@@ -60,13 +58,13 @@ lazy val core = project.in(file("core"))
     moduleName  := s"$baseNameL-core",
     description := s"$baseDescr (core module)",
     libraryDependencies ++= Seq(
-      "de.sciss"                %% "optional"               % optionalVersion,
-      "de.sciss"                %% "processor"              % processorVersion,
-      "net.databinder.dispatch" %% "dispatch-core"          % dispatchVersion,
-      "net.databinder.dispatch" %% "dispatch-json4s-native" % dispatchVersion, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
-      "de.sciss"                %% "fileutil"               % fileUtilVersion,
-      "de.sciss"                %% "serial"                 % serialVersion,
-      "org.scalatest"           %% "scalatest"              % scalaTestVersion % "test"
+      "de.sciss"                %% "optional"               % deps.core.optional,
+      "de.sciss"                %% "processor"              % deps.core.processor,
+      "net.databinder.dispatch" %% "dispatch-core"          % deps.core.dispatch,
+      "net.databinder.dispatch" %% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
+      "de.sciss"                %% "fileutil"               % deps.core.fileUtil,
+      "de.sciss"                %% "serial"                 % deps.core.serial,
+      "org.scalatest"           %% "scalatest"              % deps.test.scalaTest % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-core" % mimaVersion),
     initialCommands in (Test, console) := initialCmd()
@@ -80,9 +78,9 @@ lazy val swing = project.in(file("swing"))
     moduleName  := s"$baseNameL-swing",
     description := s"$baseDescr (Swing widgets)",
     libraryDependencies ++= Seq(
-      "de.sciss" %% "swingplus"     % swingPlusVersion,
-      "de.sciss" %% "raphael-icons" % raphaelVersion,
-      "de.sciss" %  "submin"        % subminVersion % "test"
+      "de.sciss" %% "swingplus"     % deps.swing.swingPlus,
+      "de.sciss" %% "raphael-icons" % deps.swing.raphael,
+      "de.sciss" %  "submin"        % deps.test.submin % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-swing" % mimaVersion)
   )
@@ -95,9 +93,9 @@ lazy val lucre = project.in(file("lucre"))
     moduleName  := s"$baseNameL-lucre",
     description := s"$baseDescr (SoundProcesses integration)",
     libraryDependencies ++= Seq(
-      "de.sciss" %% "soundprocesses-views" % soundProcessesVersion,
-      "de.sciss" %% "filecache-txn"        % fileCacheVersion,
-      "de.sciss" %  "submin"               % subminVersion % "test"
+      "de.sciss" %% "soundprocesses-views" % deps.lucre.soundProcesses,
+      "de.sciss" %% "filecache-txn"        % deps.lucre.fileCache,
+      "de.sciss" %  "submin"               % deps.test.submin % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
@@ -110,11 +108,11 @@ lazy val compression = project.in(file("compression"))
     moduleName  := s"$baseNameL-compression",
     description := s"$baseDescr (decompression for FLAC, mp3, ogg)",
     libraryDependencies ++= Seq(
-      "de.sciss"    %% "scalaaudiofile" % audioFileVersion,
-      "org.jflac"   %  "jflac-codec"    % jFLACVersion,
-      "de.sciss"    %  "jump3r"         % jump3rVersion,
-      "org.jcraft"  %  "jorbis"         % jOrbisVersion,
-      "org.slf4j"   %  "slf4j-nop"      % slf4jVersion % "test"
+      "de.sciss"    %% "scalaaudiofile" % deps.compression.audioFile,
+      "org.jflac"   %  "jflac-codec"    % deps.compression.jFLAC,
+      "de.sciss"    %  "jump3r"         % deps.compression.jump3r,
+      "org.jcraft"  %  "jorbis"         % deps.compression.jOrbis,
+      "org.slf4j"   %  "slf4j-nop"      % deps.test.slf4j % "test"
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-compression" % mimaVersion)
   )
