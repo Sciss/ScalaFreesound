@@ -3,14 +3,14 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.7.0"
-lazy val mimaVersion    = "1.7.0" // used for migration-manager
+lazy val projectVersion = "1.8.0-SNAPSHOT"
+lazy val mimaVersion    = "1.8.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
-  scalaVersion          := "2.12.4",
-  crossScalaVersions    := Seq("2.12.4", "2.11.12"),
+  scalaVersion          := "2.12.5",
+  crossScalaVersions    := Seq("2.12.5", "2.11.12"),
   homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint"),
@@ -26,18 +26,18 @@ lazy val deps = new {
     val processor      = "0.4.1"
     val dispatch       = "0.12.3" // note -- API changed: 0.13.1
     val fileUtil       = "1.1.3"
-    val serial         = "1.0.3"
+    val serial         = "1.1.0-SNAPSHOT"
   }
   val swing = new {
-    val swingPlus      = "0.2.4"
+    val swingPlus      = "0.3.0-SNAPSHOT"
     val raphael        = "1.0.4"
   }
   val lucre = new {
-    val soundProcesses = "3.17.0"
-    val fileCache      = "0.3.4"
+    val soundProcesses = "3.18.0-SNAPSHOT"
+    val fileCache      = "0.4.0-SNAPSHOT"
   }
   val compression = new {
-    val audioFile      = "1.4.6"   // PCM support
+    val audioFile      = "1.5.0-SNAPSHOT"   // PCM support
     val jFLAC          = "1.5.2"   // FLAC support
     val jump3r         = "1.0.4"   // mp3 support
     val jOrbis         = "0.0.17"  // Ogg Vorbis support
@@ -45,7 +45,7 @@ lazy val deps = new {
   val test = new {
     val submin         = "0.2.2"
     val slf4j          = "1.7.25"
-    val scalaTest      = "3.0.4"
+    val scalaTest      = "3.0.5"
   }
 }
 

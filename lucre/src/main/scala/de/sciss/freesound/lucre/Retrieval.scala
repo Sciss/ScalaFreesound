@@ -25,7 +25,7 @@ import de.sciss.synth.proc.Folder
 import scala.collection.immutable.{IndexedSeq => Vec}
 
 object Retrieval extends Obj.Type {
-  final val typeID = 202
+  final val typeId = 202
 
   /** Initializes all objects related to Freesound. */
   override def init(): Unit = {
