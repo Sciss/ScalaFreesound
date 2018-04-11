@@ -26,18 +26,18 @@ lazy val deps = new {
     val processor      = "0.4.1"
     val dispatch       = "0.12.3" // note -- API changed: 0.13.1
     val fileUtil       = "1.1.3"
-    val serial         = "1.1.0-SNAPSHOT"
+    val serial         = "1.1.0"
   }
   val swing = new {
-    val swingPlus      = "0.3.0-SNAPSHOT"
+    val swingPlus      = "0.3.0"
     val raphael        = "1.0.4"
   }
   val lucre = new {
     val soundProcesses = "3.18.0-SNAPSHOT"
-    val fileCache      = "0.4.0-SNAPSHOT"
+    val fileCache      = "0.4.0"
   }
   val compression = new {
-    val audioFile      = "1.5.0-SNAPSHOT"   // PCM support
+    val audioFile      = "1.5.0"   // PCM support
     val jFLAC          = "1.5.2"   // FLAC support
     val jump3r         = "1.0.4"   // mp3 support
     val jOrbis         = "0.0.17"  // Ogg Vorbis support
@@ -108,7 +108,7 @@ lazy val compression = project.in(file("compression"))
     moduleName  := s"$baseNameL-compression",
     description := s"$baseDescr (decompression for FLAC, mp3, ogg)",
     libraryDependencies ++= Seq(
-      "de.sciss"    %% "scalaaudiofile" % deps.compression.audioFile,
+      "de.sciss"    %% "audiofile"      % deps.compression.audioFile,
       "org.jflac"   %  "jflac-codec"    % deps.compression.jFLAC,
       "de.sciss"    %  "jump3r"         % deps.compression.jump3r,
       "org.jcraft"  %  "jorbis"         % deps.compression.jOrbis,
