@@ -3,14 +3,14 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.8.0"
-lazy val mimaVersion    = "1.8.0" // used for migration-manager
+lazy val projectVersion = "1.9.0"
+lazy val mimaVersion    = "1.9.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
-  scalaVersion          := "2.12.5",
-  crossScalaVersions    := Seq("2.12.5", "2.11.12"),
+  scalaVersion          := "2.12.6",
+  crossScalaVersions    := Seq("2.12.6", "2.11.12"),
   homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint"),
@@ -33,7 +33,7 @@ lazy val deps = new {
     val raphael        = "1.0.4"
   }
   val lucre = new {
-    val soundProcesses = "3.18.0"
+    val soundProcesses = "3.19.0"
     val fileCache      = "0.4.0"
   }
   val compression = new {
