@@ -79,6 +79,8 @@ object RetrievalViewImpl {
                                         aural: AuralSystem, val cursor: stm.Cursor[S])
     extends RetrievalView[S] with ComponentHolder[Component] {
 
+    type C = Component
+
     def init()(implicit tx: S#Tx): this.type = {
       deferTx(guiInit())
       this
