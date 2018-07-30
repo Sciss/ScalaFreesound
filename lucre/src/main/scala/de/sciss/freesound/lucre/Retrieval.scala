@@ -17,10 +17,9 @@ package lucre
 import de.sciss.freesound.lucre.impl.{RetrievalImpl => Impl}
 import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
 import de.sciss.lucre.event.Publisher
-import de.sciss.lucre.stm.{Obj, Sys}
+import de.sciss.lucre.stm.{Folder, Obj, Sys}
 import de.sciss.model
 import de.sciss.serial.{DataInput, Serializer}
-import de.sciss.synth.proc.Folder
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 

@@ -17,10 +17,9 @@ package impl
 
 import de.sciss.lucre.artifact.ArtifactLocation
 import de.sciss.lucre.stm.impl.ObjSerializer
-import de.sciss.lucre.stm.{Copy, Elem, NoSys, Obj, Sys}
+import de.sciss.lucre.stm.{Copy, Elem, Folder, NoSys, Obj, Sys}
 import de.sciss.lucre.{event => evt}
 import de.sciss.serial.{DataInput, DataOutput, Serializer}
-import de.sciss.synth.proc.Folder
 
 object RetrievalImpl {
   def apply[S <: Sys[S]](initSearch: TextSearchObj[S], initLocation: ArtifactLocation[S])
