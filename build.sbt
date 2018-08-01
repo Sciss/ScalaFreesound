@@ -3,7 +3,7 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.11.0-SNAPSHOT"
+lazy val projectVersion = "1.11.0"
 lazy val mimaVersion    = "1.11.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
@@ -29,11 +29,11 @@ lazy val deps = new {
     val serial         = "1.1.1"
   }
   val swing = new {
-    val swingPlus      = "0.3.0"
+    val swingPlus      = "0.3.1"
     val raphael        = "1.0.4"
   }
   val lucre = new {
-    val soundProcesses = "3.21.0-SNAPSHOT"
+    val soundProcesses = "3.21.0"
     val fileCache      = "0.4.0"
   }
   val compression = new {
