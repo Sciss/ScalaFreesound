@@ -3,7 +3,7 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.11.0"
+lazy val projectVersion = "1.12.0-SNAPSHOT"
 lazy val mimaVersion    = "1.11.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
@@ -17,7 +17,8 @@ lazy val commonSettings = Seq(
   scalacOptions in (Test, console) := {
     val c = (scalacOptions in (Compile, compile)).value
     c.filterNot(_ == "-Xlint") :+ "-Xlint:-unused,_"
-  }
+  },
+  updateOptions := updateOptions.value.withLatestSnapshots(false)
 ) ++ publishSettings
 
 lazy val deps = new {
@@ -33,7 +34,7 @@ lazy val deps = new {
     val raphael        = "1.0.4"
   }
   val lucre = new {
-    val soundProcesses = "3.21.0"
+    val soundProcesses = "3.22.0-SNAPSHOT"
     val fileCache      = "0.4.0"
   }
   val compression = new {
