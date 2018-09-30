@@ -17,20 +17,19 @@ package impl
 
 import java.awt.Toolkit
 import java.awt.geom.Path2D
-import javax.swing.{Icon, JComponent, KeyStroke, Timer}
 
 import de.sciss.audiowidgets.Transport
 import de.sciss.audiowidgets.Transport.{ButtonStrip, Loop, Play, Stop}
 import de.sciss.file._
 import de.sciss.freesound.swing.{SearchView, Shapes, SoundTableView, SoundView}
 import de.sciss.icons.raphael
-import de.sciss.lucre.stm
 import de.sciss.lucre.stm.TxnLike.peer
 import de.sciss.lucre.swing.impl.ComponentHolder
 import de.sciss.lucre.swing.{deferTx, requireEDT}
 import de.sciss.lucre.synth.{Buffer, Server, Synth, Sys}
-import de.sciss.synth.proc.{AuralSystem, SoundProcesses}
+import de.sciss.synth.proc.{SoundProcesses, Universe}
 import de.sciss.synth.{ControlSet, SynthGraph}
+import javax.swing.{Icon, JComponent, KeyStroke, Timer}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.concurrent.Future
@@ -43,7 +42,7 @@ import scala.util.control.NonFatal
 object RetrievalViewImpl {
   def apply[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
            (implicit tx: S#Tx, client: Client, previewsCache: PreviewsCache,
-            aural: AuralSystem, cursor: stm.Cursor[S]): RetrievalView[S] = {
+            universe: Universe[S]): RetrievalView[S] = {
     new Impl[S](searchInit, soundInit).init()
   }
 
@@ -76,7 +75,7 @@ object RetrievalViewImpl {
 
   private final class Impl[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
                                        (implicit client: Client, previewCache: PreviewsCache,
-                                        aural: AuralSystem, val cursor: stm.Cursor[S])
+                                        val universe: Universe[S])
     extends RetrievalView[S] with ComponentHolder[Component] {
 
     type C = Component
@@ -257,7 +256,7 @@ object RetrievalViewImpl {
           SoundProcesses.atomic[S, Unit] { implicit tx =>
             if (acquired().contains(sound) && !_disposed()) {
               deferTx(timerPrepare.stop())
-              (tr, aural.serverOption) match {
+              (tr, universe.auralSystem.serverOption) match {
                 case (Success(f), Some(s)) =>
                   val sampleRate  = sound.sampleRate                // this seems to be preserved
                   val numChannels = math.min(2, sound.numChannels)  // this seems to be constrained

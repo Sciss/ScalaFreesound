@@ -4,16 +4,18 @@ val baseNameL = baseName.toLowerCase
 val baseDescr = "A library for accessing freesound.org from Scala."
 
 lazy val projectVersion = "1.12.0-SNAPSHOT"
-lazy val mimaVersion    = "1.11.0" // used for migration-manager
+lazy val mimaVersion    = "1.12.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
-  scalaVersion          := "2.12.6",
-  crossScalaVersions    := Seq("2.12.6", "2.11.12"),
+  scalaVersion          := "2.12.7",
+  crossScalaVersions    := Seq("2.12.7", "2.11.12"),
   homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
-  scalacOptions       ++= Seq("-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint"),
+  scalacOptions        ++= Seq(
+    "-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
+  ),
   scalacOptions in (Test, console) := {
     val c = (scalacOptions in (Compile, compile)).value
     c.filterNot(_ == "-Xlint") :+ "-Xlint:-unused,_"

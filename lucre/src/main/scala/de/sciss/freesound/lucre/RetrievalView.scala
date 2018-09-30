@@ -16,9 +16,9 @@ package lucre
 
 import de.sciss.freesound.swing.{SearchView, SoundTableView, SoundView}
 import de.sciss.lucre.stm
-import de.sciss.lucre.swing.View
 import de.sciss.lucre.synth.Sys
-import de.sciss.synth.proc.AuralSystem
+import de.sciss.synth.proc.Universe
+import de.sciss.synth.proc.gui.UniverseView
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.{Component, SequentialContainer, TabbedPane}
@@ -26,10 +26,10 @@ import scala.swing.{Component, SequentialContainer, TabbedPane}
 object RetrievalView {
   def apply[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound] = Nil)
            (implicit tx: S#Tx, client: Client, previewsCache: PreviewsCache,
-            aural: AuralSystem, cursor: stm.Cursor[S]): RetrievalView[S] =
+            universe: Universe[S]): RetrievalView[S] =
     impl.RetrievalViewImpl[S](searchInit = searchInit, soundInit = soundInit)
 }
-trait RetrievalView[S <: stm.Sys[S]] extends View.Cursor[S] {
+trait RetrievalView[S <: stm.Sys[S]] extends UniverseView[S] {
   /** Swing view; must call on EDT! */
   def searchView    : SearchView
 

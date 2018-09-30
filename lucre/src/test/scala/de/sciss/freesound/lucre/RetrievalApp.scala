@@ -7,7 +7,7 @@ import de.sciss.freesound.impl.FreesoundImpl
 import de.sciss.lucre.swing.deferTx
 import de.sciss.lucre.synth.InMemory
 import de.sciss.submin.Submin
-import de.sciss.synth.proc.AuralSystem
+import de.sciss.synth.proc.Universe
 
 import scala.swing.MainFrame
 
@@ -27,11 +27,11 @@ object RetrievalApp {
     val cacheDir  = baseDir / "freesound_cache"
     cacheDir.mkdirs()
 
-    implicit val auralSystem: AuralSystem   = AuralSystem()
-    implicit val system     : S             = InMemory()
+    implicit val system: S = InMemory()
 
     system.step { implicit tx =>
-      auralSystem.start()
+      implicit val universe: Universe[S] = Universe.dummy
+      universe.auralSystem.start()
 
       implicit val cache: PreviewsCache = PreviewsCache(dir = cacheDir)
 
