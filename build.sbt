@@ -3,14 +3,14 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.13.0"
-lazy val mimaVersion    = "1.13.0" // used for migration-manager
+lazy val projectVersion = "1.14.0-SNAPSHOT"
+lazy val mimaVersion    = "1.14.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
-  scalaVersion          := "2.12.7",
-  crossScalaVersions    := Seq("2.12.7", "2.11.12"),
+  scalaVersion          := "2.12.8",
+  crossScalaVersions    := Seq("2.12.8", "2.11.12"),
   homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions        ++= Seq(
@@ -26,29 +26,29 @@ lazy val commonSettings = Seq(
 lazy val deps = new {
   val core = new {
     val optional       = "1.0.0"
-    val processor      = "0.4.1"
+    val processor      = "0.4.2"
     val dispatch       = "0.12.3" // note -- API changed: 0.13.1
     val fileUtil       = "1.1.3"
     val serial         = "1.1.1"
   }
   val swing = new {
-    val swingPlus      = "0.3.1"
-    val raphael        = "1.0.4"
+    val swingPlus      = "0.4.0"
+    val raphael        = "1.0.5"
   }
   val lucre = new {
-    val soundProcesses = "3.23.0"
-    val fileCache      = "0.4.0"
+    val soundProcesses = "3.25.0-SNAPSHOT"
+    val fileCache      = "0.5.0"
   }
   val compression = new {
-    val audioFile      = "1.5.0"   // PCM support
+    val audioFile      = "1.5.1"   // PCM support
     val jFLAC          = "1.5.2"   // FLAC support
-    val jump3r         = "1.0.4"   // mp3 support
+    val jump3r         = "1.0.5"   // mp3 support
     val jOrbis         = "0.0.17"  // Ogg Vorbis support
   }
   val test = new {
-    val submin         = "0.2.2"
-    val slf4j          = "1.7.25"
-    val scalaTest      = "3.0.5"
+    val submin         = "0.2.4"
+    val slf4j          = "1.7.26"
+    val scalaTest      = "3.0.6"
   }
 }
 
