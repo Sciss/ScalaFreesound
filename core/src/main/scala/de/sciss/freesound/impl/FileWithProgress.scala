@@ -2,7 +2,7 @@
  *  FileWithProgress.scala
  *  (ScalaFreesound)
  *
- *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2010-2019 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -17,11 +17,10 @@ package impl
 import java.io.File
 import java.nio.ByteBuffer
 
-import com.ning.http.client
-import com.ning.http.client.AsyncHandler.STATE
-import com.ning.http.client.HttpResponseHeaders
-import com.ning.http.client.resumable.ResumableAsyncHandler
 import dispatch.OkHandler
+import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaders}
+import org.asynchttpclient.{AsyncHandler, Response}
+import org.asynchttpclient.handler.resumable.{ResumableAsyncHandler, ResumableRandomAccessFileListener}
 
 import scala.util.control.NonFatal
 
@@ -35,8 +34,8 @@ object FileWithProgress {
     *                 and the expected total file length, each time a chunk has been
     *                 downloaded.
     */
-  def apply(file: File)(progress: (Long, Long) => Unit): ResumableAsyncHandler[_] = {
-    val handler = new client.resumable.ResumableAsyncHandler with OkHandler[Nothing] {
+  def apply(file: File)(progress: (Long, Long) => Unit): ResumableAsyncHandler = {
+    val handler: ResumableAsyncHandler = new ResumableAsyncHandler with OkHandler[Response] {
       private[this] val raf = new java.io.RandomAccessFile(file, "rw")
       if (raf.length() > 0L) raf.setLength(0L)
 
@@ -48,10 +47,10 @@ object FileWithProgress {
         try raf.close() catch { case NonFatal(_) => }
       }
 
-      override def onHeadersReceived(headers: HttpResponseHeaders): STATE = {
-        val res: STATE = super.onHeadersReceived(headers)
-        if (res == STATE.CONTINUE) {
-          val contentLengthHeader = headers.getHeaders.getFirstValue("Content-Length")
+      override def onHeadersReceived(headers: HttpHeaders): AsyncHandler.State = {
+        val res: AsyncHandler.State = super.onHeadersReceived(headers)
+        if (res == AsyncHandler.State.CONTINUE) {
+          val contentLengthHeader = headers.get(HttpHeaderNames.CONTENT_LENGTH) // "Content-Length"
           if (contentLengthHeader != null) {
             fileSize = java.lang.Long.parseLong(contentLengthHeader)
           }
@@ -60,7 +59,7 @@ object FileWithProgress {
       }
 
       setResumableListener(
-        new client.extra.ResumableRandomAccessFileListener(raf) {
+        new ResumableRandomAccessFileListener(raf) {
           override def onBytesReceived(buffer: ByteBuffer): Unit = {
             super.onBytesReceived(buffer)
             if (fileSize > 0L) {

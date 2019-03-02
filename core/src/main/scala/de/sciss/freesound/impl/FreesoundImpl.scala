@@ -2,7 +2,7 @@
  *  FreesoundImpl.scala
  *  (ScalaFreesound)
  *
- *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2010-2019 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -19,10 +19,10 @@ import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-import com.ning.http.client.Response
 import de.sciss.file._
 import de.sciss.processor.Processor
 import dispatch.Http
+import org.asynchttpclient.Response
 import org.json4s.JsonAST.{JInt, JObject, JString, JValue}
 import org.json4s.native.JsonMethods
 import org.json4s.native.JsonMethods.parse
@@ -262,7 +262,7 @@ object FreesoundImpl {
     import dispatch.Defaults._
     Future.successful(()).flatMap { _ =>
       val jsonFut = blocking(
-        Http(req.OK(JsonUTF))
+        Http.default(req.OK(JsonUTF))
       )
       jsonFut // Await.result(jsonFut, Duration.Inf)
     }

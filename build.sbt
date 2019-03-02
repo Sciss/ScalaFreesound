@@ -11,7 +11,7 @@ lazy val commonSettings = Seq(
   organization          := "de.sciss",
   scalaVersion          := "2.12.8",
   crossScalaVersions    := Seq("2.12.8", "2.11.12"),
-  homepage              := Some(url(s"https://github.com/Sciss/${name.value}")),
+  homepage              := Some(url(s"https://git.iem.at/sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions        ++= Seq(
     "-deprecation", "-unchecked", "-feature", "-Xfuture", "-encoding", "utf8", "-Xlint", "-Xsource:2.13"
@@ -27,7 +27,7 @@ lazy val deps = new {
   val core = new {
     val optional       = "1.0.0"
     val processor      = "0.4.2"
-    val dispatch       = "0.12.3" // note -- API changed: 0.13.1
+    val dispatch       = "1.0.0"
     val fileUtil       = "1.1.3"
     val serial         = "1.1.1"
   }
@@ -61,13 +61,13 @@ lazy val core = project.in(file("core"))
     moduleName  := s"$baseNameL-core",
     description := s"$baseDescr (core module)",
     libraryDependencies ++= Seq(
-      "de.sciss"                %% "optional"               % deps.core.optional,
-      "de.sciss"                %% "processor"              % deps.core.processor,
-      "net.databinder.dispatch" %% "dispatch-core"          % deps.core.dispatch,
-      "net.databinder.dispatch" %% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
-      "de.sciss"                %% "fileutil"               % deps.core.fileUtil,
-      "de.sciss"                %% "serial"                 % deps.core.serial,
-      "org.scalatest"           %% "scalatest"              % deps.test.scalaTest % "test"
+      "de.sciss"          %% "optional"               % deps.core.optional,
+      "de.sciss"          %% "processor"              % deps.core.processor,
+      "org.dispatchhttp" 	%% "dispatch-core"          % deps.core.dispatch,
+      "org.dispatchhttp" 	%% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
+      "de.sciss"          %% "fileutil"               % deps.core.fileUtil,
+      "de.sciss"          %% "serial"                 % deps.core.serial,
+      "org.scalatest"     %% "scalatest"              % deps.test.scalaTest % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-core" % mimaVersion),
     initialCommands in (Test, console) := initialCmd()
@@ -83,7 +83,7 @@ lazy val swing = project.in(file("swing"))
     libraryDependencies ++= Seq(
       "de.sciss" %% "swingplus"     % deps.swing.swingPlus,
       "de.sciss" %% "raphael-icons" % deps.swing.raphael,
-      "de.sciss" %  "submin"        % deps.test.submin % "test"
+      "de.sciss" %  "submin"        % deps.test.submin % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-swing" % mimaVersion)
   )
@@ -98,7 +98,7 @@ lazy val lucre = project.in(file("lucre"))
     libraryDependencies ++= Seq(
       "de.sciss" %% "soundprocesses-views" % deps.lucre.soundProcesses,
       "de.sciss" %% "filecache-txn"        % deps.lucre.fileCache,
-      "de.sciss" %  "submin"               % deps.test.submin % "test"
+      "de.sciss" %  "submin"               % deps.test.submin % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
@@ -115,7 +115,7 @@ lazy val compression = project.in(file("compression"))
       "org.jflac"   %  "jflac-codec"    % deps.compression.jFLAC,
       "de.sciss"    %  "jump3r"         % deps.compression.jump3r,
       "org.jcraft"  %  "jorbis"         % deps.compression.jOrbis,
-      "org.slf4j"   %  "slf4j-nop"      % deps.test.slf4j % "test"
+      "org.slf4j"   %  "slf4j-nop"      % deps.test.slf4j % Test
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-compression" % mimaVersion)
   )
@@ -171,8 +171,8 @@ lazy val publishSettings = Seq(
   pomIncludeRepository := { _ => false },
   pomExtra := { val n = baseName
 <scm>
-  <url>git@github.com:Sciss/{n}.git</url>
-  <connection>scm:git:git@github.com:Sciss/{n}.git</connection>
+  <url>git@git.iem.at:sciss/{n}.git</url>
+  <connection>scm:git:git@git.iem.at:sciss/{n}.git</connection>
 </scm>
   <developers>
     <developer>

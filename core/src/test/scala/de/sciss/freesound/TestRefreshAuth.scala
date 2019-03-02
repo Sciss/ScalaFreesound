@@ -6,7 +6,7 @@ import scala.util.{Failure, Success}
 
 object TestRefreshAuth {
   def main(args: Array[String]): Unit = {
-    implicit val client  = Freesound.readClient()
+    implicit val client: Client = Freesound.readClient()
     implicit val auth: Auth = {
       val f = file("auth.json")
       if (f.isFile) Freesound.readAuth()

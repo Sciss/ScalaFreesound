@@ -2,7 +2,7 @@
  *  PreviewsCacheImpl.scala
  *  (ScalaFreesound)
  *
- *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2010-2019 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -48,7 +48,7 @@ object PreviewsCacheImpl {
       val name    = uriS.substring(uriS.lastIndexOf('/') + 1)
       val out     = config.folder / name
       val proc    = Freesound.downloadUriToFile(uri, out = out)
-      implicit val exec = config.executionContext
+      implicit val exec: ExecutionContext = config.executionContext
       proc.transform[File]((_: Unit) => out, { e: Throwable => config.evict(uri, out); e })
     }
     new Impl(cons, config.executionContext)

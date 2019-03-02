@@ -4,7 +4,7 @@ import scala.util.{Failure, Success}
 
 object TestGetToken {
   def main(args: Array[String]): Unit = {
-    implicit val client = Freesound.readClient()
+    implicit val client: Client = Freesound.readClient()
     val code = args.headOption.getOrElse(sys.error(
       s"Must specify authorization code as argument! Get a refresh one: ${Freesound.urlWebAuthorize.format(client.id)}"))
 

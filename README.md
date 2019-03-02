@@ -5,7 +5,10 @@
 
 ## statement
 
-ScalaFreesound is a library to query the [Freesound audio database](https://freesound.org). It is (C)opyright 2010&ndash;2018 by Hanns Holger Rutz. All rights reserved. It is released under the [GNU Lesser General Public License](http://github.com/Sciss/ScalaFreesound/blob/master/LICENSE) and comes with absolutely no warranties. To contact the author, send an email to `contact@sciss.de`
+ScalaFreesound is a library to query the [Freesound audio database](https://freesound.org). It is
+(C)opyright 2010&ndash;2019 by Hanns Holger Rutz. All rights reserved. It is released under the
+[GNU Lesser General Public License](https://git.iem.at/sciss/ScalaFreesound/blob/master/LICENSE) and comes with 
+absolutely no warranties. To contact the author, send an email to `contact@sciss.de`
 
 ## requirements / installation
 
@@ -26,7 +29,7 @@ Or to link to an individual module
 
 - the `core` module provides functions for searching the database and downloading previews and files.
 - the `swing` module provides user interface elements for searching and viewing results.
-- the `lucre` module provides a bridge to SoundProcesses/[Mellite](http://sciss.github.io/Mellite/).
+- the `lucre` module provides a bridge to SoundProcesses/[Mellite](https://www.sciss.de/mellite/).
 - the `compression` module provides decoders from FLAC, Ogg, and mp3 to PCM.
 
 ## contributing
@@ -35,7 +38,7 @@ Please see the file [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## overview
 
-    The easiest to play around is to run `sbt test:console` which will import useful symbols
+The easiest to play around is to run `sbt test:console` which will import useful symbols
 and also load the files `client.json` and `access_token` if found. An implicit `Client` is required
 for searches, and an implicit `AccessToken` is required for downloading sounds.
 

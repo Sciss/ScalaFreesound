@@ -2,7 +2,7 @@
  *  DownloadImpl.scala
  *  (ScalaFreesound)
  *
- *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2010-2019 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -17,10 +17,10 @@ package impl
 import java.io.File
 import java.util.{concurrent => juc}
 
-import com.ning.http.client.{AsyncHandler, ListenableFuture, Request}
 import de.sciss.model.impl.ModelImpl
 import de.sciss.processor.Processor
 import de.sciss.processor.impl.FutureProxy
+import org.asynchttpclient.{AsyncHandler, ListenableFuture, Request}
 
 import scala.concurrent.Promise
 import scala.util.Try
@@ -50,7 +50,7 @@ object DownloadImpl {
       }
 
       private[this] val reqH: (Request, AsyncHandler[_]) = req > handler
-      private[this] val lFut: ListenableFuture[_] = Http.client.executeRequest(reqH._1, reqH._2) // XXX TODO --- this can block
+      private[this] val lFut: ListenableFuture[_] = Http.default.client.executeRequest(reqH._1, reqH._2) // XXX TODO --- this can block
       private[this] val pr    = Promise[Unit]()
 
       protected def peerFuture: Future[Unit] = pr.future
