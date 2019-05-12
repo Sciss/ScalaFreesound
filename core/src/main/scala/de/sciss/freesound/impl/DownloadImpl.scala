@@ -11,12 +11,12 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package impl
+package de.sciss.freesound.impl
 
 import java.io.File
 import java.util.{concurrent => juc}
 
+import de.sciss.freesound.Freesound
 import de.sciss.model.impl.ModelImpl
 import de.sciss.processor.Processor
 import de.sciss.processor.impl.FutureProxy

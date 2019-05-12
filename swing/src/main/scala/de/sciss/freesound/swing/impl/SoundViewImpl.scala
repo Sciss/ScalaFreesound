@@ -11,10 +11,10 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
-package impl
+package de.sciss.freesound.swing.impl
 
+import de.sciss.freesound.Sound
+import de.sciss.freesound.swing.SoundView
 import de.sciss.swingplus.GroupPanel
 import de.sciss.swingplus.GroupPanel.Element
 

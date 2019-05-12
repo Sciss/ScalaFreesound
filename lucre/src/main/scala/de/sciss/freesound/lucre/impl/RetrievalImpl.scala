@@ -11,10 +11,9 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package lucre
-package impl
+package de.sciss.freesound.lucre.impl
 
+import de.sciss.freesound.lucre.{Retrieval, TextSearchObj}
 import de.sciss.lucre.artifact.ArtifactLocation
 import de.sciss.lucre.stm.impl.ObjSerializer
 import de.sciss.lucre.stm.{Copy, Elem, Folder, NoSys, Obj, Sys}

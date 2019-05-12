@@ -11,10 +11,10 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package lucre
+package de.sciss.freesound.lucre
 
 import de.sciss.freesound.swing.{SearchView, SoundTableView, SoundView}
+import de.sciss.freesound.{Client, Sound, TextSearch}
 import de.sciss.lucre.stm
 import de.sciss.lucre.synth.Sys
 import de.sciss.synth.proc.Universe

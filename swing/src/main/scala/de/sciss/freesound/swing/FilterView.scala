@@ -11,9 +11,9 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
+package de.sciss.freesound.swing
 
+import de.sciss.freesound.Filter
 import de.sciss.model.Model
 
 import scala.swing.Component

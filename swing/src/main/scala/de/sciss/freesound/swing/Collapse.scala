@@ -11,10 +11,10 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
+package de.sciss.freesound.swing
 
 import java.awt.event.{ActionEvent, ActionListener}
+
 import javax.swing.Timer
 
 // XXX TODO --- this should go into swing-plus

@@ -11,19 +11,19 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
-package impl
+package de.sciss.freesound.swing.impl
 
 import java.awt
 import java.awt.geom.Path2D
 import java.awt.{Color, Graphics}
 import java.util.{Comparator, Date}
-import javax.swing.table.{AbstractTableModel, DefaultTableCellRenderer, TableCellRenderer, TableRowSorter}
-import javax.swing.{Icon, JTable, SwingConstants}
 
+import de.sciss.freesound.swing.{Shapes, SoundTableView, SoundView}
+import de.sciss.freesound.{GeoTag, Sound}
 import de.sciss.icons.raphael
 import de.sciss.model.impl.ModelImpl
+import javax.swing.table.{AbstractTableModel, DefaultTableCellRenderer, TableCellRenderer, TableRowSorter}
+import javax.swing.{Icon, JTable, SwingConstants}
 import sun.swing.table.DefaultTableCellHeaderRenderer
 
 import scala.collection.immutable.{Seq => ISeq}
@@ -86,7 +86,7 @@ object SoundTableViewImpl {
   }
 
   private def mkIconHeader(tt: String, shape: Path2D => Unit): TableCellRenderer = {
-    val res = new DefaultTableCellHeaderRenderer {
+    val res: DefaultTableCellHeaderRenderer = new DefaultTableCellHeaderRenderer {
       private[this] val mainIcon = raphael.Icon(extent = 14, fill = Color.black)(shape)
 //      override def paintComponent(g: Graphics): Unit =  {
 //        super.paintComponent(g)

@@ -11,11 +11,12 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
+package de.sciss.freesound.swing
 
 import java.text.SimpleDateFormat
 import java.util.Date
+
+import de.sciss.freesound.Sound
 
 import scala.swing.Component
 import impl.{SoundViewImpl => Impl}

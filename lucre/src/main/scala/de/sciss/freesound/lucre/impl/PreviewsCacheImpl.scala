@@ -11,15 +11,15 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package lucre
-package impl
+package de.sciss.freesound.lucre.impl
 
 import java.net.URI
 
 import de.sciss.file._
 import de.sciss.filecache
 import de.sciss.filecache.{TxnConsumer, TxnProducer}
+import de.sciss.freesound.lucre.PreviewsCache
+import de.sciss.freesound.{Client, Freesound, Sound}
 import de.sciss.lucre.stm.TxnLike
 import de.sciss.lucre.stm.TxnLike.peer
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}

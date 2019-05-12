@@ -11,8 +11,7 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package impl
+package de.sciss.freesound.impl
 
 import java.io.FileOutputStream
 import java.net.URI
@@ -20,6 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 
 import de.sciss.file._
+import de.sciss.freesound.{Auth, Client, FileType, Filter, Freesound, GeoTag, License, QueryField, Sort, Sound, TextSearch}
 import de.sciss.processor.Processor
 import dispatch.Http
 import org.asynchttpclient.Response

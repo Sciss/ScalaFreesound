@@ -4,7 +4,7 @@ package lucre
 import de.sciss.file._
 import de.sciss.freesound.Implicits._
 import de.sciss.freesound.impl.FreesoundImpl
-import de.sciss.lucre.swing.deferTx
+import de.sciss.lucre.swing.LucreSwing.deferTx
 import de.sciss.lucre.synth.InMemory
 import de.sciss.submin.Submin
 import de.sciss.synth.proc.Universe

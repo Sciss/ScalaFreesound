@@ -11,15 +11,14 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
-package impl
-
-import javax.swing.SpinnerNumberModel
+package de.sciss.freesound.swing.impl
 
 import de.sciss.freesound
+import de.sciss.freesound.swing.FilterView
+import de.sciss.freesound.{Filter, QueryExpr, StringExpr, UDoubleExpr, UIntExpr}
 import de.sciss.model.impl.ModelImpl
 import de.sciss.swingplus.{GroupPanel, PopupMenu, Spinner}
+import javax.swing.SpinnerNumberModel
 
 import scala.swing.Swing._
 import scala.swing.event.{ButtonClicked, EditDone, ValueChanged}
@@ -51,6 +50,7 @@ object FilterViewImpl {
       require(_parent != null)
       _parent
     }
+
 
     final def parent_=(value: PartParent[Repr]): Unit =
       _parent = value
@@ -800,12 +800,12 @@ object FilterViewImpl {
     }
 
     lazy val component: Component = {
-      val gp = new GroupPanel {
+      val gp: GroupPanel = new GroupPanel {
 //        autoContainerGaps = false
         autoGaps          = false
 //        autoContainerGaps = true
 //        autoGaps          = true
-        val lbTags = new Label("Tags:")
+//        val lbTags = new Label("Tags:")
         import GroupPanel.Element
         horizontal  = Seq(Par(fields.map(_.label: Element): _*), Par(fields.map(_.editor: Element): _*))
         vertical    = Seq(

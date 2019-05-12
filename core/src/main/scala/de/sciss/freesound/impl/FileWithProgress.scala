@@ -11,16 +11,15 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package impl
+package de.sciss.freesound.impl
 
 import java.io.File
 import java.nio.ByteBuffer
 
 import dispatch.OkHandler
 import io.netty.handler.codec.http.{HttpHeaderNames, HttpHeaders}
-import org.asynchttpclient.{AsyncHandler, Response}
 import org.asynchttpclient.handler.resumable.{ResumableAsyncHandler, ResumableRandomAccessFileListener}
+import org.asynchttpclient.{AsyncHandler, Response}
 
 import scala.util.control.NonFatal
 

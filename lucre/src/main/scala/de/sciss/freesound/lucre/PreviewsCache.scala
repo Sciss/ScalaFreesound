@@ -11,11 +11,11 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package lucre
+package de.sciss.freesound.lucre
 
 import de.sciss.file.File
 import de.sciss.filecache.Limit
+import de.sciss.freesound.{Client, Sound}
 import de.sciss.lucre.stm.TxnLike
 
 import scala.concurrent.{ExecutionContext, Future}

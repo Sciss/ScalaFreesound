@@ -11,14 +11,14 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
+package de.sciss.freesound.swing
 
+import de.sciss.freesound.{Client, Filter, Sort, Sound}
 import de.sciss.model.Model
 
+import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.swing.{Button, Component, TextField}
 import scala.util.Try
-import scala.collection.immutable.{IndexedSeq => Vec}
 
 object SearchView {
   def apply()(implicit client: Client): SearchView = impl.SearchViewImpl()

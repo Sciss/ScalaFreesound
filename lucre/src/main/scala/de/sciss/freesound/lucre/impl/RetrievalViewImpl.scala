@@ -11,9 +11,7 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package lucre
-package impl
+package de.sciss.freesound.lucre.impl
 
 import java.awt.Toolkit
 import java.awt.geom.Path2D
@@ -21,11 +19,13 @@ import java.awt.geom.Path2D
 import de.sciss.audiowidgets.Transport
 import de.sciss.audiowidgets.Transport.{ButtonStrip, Loop, Play, Stop}
 import de.sciss.file._
+import de.sciss.freesound.lucre.{PreviewsCache, RetrievalView}
 import de.sciss.freesound.swing.{SearchView, Shapes, SoundTableView, SoundView}
+import de.sciss.freesound.{Client, Sound, TextSearch}
 import de.sciss.icons.raphael
 import de.sciss.lucre.stm.TxnLike.peer
+import de.sciss.lucre.swing.LucreSwing.{deferTx, requireEDT}
 import de.sciss.lucre.swing.impl.ComponentHolder
-import de.sciss.lucre.swing.{deferTx, requireEDT}
 import de.sciss.lucre.synth.{Buffer, Server, Synth, Sys}
 import de.sciss.synth.proc.{SoundProcesses, Universe}
 import de.sciss.synth.{ControlSet, SynthGraph}

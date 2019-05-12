@@ -11,10 +11,10 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package lucre
+package de.sciss.freesound.lucre
 
 import de.sciss.freesound
+import de.sciss.freesound.TextSearch
 import de.sciss.lucre.event.Targets
 import de.sciss.lucre.expr.Expr
 import de.sciss.lucre.expr.impl.ExprTypeImpl

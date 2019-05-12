@@ -11,8 +11,7 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
+package de.sciss.freesound.swing
 
 import java.awt.geom.Path2D
 

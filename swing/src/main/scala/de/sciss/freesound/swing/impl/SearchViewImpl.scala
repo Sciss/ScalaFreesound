@@ -11,19 +11,19 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package swing
-package impl
+package de.sciss.freesound.swing.impl
 
 import java.awt.Toolkit
 import java.awt.event.KeyEvent
 import java.util.concurrent.ExecutionException
-import javax.swing.{JComponent, KeyStroke, SpinnerNumberModel}
 
+import de.sciss.freesound.swing.{Collapse, FilterView, SearchView}
+import de.sciss.freesound.{Client, Filter, Freesound, Sort, Sound}
 import de.sciss.model.impl.ModelImpl
-import de.sciss.swingplus.{GroupPanel, Separator, Spinner}
 import de.sciss.swingplus.GroupPanel.Alignment
+import de.sciss.swingplus.{GroupPanel, Separator, Spinner}
 import dispatch.StatusCode
+import javax.swing.{JComponent, KeyStroke, SpinnerNumberModel}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 import scala.concurrent.{ExecutionContext, Future}

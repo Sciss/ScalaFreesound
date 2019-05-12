@@ -11,9 +11,9 @@
  *  contact@sciss.de
  */
 
-package de.sciss.freesound
-package lucre
+package de.sciss.freesound.lucre
 
+import de.sciss.freesound.TextSearch
 import de.sciss.freesound.lucre.impl.{RetrievalImpl => Impl}
 import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
 import de.sciss.lucre.event.Publisher
