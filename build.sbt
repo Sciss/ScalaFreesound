@@ -48,7 +48,7 @@ lazy val deps = new {
   val test = new {
     val submin         = "0.2.5"
     val slf4j          = "1.7.26"
-    val scalaTest      = "3.0.8-RC2"
+    val scalaTest      = "3.1.0-SNAP11"
   }
 }
 
