@@ -9,8 +9,8 @@ lazy val mimaVersion    = "1.18.0" // used for migration-manager
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
-  scalaVersion          := "2.12.8",
-  crossScalaVersions    := Seq("2.12.8", "2.11.12"),  // due to missing dispatch not available: "2.13.0-RC1"
+  scalaVersion          := "2.13.0-RC2",
+  crossScalaVersions    := Seq("2.12.8", "2.11.12", "2.13.0-RC2"),
   homepage              := Some(url(s"https://git.iem.at/sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions        ++= Seq(
@@ -23,13 +23,16 @@ lazy val commonSettings = Seq(
   updateOptions := updateOptions.value.withLatestSnapshots(false)
 ) ++ publishSettings
 
+// lazy val dispatchOrg = "org.dispatchhttp"
+lazy val dispatchOrg = "de.sciss"
+
 lazy val deps = new {
   val core = new {
-    val dispatch       = "1.0.1"
+    // val dispatch       = "1.0.1"
+    val dispatch       = "0.1.0"  // de.sciss version
     val fileUtil       = "1.1.3"
     val optional       = "1.0.0"
     val processor      = "0.4.2"
-    val scalajHttp     = "2.4.1"
     val serial         = "1.1.1"
   }
   val swing = new {
@@ -64,9 +67,8 @@ lazy val core = project.in(file("core"))
     libraryDependencies ++= Seq(
       "de.sciss"          %% "optional"               % deps.core.optional,
       "de.sciss"          %% "processor"              % deps.core.processor,
-      "org.dispatchhttp"  %% "dispatch-core"          % deps.core.dispatch,
-      "org.dispatchhttp"  %% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
-      "org.scalaj"        %% "scalaj-http"            % deps.core.scalajHttp,
+      dispatchOrg         %% "dispatch-core"          % deps.core.dispatch,
+      dispatchOrg         %% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
       "de.sciss"          %% "fileutil"               % deps.core.fileUtil,
       "de.sciss"          %% "serial"                 % deps.core.serial,
       "org.scalatest"     %% "scalatest"              % deps.test.scalaTest % Test

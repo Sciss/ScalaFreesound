@@ -2,7 +2,7 @@
  *  SoundView.scala
  *  (ScalaFreesound)
  *
- *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2010-2019 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -28,10 +28,10 @@ object SoundView {
   def fileSizeString(bytes: Long): String = {
     val si    = true
     val unit  = if (si) 1000 else 1024
-    if (bytes < unit) bytes + " B"
+    if (bytes < unit) s"$bytes B"
     else {
       val exp = (math.log(bytes) / math.log(unit)).toInt
-      val pre = (if (si) "kMGTPE" else "KMGTPE").charAt(exp - 1) + (if (si) "" else "i")
+      val pre = s"${(if (si) "kMGTPE" else "KMGTPE").charAt(exp - 1)}${if (si) "" else "i"}"
       String.format("%.1f %sB", (bytes / math.pow(unit, exp)).asInstanceOf[java.lang.Double], pre)
     }
   }

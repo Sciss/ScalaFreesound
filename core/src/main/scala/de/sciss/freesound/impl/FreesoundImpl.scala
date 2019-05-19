@@ -152,7 +152,7 @@ object FreesoundImpl {
     futJson.map { json0 =>
       val json1 = json0.mapField {
         case ("expires_in", JInt(expiresIn)) =>
-          now.add(Calendar.SECOND, expiresIn.intValue())
+          now.add(Calendar.SECOND, expiresIn.intValue)
           "expires" -> JString(default.dateFormat.format(now.getTime))
         case other => other
       }
@@ -185,7 +185,7 @@ object FreesoundImpl {
       val numOpt = json match {
         case JObject(entries) =>
           entries.collectFirst {
-            case ("count", JInt(num)) => num.intValue()
+            case ("count", JInt(num)) => num.intValue
           }
         case _ => None
       }

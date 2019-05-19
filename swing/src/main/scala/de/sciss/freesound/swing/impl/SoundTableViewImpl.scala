@@ -2,7 +2,7 @@
  *  SoundTableViewImpl.scala
  *  (ScalaFreesound)
  *
- *  Copyright (c) 2010-2017 Hanns Holger Rutz. All rights reserved.
+ *  Copyright (c) 2010-2019 Hanns Holger Rutz. All rights reserved.
  *
  *	This software is published under the GNU Lesser General Public License v2.1+
  *
@@ -178,32 +178,35 @@ object SoundTableViewImpl {
     }
   }
 
-  private val columns: Array[Column] = Array(
-    Column( 0, "Id"             , 64,  64,  64, _.id              , Some(RightAlignedRenderer), Some(Ordering.Int)),
-    Column( 1, "Name"           , 64, 144, 256, _.fileName        , None, None),
-    Column( 2, "Tags"           , 64, 144, 256, _.tags            , Some(TagsRenderer), None),
-    Column( 3, "Description"    , 64, 160, 384, _.description     , None, None),
-    Column( 4, "User"           , 56,  72, 128, _.userName        , None, None),
-    Column( 5, "Created"        , 64,  96, 152, _.created         , Some(DateRenderer), Some(Ordering.by((d: Date) => d.getTime))),
-    Column( 6, "License"        , 64,  96, 360, _.license         , None, None),
-    Column( 7, "Pack"           , 48,  52,  64, _.packId          , Some(PackRenderer)        , Some(Ordering.Int   )),
-    Column( 8, "Geo"            , 48,  60, 160, _.geoTag          , Some(GeoTagRenderer), Some(Ordering.Option[GeoTag])),
-    Column( 9, "Type"           , 48,  52,  56, _.fileType        , None, None),
-    Column(10, null             , 48,  52,  64, _.duration        , Some(DurationRenderer    ), Some(Ordering.Double),
-      headerRenderer = Some(DurationHeaderRenderer)),
-    Column(11, null             , 32,  32,  48, _.numChannels     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
-      headerRenderer = Some(ChannelsHeaderRenderer)),
-    Column(12, "sr [Hz]"        , 48,  60,  64, _.sampleRate.toInt, Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(13, "Bits"           , 48,  52,  64, _.bitDepth, Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(14, "kbps"           , 48,  52,  64, _.bitRate/*.toInt*/,Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(15, "Size"           , 48,  64,  72, _.fileSize        , Some(FileSizeRenderer)    , Some(Ordering.Long  )),
-    Column(16, null             , 48,  52,  64, _.numDownloads    , Some(RightAlignedRenderer), Some(Ordering.Int   ),
-      headerRenderer = Some(DownloadHeaderRenderer)),
-    Column(17, "Avg.\u2605"     , 60,  60,  60, _.avgRating       , Some(RatingRenderer)      , Some(Ordering.Double)),
-    Column(18, "No.\u2605"      , 48,  52,  56, _.numRatings      , Some(RightAlignedRenderer), Some(Ordering.Int   )),
-    Column(19, null             , 48,  52,  64, _.numComments     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
-      headerRenderer = Some(CommentsHeaderRenderer))
-  )
+  private val columns: Array[Column] = {
+    val doubleOrd: Option[Ordering[Double]] = Some(implicitly)  // Scala 2.13 woes
+    Array(
+      Column( 0, "Id"             , 64,  64,  64, _.id              , Some(RightAlignedRenderer), Some(Ordering.Int)),
+      Column( 1, "Name"           , 64, 144, 256, _.fileName        , None, None),
+      Column( 2, "Tags"           , 64, 144, 256, _.tags            , Some(TagsRenderer), None),
+      Column( 3, "Description"    , 64, 160, 384, _.description     , None, None),
+      Column( 4, "User"           , 56,  72, 128, _.userName        , None, None),
+      Column( 5, "Created"        , 64,  96, 152, _.created         , Some(DateRenderer), Some(Ordering.by((d: Date) => d.getTime))),
+      Column( 6, "License"        , 64,  96, 360, _.license         , None, None),
+      Column( 7, "Pack"           , 48,  52,  64, _.packId          , Some(PackRenderer)        , Some(Ordering.Int   )),
+      Column( 8, "Geo"            , 48,  60, 160, _.geoTag          , Some(GeoTagRenderer), Some(Ordering.Option[GeoTag])),
+      Column( 9, "Type"           , 48,  52,  56, _.fileType        , None, None),
+      Column(10, null             , 48,  52,  64, _.duration        , Some(DurationRenderer    ), doubleOrd,
+        headerRenderer = Some(DurationHeaderRenderer)),
+      Column(11, null             , 32,  32,  48, _.numChannels     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
+        headerRenderer = Some(ChannelsHeaderRenderer)),
+      Column(12, "sr [Hz]"        , 48,  60,  64, _.sampleRate.toInt, Some(RightAlignedRenderer), Some(Ordering.Int   )),
+      Column(13, "Bits"           , 48,  52,  64, _.bitDepth, Some(RightAlignedRenderer), Some(Ordering.Int   )),
+      Column(14, "kbps"           , 48,  52,  64, _.bitRate/*.toInt*/,Some(RightAlignedRenderer), Some(Ordering.Int   )),
+      Column(15, "Size"           , 48,  64,  72, _.fileSize        , Some(FileSizeRenderer)    , Some(Ordering.Long  )),
+      Column(16, null             , 48,  52,  64, _.numDownloads    , Some(RightAlignedRenderer), Some(Ordering.Int   ),
+        headerRenderer = Some(DownloadHeaderRenderer)),
+      Column(17, "Avg.\u2605"     , 60,  60,  60, _.avgRating       , Some(RatingRenderer)      , doubleOrd),
+      Column(18, "No.\u2605"      , 48,  52,  56, _.numRatings      , Some(RightAlignedRenderer), Some(Ordering.Int   )),
+      Column(19, null             , 48,  52,  64, _.numComments     , Some(RightAlignedRenderer), Some(Ordering.Int   ),
+        headerRenderer = Some(CommentsHeaderRenderer))
+    )
+  }
 
   private final class Impl extends SoundTableView with ModelImpl[SoundTableView.Update] {
     private[this] var _sounds: ISeq[Sound] = Nil

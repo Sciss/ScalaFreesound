@@ -17,8 +17,6 @@ import java.net.URI
 
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
 
-import scala.collection.breakOut
-
 object License {
   object Unknown {
     private[freesound] final val id = 0
@@ -133,7 +131,7 @@ object License {
 
   val known: Set[CC]    = Set(CC0_1_0, CC_BY_3_0, CC_BY_NC_3_0, Sampling_Plus_1_0)
 
-  val map: Map[URI, CC] = known.map(lic => lic.uri -> lic)(breakOut)
+  val map: Map[URI, CC] = known.iterator.map(lic => lic.uri -> lic).toMap
 
   def parse(uri: URI): License = map.getOrElse(uri, Unknown(uri))
 
