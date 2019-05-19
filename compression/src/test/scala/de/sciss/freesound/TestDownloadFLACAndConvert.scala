@@ -20,7 +20,7 @@ object TestDownloadFLACAndConvert {
 
     val futDL = Freesound.download(id = soundId, out = fOut)
 
-    import dispatch.Defaults.executor
+    import scala.concurrent.ExecutionContext.Implicits.global
 
     val futRes = futDL.map { _ =>
       blocking {

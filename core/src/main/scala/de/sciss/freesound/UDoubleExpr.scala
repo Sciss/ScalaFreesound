@@ -28,6 +28,13 @@ object UDoubleExpr extends Factory[UDoubleExpr] {
     ConstSingle(i)
   }
 
+  implicit def fromTuple(tup: (Double, Double)): ConstRange = {
+    val (start, end) = tup
+    require(start >= 0    , s"Unsigned range must have start value >=0: $start")
+    require(end   >= start, "Range must be non-empty")
+    ConstRange(start = start, end = end)
+  }
+
   implicit def fromRange(r: Range): ConstRange = {
     require(r.nonEmpty  , "Range must be non-empty")
     require(r.start >= 0, s"Unsigned range must have start value >=0: $r")

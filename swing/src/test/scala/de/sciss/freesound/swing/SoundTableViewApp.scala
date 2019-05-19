@@ -22,7 +22,7 @@ object SoundTableViewApp extends SimpleSwingApplication {
 
     val fut = Freesound.textSearch("rising", Filter(numChannels = 2, sampleRate = 44100), maxItems = 48 /* 24 */)
 
-    import dispatch.Defaults.executor
+    import scala.concurrent.ExecutionContext.Implicits.global
 
     fut.onComplete {
       case Success(xs) =>

@@ -16,7 +16,7 @@ object TestDownload {
 
     val futRes = Freesound.download(id = soundId, out = fOut)
 
-    import dispatch.Defaults.executor
+    import scala.concurrent.ExecutionContext.Implicits.global
 
     futRes.onComplete { res =>
       println(s"RESULT: $res")

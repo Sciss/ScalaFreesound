@@ -13,7 +13,7 @@ object TestTextCount {
     }
     val fut = Freesound.textCount("water", Filter(numChannels = 2, sampleRate = 44100))
 
-    import dispatch.Defaults.executor
+    import scala.concurrent.ExecutionContext.Implicits.global
 
     fut.onComplete {
       case Success(count) =>

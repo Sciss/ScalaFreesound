@@ -17,7 +17,7 @@ object TestTextSearch {
 //    val fut   = Freesound.textSearch("fish", Filter(duration = 4 to 100, tags = "portugal"))
     val fut = Freesound.textSearch("water", Filter(numChannels = 2, sampleRate = 44100), maxItems = 10)
 
-    import dispatch.Defaults.executor
+    import scala.concurrent.ExecutionContext.Implicits.global
 
     // prevent JVM from instantly exiting
     new Thread { override def run(): Unit = this.synchronized(this.wait()) }.start()

@@ -25,30 +25,31 @@ lazy val commonSettings = Seq(
 
 lazy val deps = new {
   val core = new {
-    val optional       = "1.0.0"
-    val processor      = "0.4.2"
     val dispatch       = "1.0.1"
     val fileUtil       = "1.1.3"
+    val optional       = "1.0.0"
+    val processor      = "0.4.2"
+    val scalajHttp     = "2.4.1"
     val serial         = "1.1.1"
   }
   val swing = new {
-    val swingPlus      = "0.4.2"
     val raphael        = "1.0.6"
+    val swingPlus      = "0.4.2"
   }
   val lucre = new {
-    val soundProcesses = "3.29.0-SNAPSHOT"
     val fileCache      = "0.5.1"
+    val soundProcesses = "3.29.0-SNAPSHOT"
   }
   val compression = new {
     val audioFile      = "1.5.3"   // PCM support
     val jFLAC          = "1.5.2"   // FLAC support
-    val jump3r         = "1.0.5"   // mp3 support
     val jOrbis         = "0.0.17"  // Ogg Vorbis support
+    val jump3r         = "1.0.5"   // mp3 support
   }
   val test = new {
-    val submin         = "0.2.5"
-    val slf4j          = "1.7.26"
     val scalaTest      = "3.1.0-SNAP11"
+    val slf4j          = "1.7.26"
+    val submin         = "0.2.5"
   }
 }
 
@@ -63,8 +64,9 @@ lazy val core = project.in(file("core"))
     libraryDependencies ++= Seq(
       "de.sciss"          %% "optional"               % deps.core.optional,
       "de.sciss"          %% "processor"              % deps.core.processor,
-      "org.dispatchhttp" 	%% "dispatch-core"          % deps.core.dispatch,
-      "org.dispatchhttp" 	%% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
+      "org.dispatchhttp"  %% "dispatch-core"          % deps.core.dispatch,
+      "org.dispatchhttp"  %% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
+      "org.scalaj"        %% "scalaj-http"            % deps.core.scalajHttp,
       "de.sciss"          %% "fileutil"               % deps.core.fileUtil,
       "de.sciss"          %% "serial"                 % deps.core.serial,
       "org.scalatest"     %% "scalatest"              % deps.test.scalaTest % Test

@@ -11,7 +11,8 @@ object TestGetToken {
     // prevent JVM from instantly exiting
     new Thread { override def run(): Unit = this.synchronized(this.wait()) }.start()
 
-    import dispatch.Defaults.executor
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     Freesound.getAuth(code).onComplete {
       case Success(auth) =>
         println("Writing...")

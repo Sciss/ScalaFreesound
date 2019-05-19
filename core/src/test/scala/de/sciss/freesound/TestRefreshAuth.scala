@@ -16,7 +16,8 @@ object TestRefreshAuth {
     // prevent JVM from instantly exiting
     new Thread { override def run(): Unit = this.synchronized(this.wait()) }.start()
 
-    import dispatch.Defaults.executor
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     Freesound.refreshAuth().onComplete {
       case Success(authNew) =>
         println("Writing...")
