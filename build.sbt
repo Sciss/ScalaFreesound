@@ -3,14 +3,14 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.18.0"
+lazy val projectVersion = "1.18.1"
 lazy val mimaVersion    = "1.18.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
   scalaVersion          := "2.12.8",
-  crossScalaVersions    := Seq("2.12.8", "2.11.12", "2.13.0-RC2"),
+  crossScalaVersions    := Seq("2.12.8", "2.11.12", "2.13.0"),
   homepage              := Some(url(s"https://git.iem.at/sciss/${name.value}")),
   licenses              := Seq("LGPL v2.1+" -> url("http://www.gnu.org/licenses/lgpl-2.1.txt")),
   scalacOptions        ++= Seq(
@@ -29,7 +29,7 @@ lazy val dispatchOrg = "de.sciss"
 lazy val deps = new {
   val core = new {
     // val dispatch       = "1.0.1"
-    val dispatch       = "0.1.0"  // de.sciss version
+    val dispatch       = "0.1.1"  // de.sciss version
     val fileUtil       = "1.1.3"
     val optional       = "1.0.0"
     val processor      = "0.4.2"
@@ -41,7 +41,7 @@ lazy val deps = new {
   }
   val lucre = new {
     val fileCache      = "0.5.1"
-    val soundProcesses = "3.29.0"
+    val soundProcesses = "3.29.2"
   }
   val compression = new {
     val audioFile      = "1.5.3"   // PCM support
@@ -50,16 +50,26 @@ lazy val deps = new {
     val jump3r         = "1.0.5"   // mp3 support
   }
   val test = new {
-    val scalaTest      = "3.1.0-SNAP11"
+    val scalaTest      = "3.0.8-RC5"
     val slf4j          = "1.7.26"
     val submin         = "0.2.5"
   }
 }
 
+lazy val testSettings = Seq(
+  libraryDependencies += {
+    if (scalaVersion.value == "2.13.0")
+      "org.scalatest" %  "scalatest_2.13.0-RC3" % deps.test.scalaTest % Test exclude("org.scala-lang.modules", "scala-xml_2.13.0-RC3")
+    else
+      "org.scalatest" %% "scalatest"            % deps.test.scalaTest % Test
+  }
+)
+
 // ---- modules ----
 
 lazy val core = project.in(file("core"))
   .settings(commonSettings)
+  .settings(testSettings)
   .settings(
     name        := s"$baseName-core",
     moduleName  := s"$baseNameL-core",
@@ -70,8 +80,7 @@ lazy val core = project.in(file("core"))
       dispatchOrg         %% "dispatch-core"          % deps.core.dispatch,
       dispatchOrg         %% "dispatch-json4s-native" % deps.core.dispatch, // dispatch-lift-json, dispatch-json4s-native, dispatch-json4s-jackson
       "de.sciss"          %% "fileutil"               % deps.core.fileUtil,
-      "de.sciss"          %% "serial"                 % deps.core.serial,
-      "org.scalatest"     %% "scalatest"              % deps.test.scalaTest % Test
+      "de.sciss"          %% "serial"                 % deps.core.serial
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-core" % mimaVersion),
     initialCommands in (Test, console) := initialCmd()

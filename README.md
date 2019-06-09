@@ -12,13 +12,13 @@ absolutely no warranties. To contact the author, send an email to `contact@sciss
 
 ## requirements / installation
 
-ScalaOSC currently builds against Scala 2.12, 2.11 using sbt.
+ScalaOSC currently builds against Scala 2.13, 2.12, 2.11 using sbt.
 
 To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"1.18.0"`
+The current version `v` is `"1.18.1"`
 
 Or to link to an individual module
 
