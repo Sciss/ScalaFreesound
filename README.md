@@ -7,7 +7,7 @@
 
 ScalaFreesound is a library to query the [Freesound audio database](https://freesound.org). It is
 (C)opyright 2010&ndash;2019 by Hanns Holger Rutz. All rights reserved. It is released under the
-[GNU Lesser General Public License](https://git.iem.at/sciss/ScalaFreesound/blob/master/LICENSE) and comes with 
+[GNU Affero General Public License](https://git.iem.at/sciss/ScalaFreesound/blob/master/LICENSE) and comes with 
 absolutely no warranties. To contact the author, send an email to `contact@sciss.de`
 
 ## requirements / installation
