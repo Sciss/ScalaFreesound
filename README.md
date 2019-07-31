@@ -18,18 +18,20 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"1.18.1"`
+The current version `v` is `"1.19.0"`
 
 Or to link to an individual module
 
     libraryDependencies += "de.sciss" %% "scalafreesound-core"        % v
     libraryDependencies += "de.sciss" %% "scalafreesound-swing"       % v
     libraryDependencies += "de.sciss" %% "scalafreesound-lucre"       % v
+    libraryDependencies += "de.sciss" %% "scalafreesound-views"       % v
     libraryDependencies += "de.sciss" %% "scalafreesound-compression" % v
 
 - the `core` module provides functions for searching the database and downloading previews and files.
 - the `swing` module provides user interface elements for searching and viewing results.
-- the `lucre` module provides a bridge to SoundProcesses/[Mellite](https://www.sciss.de/mellite/).
+- the `lucre` module provides a bridge to SoundProcesses/.
+- the `views` module provides a bridge to [Mellite](https://www.sciss.de/mellite/).
 - the `compression` module provides decoders from FLAC, Ogg, and mp3 to PCM.
 
 ## contributing

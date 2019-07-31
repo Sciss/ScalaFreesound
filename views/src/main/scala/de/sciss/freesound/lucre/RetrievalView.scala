@@ -17,8 +17,8 @@ import de.sciss.freesound.swing.{SearchView, SoundTableView, SoundView}
 import de.sciss.freesound.{Client, Sound, TextSearch}
 import de.sciss.lucre.stm
 import de.sciss.lucre.synth.Sys
+import de.sciss.mellite.UniverseView
 import de.sciss.synth.proc.Universe
-import de.sciss.synth.proc.gui.UniverseView
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.{Component, SequentialContainer, TabbedPane}

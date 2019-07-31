@@ -3,8 +3,8 @@ val baseNameL = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.18.1"
-lazy val mimaVersion    = "1.18.0" // used for migration-manager
+lazy val projectVersion = "1.19.0-SNAPSHOT"
+lazy val mimaVersion    = "1.19.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
@@ -29,28 +29,32 @@ lazy val dispatchOrg = "de.sciss"
 lazy val deps = new {
   val core = new {
     // val dispatch       = "1.0.1"
-    val dispatch       = "0.1.1"  // de.sciss version
-    val fileUtil       = "1.1.3"
-    val optional       = "1.0.0"
-    val processor      = "0.4.2"
-    val serial         = "1.1.1"
+    val dispatch        = "0.1.1"  // de.sciss version
+    val fileUtil        = "1.1.3"
+    val optional        = "1.0.0"
+    val processor       = "0.4.2"
+    val serial          = "1.1.1"
   }
   val swing = new {
-    val raphael        = "1.0.6"
-    val swingPlus      = "0.4.2"
+    val raphael         = "1.0.6"
+    val swingPlus       = "0.4.2"
   }
   val lucre = new {
-    val fileCache      = "0.5.1"
-    val soundProcesses = "3.29.2"
+    val fileCache       = "0.5.1"
+    val soundProcesses  = "3.30.0"
+  }
+  val views = new {
+    val mellite         = "2.38.0-SNAPSHOT"
+    def soundProcesses: String = lucre.soundProcesses
   }
   val compression = new {
-    val audioFile      = "1.5.3"   // PCM support
-    val jFLAC          = "1.5.2"   // FLAC support
-    val jOrbis         = "0.0.17"  // Ogg Vorbis support
-    val jump3r         = "1.0.5"   // mp3 support
+    val audioFile       = "1.5.3"   // PCM support
+    val jFLAC           = "1.5.2"   // FLAC support
+    val jOrbis          = "0.0.17"  // Ogg Vorbis support
+    val jump3r          = "1.0.5"   // mp3 support
   }
   val test = new {
-    val scalaTest      = "3.0.8-RC5"
+    val scalaTest      = "3.0.8"
     val slf4j          = "1.7.26"
     val submin         = "0.2.5"
   }
@@ -58,10 +62,7 @@ lazy val deps = new {
 
 lazy val testSettings = Seq(
   libraryDependencies += {
-    if (scalaVersion.value == "2.13.0")
-      "org.scalatest" %  "scalatest_2.13.0-RC3" % deps.test.scalaTest % Test exclude("org.scala-lang.modules", "scala-xml_2.13.0-RC3")
-    else
-      "org.scalatest" %% "scalatest"            % deps.test.scalaTest % Test
+    "org.scalatest" %% "scalatest"            % deps.test.scalaTest % Test
   }
 )
 
@@ -102,16 +103,15 @@ lazy val swing = project.in(file("swing"))
   )
 
 lazy val lucre = project.in(file("lucre"))
-  .dependsOn(swing)
+  .dependsOn(core)
   .settings(commonSettings)
   .settings(
     name        := s"$baseName-lucre",
     moduleName  := s"$baseNameL-lucre",
     description := s"$baseDescr (SoundProcesses integration)",
     libraryDependencies ++= Seq(
-      "de.sciss" %% "soundprocesses-views" % deps.lucre.soundProcesses,
-      "de.sciss" %% "filecache-txn"        % deps.lucre.fileCache,
-      "de.sciss" %  "submin"               % deps.test.submin % Test
+      "de.sciss" %% "soundprocesses-core"   % deps.lucre.soundProcesses,
+      "de.sciss" %% "filecache-txn"         % deps.lucre.fileCache,
     ),
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-lucre" % mimaVersion)
   )
@@ -133,9 +133,24 @@ lazy val compression = project.in(file("compression"))
     mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-compression" % mimaVersion)
   )
 
+lazy val views = project.in(file("views"))
+  .dependsOn(lucre, swing, compression)
+  .settings(commonSettings)
+  .settings(
+    name        := s"$baseName-views",
+    moduleName  := s"$baseNameL-views",
+    description := s"$baseDescr (Mellite integration)",
+    libraryDependencies ++= Seq(
+      "de.sciss" %% "mellite-core"          % deps.views.mellite,
+      "de.sciss" %% "soundprocesses-views"  % deps.views.soundProcesses,
+      "de.sciss" %  "submin"                % deps.test.submin % Test
+    ),
+    mimaPreviousArtifacts := Set("de.sciss" %% s"$baseNameL-views" % mimaVersion)
+  )
+
 lazy val root = project.in(file("."))
-  .aggregate(core, swing, lucre, compression)
-  .dependsOn(core, swing, lucre, compression)
+  .aggregate(core, swing, lucre, views, compression)
+  .dependsOn(core, swing, lucre, views, compression)
   .settings(commonSettings)
   .settings(
     name        := baseName,
