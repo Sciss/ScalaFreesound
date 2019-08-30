@@ -28,6 +28,11 @@ object SoundObj extends ExprTypeImpl[Sound, SoundObj] {
 
   final val valueSerializer: ImmutableSerializer[Sound] = Sound.serializer
 
+  def tryParse(value: Any): Option[Sound] = value match {
+    case s: Sound => Some(s)
+    case _        => None
+  }
+
   protected def mkConst[S <: Sys[S]](id: S#Id, value: A)(implicit tx: S#Tx): Const[S] =
     new _Const[S](id, value)
 

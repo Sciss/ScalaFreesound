@@ -28,6 +28,11 @@ object TextSearchObj extends ExprTypeImpl[TextSearch, TextSearchObj] {
 
   final val valueSerializer: ImmutableSerializer[TextSearch] = TextSearch.serializer
 
+  def tryParse(value: Any): Option[TextSearch] = value match {
+    case ts: TextSearch => Some(ts)
+    case _              => None
+  }
+
   protected def mkConst[S <: Sys[S]](id: S#Id, value: A)(implicit tx: S#Tx): Const[S] =
     new _Const[S](id, value)
 
