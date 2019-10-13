@@ -15,10 +15,9 @@ package de.sciss.freesound.swing.impl
 
 import de.sciss.freesound.Sound
 import de.sciss.freesound.swing.SoundView
-import de.sciss.swingplus.GroupPanel
-import de.sciss.swingplus.GroupPanel.Element
 
-import scala.swing.{Component, Label, ScrollPane, TextArea, TextField}
+import scala.swing.Swing.EmptyIcon
+import scala.swing.{Alignment, Component, GridBagPanel, Insets, Label, ScrollPane, TextArea, TextField}
 
 object SoundViewImpl {
   def apply(): SoundView = new Impl
@@ -56,12 +55,12 @@ object SoundViewImpl {
       }
     }
 
-    private def label(n: String): Label = new Label(s"$n:")
+    private def label(n: String): Label = new Label(s"$n:", EmptyIcon, Alignment.Right)
 
     private def textField(): TextField = {
       val res = new TextField(12)
       res.editable = false
-      res.peer.putClientProperty("styleId", "undecorated")
+      res.peer.putClientProperty("styleId", "nofocus")
       res
     }
 
@@ -126,14 +125,30 @@ object SoundViewImpl {
     )
 
     val component: Component = {
-      val pane = new GroupPanel {
-        horizontal = Seq(
-          Par(pairs.map(tup => tup._1: Element): _*),
-          Par(pairs.map(tup => tup._2: Element): _*)
-        )
-        vertical = Seq(
-          pairs.map { case (lb, gg) => Par(Baseline)(lb, gg) }: _*
-        )
+      // XXX TODO
+      // this is work-around for https://github.com/mgarin/weblaf/issues/558
+
+//      val pane = new GroupPanel {
+//        horizontal = Seq(
+//          Par(pairs.map(tup => tup._1: Element): _*),
+//          Par(pairs.map(tup => tup._2: Element): _*)
+//        )
+//        vertical = Seq(
+//          pairs.map { case (lb, gg) => Par(Baseline)(lb, gg) }: _*
+//        )
+//      }
+      val pane = new GridBagPanel
+      val cons = new pane.Constraints()
+      cons.insets = new Insets(2, 4, 2, 4)
+      pairs.foreach { case (lb, gg) =>
+        cons.gridwidth  = 1
+        cons.fill       = GridBagPanel.Fill.None
+        cons.weightx    = 0.0
+        pane.layout(lb) = cons
+        cons.gridwidth  = 0
+        cons.fill       = GridBagPanel.Fill.Both
+        cons.weightx    = 1.0
+        pane.layout(gg) = cons
       }
 
       val scroll = new ScrollPane(pane)
