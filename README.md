@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Sciss/ScalaFreesound.svg?branch=master)](https://travis-ci.org/Sciss/ScalaFreesound)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound-core_2.12)
+<a href="https://liberapay.com/sciss/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" height="24"></a>
 
 ## statement
 
@@ -10,15 +11,17 @@ ScalaFreesound is a library to query the [Freesound audio database](https://free
 [GNU Affero General Public License](https://git.iem.at/sciss/ScalaFreesound/blob/master/LICENSE) and comes with 
 absolutely no warranties. To contact the author, send an email to `contact@sciss.de`
 
+Please consider supporting this project through Liberapay (see badge above) – thank you!
+
 ## requirements / installation
 
-ScalaOSC currently builds against Scala 2.13, 2.12 using sbt (the last version to support Scala 2.11 was 1.19.0).
+This project currently builds against Scala 2.13, 2.12 using sbt (the last version to support Scala 2.11 was 1.19.0).
 
 To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"1.22.0"`
+The current version `v` is `"1.23.0"`
 
 Or to link to an individual module
 
