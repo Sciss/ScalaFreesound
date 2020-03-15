@@ -1,13 +1,13 @@
 # ScalaFreesound
 
 [![Build Status](https://travis-ci.org/Sciss/ScalaFreesound.svg?branch=master)](https://travis-ci.org/Sciss/ScalaFreesound)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound-core_2.12)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound-core_2.13)
 <a href="https://liberapay.com/sciss/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" height="24"></a>
 
 ## statement
 
 ScalaFreesound is a library to query the [Freesound audio database](https://freesound.org). It is
-(C)opyright 2010&ndash;2019 by Hanns Holger Rutz. All rights reserved. It is released under the
+(C)opyright 2010&ndash;2020 by Hanns Holger Rutz. All rights reserved. It is released under the
 [GNU Affero General Public License](https://git.iem.at/sciss/ScalaFreesound/blob/master/LICENSE) and comes with 
 absolutely no warranties. To contact the author, send an email to `contact@sciss.de`
 
@@ -21,7 +21,7 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"1.23.0"`
+The current version `v` is `"1.24.0"`
 
 Or to link to an individual module
 

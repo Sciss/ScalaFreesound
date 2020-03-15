@@ -3,14 +3,14 @@ package de.sciss.freesound
 import java.util.Date
 
 import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 
 /* To run only this test:
 
   testOnly de.sciss.freesound.SerializationSpec
 
   */
-class SerializationSpec extends FunSpec {
+class SerializationSpec extends AnyFunSpec {
   def trip[A](x: A)(implicit serializer: ImmutableSerializer[A]): A = {
     val out = DataOutput()
     serializer.write(x, out)
