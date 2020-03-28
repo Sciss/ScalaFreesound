@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Sciss/ScalaFreesound.svg?branch=master)](https://travis-ci.org/Sciss/ScalaFreesound)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound-core_2.13)
-<a href="https://liberapay.com/sciss/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" height="24"></a>
+<a href="https://liberapay.com/sciss"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" height="24"></a>
 
 ## statement
 
@@ -21,7 +21,7 @@ To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"1.24.0"`
+The current version `v` is `"1.25.0"`
 
 Or to link to an individual module
 

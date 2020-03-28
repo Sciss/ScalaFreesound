@@ -3,14 +3,14 @@ lazy val baseNameL  = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "1.24.0"
-lazy val mimaVersion    = "1.24.0" // used for migration-manager
+lazy val projectVersion = "1.25.0"
+lazy val mimaVersion    = "1.25.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
   organization          := "de.sciss",
   scalaVersion          := "2.13.1",
-  crossScalaVersions    := Seq("2.13.1", "2.12.10"),
+  crossScalaVersions    := Seq("2.13.1", "2.12.11"),
   homepage              := Some(url(s"https://git.iem.at/sciss/$baseName")),
   licenses              := Seq("AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")),
   scalacOptions        ++= Seq(
@@ -33,7 +33,7 @@ lazy val deps = new {
     val fileUtil        = "1.1.3"
     val optional        = "1.0.0"
     val processor       = "0.4.2"
-    val serial          = "1.1.1"
+    val serial          = "1.1.2"
   }
   val swing = new {
     val raphael         = "1.0.6"
@@ -41,20 +41,20 @@ lazy val deps = new {
   }
   val lucre = new {
     val fileCache       = "0.5.1"
-    val soundProcesses  = "3.34.0"
+    val soundProcesses  = "3.35.0"
   }
   val views = new {
-    val mellite         = "2.44.0"
+    val mellite         = "2.45.0"
     def soundProcesses: String = lucre.soundProcesses
   }
   val compression = new {
-    val audioFile       = "1.5.3"   // PCM support
+    val audioFile       = "1.5.4"   // PCM support
     val jFLAC           = "1.5.2"   // FLAC support
     val jOrbis          = "0.0.17"  // Ogg Vorbis support
     val jump3r          = "1.0.5"   // mp3 support
   }
   val test = new {
-    val scalaTest      = "3.1.0"
+    val scalaTest      = "3.1.1"
     val slf4j          = "1.7.30"
     val submin         = "0.3.4"
   }
