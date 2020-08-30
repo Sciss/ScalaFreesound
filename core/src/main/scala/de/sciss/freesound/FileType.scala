@@ -40,8 +40,12 @@ object FileType {
     final val toProperty = "flac"
     def isCompressed = true
   }
+  case object M4A extends FileType {
+    final val toProperty = "m4a"
+    def isCompressed = true
+  }
 
-  val all: ISeq[FileType] = ISeq(Wave, AIFF, Ogg, MP3, FLAC)
+  val all: ISeq[FileType] = ISeq(Wave, AIFF, Ogg, MP3, FLAC, M4A)
 
   implicit def fromString(s: String): FileType = s match {
     case Wave.toProperty  => Wave
@@ -50,6 +54,7 @@ object FileType {
     case Ogg .toProperty  => Ogg
     case MP3 .toProperty  => MP3
     case FLAC.toProperty  => FLAC
+    case M4A .toProperty  => M4A
     case _                =>
       throw new IllegalArgumentException(s"Unsupported file type '$s' (must be one of ${all.mkString(", ")})")
   }

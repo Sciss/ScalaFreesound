@@ -196,8 +196,10 @@ object SearchViewImpl {
               case e: ExecutionException => e.getCause match {
                 case StatusCode(c) => failure(c)
                 case _ =>
+                  e.printStackTrace()
               }
-              case _ =>
+              case e =>
+                e.printStackTrace()
             }
           }
         }
