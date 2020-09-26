@@ -13,7 +13,7 @@
 
 package de.sciss.freesound
 
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.language.implicitConversions
@@ -59,7 +59,7 @@ object FileType {
       throw new IllegalArgumentException(s"Unsupported file type '$s' (must be one of ${all.mkString(", ")})")
   }
 
-  implicit object serializer extends ImmutableSerializer[FileType] {
+  implicit object format extends ConstFormat[FileType] {
     def read(in: DataInput): FileType = fromString(in.readUTF())
 
     def write(v: FileType, out: DataOutput): Unit = out.writeUTF(v.toProperty)

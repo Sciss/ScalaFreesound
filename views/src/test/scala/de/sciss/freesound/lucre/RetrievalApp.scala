@@ -17,6 +17,7 @@ object RetrievalApp {
   def main(args: Array[String]): Unit = run()
 
   type S = InMemory
+  type T = InMemory.Txn
 
   def run(): Unit = {
     Submin.install(true)
@@ -30,7 +31,7 @@ object RetrievalApp {
     implicit val system: S = InMemory()
 
     system.step { implicit tx =>
-      implicit val universe: Universe[S] = Universe.dummy
+      implicit val universe: Universe[T] = Universe.dummy
       universe.auralSystem.start()
 
       implicit val cache: PreviewsCache = PreviewsCache(dir = cacheDir)
@@ -38,13 +39,13 @@ object RetrievalApp {
       val queryInit   = "water"
       val filterInit  = Filter(numChannels = 2, sampleRate = 44100 to *, duration = 10.0 to *)
       val tsInit      = TextSearch(queryInit, filterInit)
-      val view        = RetrievalView[S](tsInit)
+      val view        = RetrievalView[T](tsInit)
 
       deferTx(guiInit(view))
     }
   }
 
-  def guiInit(view: RetrievalView[S]): Unit = {
+  def guiInit(view: RetrievalView[T]): Unit = {
     val top = new MainFrame {
       title     = "Retrieval Test"
       contents  = view.component

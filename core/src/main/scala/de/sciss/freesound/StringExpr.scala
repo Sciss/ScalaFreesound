@@ -14,7 +14,7 @@
 package de.sciss.freesound
 
 import de.sciss.freesound.QueryExpr.{Base, Factory}
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 import scala.annotation.switch
 import scala.language.implicitConversions
@@ -42,17 +42,17 @@ object StringExpr extends Factory[StringExpr] {
   def not(a: Repr         ): Repr = Not(a)
 
   object Option {
-    import StringExpr.{serializer => valueSerializer}
+    import StringExpr.{format => valueFormat}
 
-    implicit object serializer extends ImmutableSerializer[Option] {
+    implicit object format extends ConstFormat[Option] {
       def read(in: DataInput): Option = in.readByte() match {
         case 0 => None
-        case 1 => valueSerializer.read(in)
+        case 1 => valueFormat.read(in)
       }
 
       def write(v: Option, out: DataOutput): Unit = v match {
         case None       => out.writeByte(0)
-        case some: Repr => out.writeByte(1); valueSerializer.write(some, out)
+        case some: Repr => out.writeByte(1); valueFormat.write(some, out)
       }
     }
   }
@@ -61,7 +61,7 @@ object StringExpr extends Factory[StringExpr] {
   }
   case object None extends Option with QueryExpr.None
 
-  implicit object serializer extends ImmutableSerializer[Repr] {
+  implicit object format extends ConstFormat[Repr] {
     def read(in: DataInput): Repr = (in.readByte(): @switch) match {
       case 0 => val s = in.readUTF(); Const(s)
       case 2 => val a = read(in); val b = read(in); And(a, b)

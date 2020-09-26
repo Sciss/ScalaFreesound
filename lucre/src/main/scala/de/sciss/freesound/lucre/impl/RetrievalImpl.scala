@@ -14,52 +14,51 @@
 package de.sciss.freesound.lucre.impl
 
 import de.sciss.freesound.lucre.{Retrieval, TextSearchObj}
-import de.sciss.lucre.artifact.ArtifactLocation
-import de.sciss.lucre.stm.impl.ObjSerializer
-import de.sciss.lucre.stm.{Copy, Elem, Folder, NoSys, Obj, Sys}
-import de.sciss.lucre.{event => evt}
-import de.sciss.serial.{DataInput, DataOutput, Serializer}
+import de.sciss.lucre.Event.Targets
+import de.sciss.lucre.impl.{GeneratorEvent, ObjFormat, SingleEventNode}
+import de.sciss.lucre.{AnyTxn, ArtifactLocation, Copy, Elem, Folder, Obj, Pull, Txn}
+import de.sciss.serial.{DataInput, DataOutput, TFormat}
 
 object RetrievalImpl {
-  def apply[S <: Sys[S]](initSearch: TextSearchObj[S], initLocation: ArtifactLocation[S])
-                        (implicit tx: S#Tx): Retrieval[S] = {
-    val targets           = evt.Targets[S]
-    val textSearch        = TextSearchObj   .newVar[S](initSearch  )
-    val downloadLocation  = ArtifactLocation.newVar[S](initLocation)
-    val downloads         = Folder[S]
-    new Impl[S](targets, textSearch, downloadLocation, downloads).connect()
+  def apply[T <: Txn[T]](initSearch: TextSearchObj[T], initLocation: ArtifactLocation[T])
+                        (implicit tx: T): Retrieval[T] = {
+    val targets           = Targets[T]()
+    val textSearch        = TextSearchObj   .newVar[T](initSearch  )
+    val downloadLocation  = ArtifactLocation.newVar[T](initLocation)
+    val downloads         = Folder[T]()
+    new Impl[T](targets, textSearch, downloadLocation, downloads).connect()
   }
 
-  def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] = {
-    val targets           = evt.Targets.read(in, access)
+  def readIdentifiedObj[T <: Txn[T]](in: DataInput)(implicit tx: T): Obj[T] = {
+    val targets           = Targets.read(in)
     val c                 = in.readInt()
     require(c == COOKIE, s"Unexpected cookie (found ${c.toHexString}, expected ${COOKIE.toHexString})")
-    val textSearch        = TextSearchObj   .readVar[S](in, access)
-    val downloadLocation  = ArtifactLocation.readVar[S](in, access)
-    val downloads         = Folder          .read   [S](in, access)
-    new Impl[S](targets, textSearch, downloadLocation, downloads)
+    val textSearch        = TextSearchObj   .readVar[T](in)
+    val downloadLocation  = ArtifactLocation.readVar[T](in)
+    val downloads         = Folder          .read   [T](in)
+    new Impl[T](targets, textSearch, downloadLocation, downloads)
   }
 
-  def serializer[S <: Sys[S]]: Serializer[S#Tx, S#Acc, Retrieval[S]] = anySer.asInstanceOf[Ser[S]]
+  def format[T <: Txn[T]]: TFormat[T, Retrieval[T]] = anyFmt.asInstanceOf[Fmt[T]]
 
-  private val anySer = new Ser[NoSys]
+  private val anyFmt = new Fmt[AnyTxn]
 
-  private class Ser[S <: Sys[S]] extends ObjSerializer[S, Retrieval[S]] {
+  private class Fmt[T <: Txn[T]] extends ObjFormat[T, Retrieval[T]] {
     def tpe: Obj.Type = Retrieval
   }
 
   private final val COOKIE = 0x46535265
 
-  private final class Impl[S <: Sys[S]](protected val targets: evt.Targets[S],
-                                        val textSearch      : TextSearchObj   .Var[S],
-                                        val downloadLocation: ArtifactLocation.Var[S],
-                                        val downloads       : Folder              [S])
-    extends Retrieval[S] with evt.impl.SingleNode[S, Retrieval.Update[S]] { self =>
+  private final class Impl[T <: Txn[T]](protected val targets: Targets[T],
+                                        val textSearch      : TextSearchObj   .Var[T],
+                                        val downloadLocation: ArtifactLocation.Var[T],
+                                        val downloads       : Folder              [T])
+    extends Retrieval[T] with SingleEventNode[T, Retrieval.Update[T]] { self =>
 
     def tpe: Obj.Type = Retrieval
 
-    def copy[Out <: Sys[Out]]()(implicit tx: S#Tx, txOut: Out#Tx, context: Copy[S, Out]): Elem[Out] = {
-      val targetsOut          = evt.Targets[Out]
+    def copy[Out <: Txn[Out]]()(implicit tx: T, txOut: Out, context: Copy[T, Out]): Elem[Out] = {
+      val targetsOut          = Targets[Out]()
       val textSearchOut       = context(textSearch)
       val downloadLocationOut = context(downloadLocation)
       val downloadsOut        = context(downloads)
@@ -73,29 +72,29 @@ object RetrievalImpl {
       downloads       .write(out)
     }
 
-    protected def disposeData()(implicit tx: S#Tx): Unit = {
+    protected def disposeData()(implicit tx: T): Unit = {
       textSearch      .dispose()
       downloadLocation.dispose()
       downloads       .dispose()
     }
 
-    def connect()(implicit tx: S#Tx): this.type = {
+    def connect()(implicit tx: T): this.type = {
       textSearch      .changed ---> changed
       downloadLocation.changed ---> changed
       downloads       .changed ---> changed
       this
     }
 
-    def disconnect()(implicit tx: S#Tx): Unit = {
+    def disconnect()(implicit tx: T): Unit = {
       textSearch      .changed -/-> changed
       downloadLocation.changed -/-> changed
       downloads       .changed -/-> changed
     }
 
     object changed extends Changed
-      with evt.impl.Generator[S, Retrieval.Update[S]] {
+      with GeneratorEvent[T, Retrieval.Update[T]] {
 
-      def pullUpdate(pull: evt.Pull[S])(implicit tx: S#Tx): Option[Retrieval.Update[S]] = {
+      def pullUpdate(pull: Pull[T])(implicit tx: T): Option[Retrieval.Update[T]] = {
         val searchCh  = textSearch      .changed
         val locCh     = downloadLocation.changed
         val dlCh      = downloads       .changed
@@ -103,7 +102,7 @@ object RetrievalImpl {
         val locOpt    = if (pull.contains(locCh   )) pull(locCh   ) else None
         val dlOpt     = if (pull.contains(dlCh    )) pull(dlCh    ) else None
 
-        var changes   = Vector.empty[Retrieval.Change[S]]
+        var changes   = Vector.empty[Retrieval.Change[T]]
         searchOpt.foreach(changes :+= Retrieval.TextSearchChange      (_))
         locOpt   .foreach(changes :+= Retrieval.DownloadLocationChange(_))
         dlOpt    .foreach(changes :+= Retrieval.DownloadsChange       (_))

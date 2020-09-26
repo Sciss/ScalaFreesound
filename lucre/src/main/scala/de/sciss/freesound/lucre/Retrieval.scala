@@ -15,11 +15,11 @@ package de.sciss.freesound.lucre
 
 import de.sciss.freesound.TextSearch
 import de.sciss.freesound.lucre.impl.{RetrievalImpl => Impl}
-import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
-import de.sciss.lucre.event.Publisher
-import de.sciss.lucre.stm.{Folder, Obj, Sys}
+import de.sciss.lucre.{Artifact, ArtifactLocation}
+import de.sciss.lucre.Publisher
+import de.sciss.lucre.{Folder, Obj, Txn}
 import de.sciss.model
-import de.sciss.serial.{DataInput, Serializer}
+import de.sciss.serial.{DataInput, TFormat}
 
 import scala.collection.immutable.{IndexedSeq => Vec}
 
@@ -33,37 +33,37 @@ object Retrieval extends Obj.Type {
     TextSearchObj .init()
   }
 
-  def apply[S <: Sys[S]](initSearch: TextSearchObj[S], initLocation: ArtifactLocation[S])
-                        (implicit tx: S#Tx): Retrieval[S] =
-    Impl[S](initSearch = initSearch, initLocation = initLocation)
+  def apply[T <: Txn[T]](initSearch: TextSearchObj[T], initLocation: ArtifactLocation[T])
+                        (implicit tx: T): Retrieval[T] =
+    Impl[T](initSearch = initSearch, initLocation = initLocation)
 
-  implicit def serializer[S <: Sys[S]]: Serializer[S#Tx, S#Acc, Retrieval[S]] = Impl.serializer[S]
+  implicit def format[T <: Txn[T]]: TFormat[T, Retrieval[T]] = Impl.format[T]
 
-  def readIdentifiedObj[S <: Sys[S]](in: DataInput, access: S#Acc)(implicit tx: S#Tx): Obj[S] =
-    Impl.readIdentifiedObj(in, access)
+  def readIdentifiedObj[T <: Txn[T]](in: DataInput)(implicit tx: T): Obj[T] =
+    Impl.readIdentifiedObj(in)
 
   /** An update is a sequence of changes */
-  final case class Update[S <: Sys[S]](r: Retrieval[S], changes: Vec[Change[S]])
+  final case class Update[T <: Txn[T]](r: Retrieval[T], changes: Vec[Change[T]])
 
   /** A change is either a state change, or a scan or a grapheme change */
-  sealed trait Change[S <: Sys[S]]
+  sealed trait Change[T <: Txn[T]]
 
-  final case class TextSearchChange      [S <: Sys[S]](change: model.Change[TextSearch    ]) extends Change[S]
-  final case class DownloadLocationChange[S <: Sys[S]](change: model.Change[Artifact.Value]) extends Change[S]
-  final case class DownloadsChange       [S <: Sys[S]](change: Folder.Update[S])             extends Change[S]
+  final case class TextSearchChange      [T <: Txn[T]](change: model.Change[TextSearch    ]) extends Change[T]
+  final case class DownloadLocationChange[T <: Txn[T]](change: model.Change[Artifact.Value]) extends Change[T]
+  final case class DownloadsChange       [T <: Txn[T]](change: Folder.Update[T])             extends Change[T]
 
   final val attrFreesound = "freesound"
 }
-trait Retrieval[S <: Sys[S]] extends Obj[S] with Publisher[S, Retrieval.Update[S]] {
+trait Retrieval[T <: Txn[T]] extends Obj[T] with Publisher[T, Retrieval.Update[T]] {
   /** Last performed text search settings. */
-  def textSearch: TextSearchObj.Var[S]
+  def textSearch: TextSearchObj.Var[T]
 
   /** Base directory used by the GUI for downloads. */
-  def downloadLocation: ArtifactLocation.Var[S]
+  def downloadLocation: ArtifactLocation.Var[T]
 
   /** A folder containing all the downloaded sounds.
     * Each sound (`AudioCue`) has in its attribute dictionary
     * at key `Retrieval.attrFreesound` and instance of `SoundObj`.
     */
-  def downloads: Folder[S]
+  def downloads: Folder[T]
 }

@@ -23,10 +23,10 @@ import de.sciss.freesound.lucre.{PreviewsCache, RetrievalView}
 import de.sciss.freesound.swing.{SearchView, Shapes, SoundTableView, SoundView}
 import de.sciss.freesound.{Client, Sound, TextSearch}
 import de.sciss.icons.raphael
-import de.sciss.lucre.stm.TxnLike.peer
+import de.sciss.lucre.Txn.peer
 import de.sciss.lucre.swing.LucreSwing.{deferTx, requireEDT}
 import de.sciss.lucre.swing.impl.ComponentHolder
-import de.sciss.lucre.synth.{Buffer, Server, Synth, Sys}
+import de.sciss.lucre.synth.{Buffer, Server, Synth, Txn}
 import de.sciss.synth.proc.{SoundProcesses, Universe}
 import de.sciss.synth.{ControlSet, SynthGraph}
 import javax.swing.{Icon, JComponent, KeyStroke, Timer}
@@ -40,10 +40,10 @@ import scala.util.Success
 import scala.util.control.NonFatal
 
 object RetrievalViewImpl {
-  def apply[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
-           (implicit tx: S#Tx, client: Client, previewsCache: PreviewsCache,
-            universe: Universe[S]): RetrievalView[S] = {
-    new Impl[S](searchInit, soundInit).init()
+  def apply[T <: Txn[T]](searchInit: TextSearch, soundInit: ISeq[Sound])
+           (implicit tx: T, client: Client, previewsCache: PreviewsCache,
+            universe: Universe[T]): RetrievalView[T] = {
+    new Impl[T](searchInit, soundInit).init()
   }
 
   private def iconNormal  (fun: Path2D => Unit): Icon = raphael.TexturedIcon        (20)(fun)
@@ -73,26 +73,26 @@ object RetrievalViewImpl {
     c.peer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, name)
   }
 
-  private final class Impl[S <: Sys[S]](searchInit: TextSearch, soundInit: ISeq[Sound])
+  private final class Impl[T <: Txn[T]](searchInit: TextSearch, soundInit: ISeq[Sound])
                                        (implicit client: Client, previewCache: PreviewsCache,
-                                        val universe: Universe[S])
-    extends RetrievalView[S] with ComponentHolder[Component] {
+                                        val universe: Universe[T])
+    extends RetrievalView[T] with ComponentHolder[Component] {
 
     type C = Component
 
-    def init()(implicit tx: S#Tx): this.type = {
+    def init()(implicit tx: T): this.type = {
       deferTx(guiInit())
       this
     }
 
     private[this] val _disposed = Ref(false)
 
-    def dispose()(implicit tx: S#Tx): Unit = {
+    def dispose()(implicit tx: T): Unit = {
       _disposed() = true
       stopAndRelease()
     }
 
-    private def stopAndRelease()(implicit tx: S#Tx): Unit = {
+    private def stopAndRelease()(implicit tx: T): Unit = {
       synth   .swap(None).foreach(_.dispose())
       acquired.swap(None).foreach { sound =>
         // XXX TODO - workaround for https://github.com/Sciss/FileCache/issues/5
@@ -123,7 +123,7 @@ object RetrievalViewImpl {
     private[this] var transPane   : Component with ButtonStrip = _
     private[this] var ggView      : Button = _
 
-    private def play(s: Server, f: File, sampleRate: Double, numChannels: Int)(implicit tx: S#Tx): Unit = {
+    private def play(s: Server, f: File, sampleRate: Double, numChannels: Int)(implicit tx: T): Unit = {
       val buf = Buffer.diskIn(s)(path = f.path, startFrame = 0L, numChannels = numChannels)
       val graph = SynthGraph {
         import de.sciss.synth.Ops.stringToControl
@@ -253,7 +253,7 @@ object RetrievalViewImpl {
 
         import previewCache.executionContext
         fut.onComplete { tr =>
-          SoundProcesses.atomic[S, Unit] { implicit tx =>
+          SoundProcesses.atomic[T, Unit] { implicit tx =>
             if (acquired().contains(sound) && !_disposed()) {
               deferTx(timerPrepare.stop())
               (tr, universe.auralSystem.serverOption) match {

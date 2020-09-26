@@ -15,7 +15,7 @@ package de.sciss.freesound
 
 import de.sciss.freesound.Filter.StringTokens
 import de.sciss.optional.Optional
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 object Filter {
   private final implicit class OptionalBooleanOps(private val opt: Optional[Boolean]) /* extends AnyVal */ {
@@ -33,21 +33,21 @@ object Filter {
   // XXX TODO --- how are tokenized strings different?
   type StringTokens = StringExpr.Option
 
-  implicit object serializer extends ImmutableSerializer[Filter] {
+  implicit object format extends ConstFormat[Filter] {
     private[this] val COOKIE = 0x46534669  // "FSFi" - freesound filter
 
-    private[this] val BooleanS = ImmutableSerializer.option[Boolean]
+    private[this] val BooleanS = ConstFormat.option[Boolean]
 
     def read(in: DataInput): Filter = {
       val c = in.readInt()
       require(c == COOKIE, s"Unexpected cookie (found ${c.toHexString}, expected ${COOKIE.toHexString})")
-      val StringS   = StringExpr  .Option.serializer
-      val UIntS     = UIntExpr    .Option.serializer
-      val UDoubleS  = UDoubleExpr .Option.serializer
-      import FileTypeExpr.Option.{serializer => FileTypeS}
-      import DateExpr    .Option.{serializer => DateS}
-      import LicenseExpr .Option.{serializer => LicenseS}
-      import GeoTag.Expr        .{serializer => GeoTagS}
+      val StringS   = StringExpr  .Option.format
+      val UIntS     = UIntExpr    .Option.format
+      val UDoubleS  = UDoubleExpr .Option.format
+      import FileTypeExpr.Option.{format => FileTypeS}
+      import DateExpr    .Option.{format => DateS}
+      import LicenseExpr .Option.{format => LicenseS}
+      import GeoTag.Expr        .{format => GeoTagS}
       val id            = UIntS     .read(in)
       val fileName      = StringS   .read(in)
       val tags          = StringS   .read(in)
@@ -86,13 +86,13 @@ object Filter {
     def write(v: Filter, out: DataOutput): Unit = {
       out.writeInt(COOKIE)
       import v._
-      val StringS   = StringExpr  .Option.serializer
-      val UIntS     = UIntExpr    .Option.serializer
-      val UDoubleS  = UDoubleExpr .Option.serializer
-      import FileTypeExpr.Option.{serializer => FileTypeS}
-      import DateExpr    .Option.{serializer => DateS}
-      import LicenseExpr .Option.{serializer => LicenseS}
-      import GeoTag.Expr        .{serializer => GeoTagS}
+      val StringS   = StringExpr  .Option.format
+      val UIntS     = UIntExpr    .Option.format
+      val UDoubleS  = UDoubleExpr .Option.format
+      import FileTypeExpr.Option.{format => FileTypeS}
+      import DateExpr    .Option.{format => DateS}
+      import LicenseExpr .Option.{format => LicenseS}
+      import GeoTag.Expr        .{format => GeoTagS}
       UIntS     .write(id           , out)
       StringS   .write(fileName     , out)
       StringS   .write(tags         , out)

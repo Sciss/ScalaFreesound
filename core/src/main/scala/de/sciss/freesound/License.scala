@@ -15,7 +15,7 @@ package de.sciss.freesound
 
 import java.net.URI
 
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 object License {
   object Unknown {
@@ -51,7 +51,7 @@ object License {
   }
 
   object CC {
-    implicit object serializer extends ImmutableSerializer[CC] {
+    implicit object format extends ConstFormat[CC] {
       def read(in: DataInput): CC = in.readByte() match {
         case CC0_1_0.id           => CC0_1_0
         case CC_BY_3_0.id         => CC_BY_3_0
@@ -135,7 +135,7 @@ object License {
 
   def parse(uri: URI): License = map.getOrElse(uri, Unknown(uri))
 
-  implicit object serializer extends ImmutableSerializer[License] {
+  implicit object format extends ConstFormat[License] {
     def read(in: DataInput): License = in.readByte() match {
       case Unknown.id           => val uri = new URI(in.readUTF()); Unknown(uri)
       case CC0_1_0.id           => CC0_1_0

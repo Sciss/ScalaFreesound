@@ -16,10 +16,10 @@ package de.sciss.freesound
 import java.net.URI
 import java.util.Date
 
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 object Sound {
-  implicit object serializer extends ImmutableSerializer[Sound] {
+  implicit object format extends ConstFormat[Sound] {
     private[this] val COOKIE = 0x4653536e // "FSSn"
 
     def read(in: DataInput): Sound = {
@@ -33,14 +33,14 @@ object Sound {
       val description   = readUTF   ()
       val userName      = readUTF   ()
       val created       = new Date(readLong())
-      val license       = License.serializer.read(in)
+      val license       = License.format.read(in)
       val packId        = readInt   ()
       val geoTag        = if (readByte() == 0) None else {
         val lat = readDouble()
         val lon = readDouble()
         Some(GeoTag(lat = lat, lon = lon))
       }
-      val fileType      = FileType.serializer.read(in)
+      val fileType      = FileType.format.read(in)
       val duration      = readDouble()
       val numChannels   = readInt   ()
       val sampleRate    = readDouble()
@@ -70,14 +70,14 @@ object Sound {
       writeUTF   (description)
       writeUTF   (userName   )
       writeLong  (created.getTime)
-      License.serializer.write(license, out)
+      License.format.write(license, out)
       writeInt   (packId     )
       geoTag.fold(writeByte(0)) { gt =>
         writeByte(1)
         writeDouble(gt.lat)
         writeDouble(gt.lon)
       }
-      FileType.serializer.write(fileType, out)
+      FileType.format.write(fileType, out)
       writeDouble(duration    )
       writeInt   (numChannels )
       writeDouble(sampleRate  )

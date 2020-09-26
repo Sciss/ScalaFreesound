@@ -30,7 +30,7 @@ object SoundView {
     val unit  = if (si) 1000 else 1024
     if (bytes < unit) s"$bytes B"
     else {
-      val exp = (math.log(bytes) / math.log(unit)).toInt
+      val exp = (math.log(bytes.toDouble) / math.log(unit)).toInt
       val pre = s"${(if (si) "kMGTPE" else "KMGTPE").charAt(exp - 1)}${if (si) "" else "i"}"
       String.format("%.1f %sB", (bytes / math.pow(unit, exp)).asInstanceOf[java.lang.Double], pre)
     }

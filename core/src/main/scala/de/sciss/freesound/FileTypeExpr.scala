@@ -14,7 +14,7 @@
 package de.sciss.freesound
 
 import de.sciss.freesound.QueryExpr.{Base, Factory}
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 import scala.annotation.switch
 import scala.language.implicitConversions
@@ -43,33 +43,33 @@ object FileTypeExpr extends Factory[FileTypeExpr] {
   def not(a: Repr         ): Repr = Not(a)
 
   object Option {
-    import FileTypeExpr.{serializer => valueSerializer}
+    import FileTypeExpr.{format => valueFormat}
 
-    implicit object serializer extends ImmutableSerializer[Option] {
+    implicit object format extends ConstFormat[Option] {
       def read(in: DataInput): Option = in.readByte() match {
         case 0 => None
-        case 1 => valueSerializer.read(in)
+        case 1 => valueFormat.read(in)
       }
 
       def write(v: Option, out: DataOutput): Unit = v match {
         case None       => out.writeByte(0)
-        case some: Repr => out.writeByte(1); valueSerializer.write(some, out)
+        case some: Repr => out.writeByte(1); valueFormat.write(some, out)
       }
     }
   }
   sealed trait Option extends QueryExpr.Option
   case object None extends Option with QueryExpr.None
 
-  implicit object serializer extends ImmutableSerializer[Repr] {
+  implicit object format extends ConstFormat[Repr] {
     def read(in: DataInput): Repr = (in.readByte(): @switch) match {
-      case 0 => val f = FileType.serializer.read(in); Const(f)
+      case 0 => val f = FileType.format.read(in); Const(f)
       case 2 => val a = read(in); val b = read(in); And(a, b)
       case 3 => val a = read(in); val b = read(in); Or (a, b)
       case 4 => val a = read(in);                   Not(a)
     }
 
     def write(v: Repr, out: DataOutput): Unit = v match {
-      case Const(f)  => out.writeByte(0); FileType.serializer.write(f, out)
+      case Const(f)  => out.writeByte(0); FileType.format.write(f, out)
       case And(a, b) => out.writeByte(2); write(a, out); write(b, out)
       case Or (a, b) => out.writeByte(3); write(a, out); write(b, out)
       case Not(a)    => out.writeByte(4); write(a, out)

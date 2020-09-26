@@ -16,7 +16,7 @@ package de.sciss.freesound.lucre
 import de.sciss.file.File
 import de.sciss.filecache.Limit
 import de.sciss.freesound.{Client, Sound}
-import de.sciss.lucre.stm.TxnLike
+import de.sciss.lucre.TxnLike
 
 import scala.concurrent.{ExecutionContext, Future}
 

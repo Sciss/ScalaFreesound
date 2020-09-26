@@ -20,14 +20,14 @@ import de.sciss.filecache
 import de.sciss.filecache.{TxnConsumer, TxnProducer}
 import de.sciss.freesound.lucre.PreviewsCache
 import de.sciss.freesound.{Client, Freesound, Sound}
-import de.sciss.lucre.stm.TxnLike
-import de.sciss.lucre.stm.TxnLike.peer
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.lucre.TxnLike
+import de.sciss.lucre.Txn.peer
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object PreviewsCacheImpl {
-  implicit private object uriSerializer extends ImmutableSerializer[URI] {
+  implicit private object uriFormat extends ConstFormat[URI] {
     def read (in         : DataInput ): URI  = new URI(in.readUTF())
     def write(v: URI, out: DataOutput): Unit = out.writeUTF(v.toString)
   }

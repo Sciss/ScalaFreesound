@@ -23,13 +23,11 @@ import de.sciss.equal.Implicits._
 import de.sciss.file._
 import de.sciss.freesound.swing.SoundTableView
 import de.sciss.freesound.{Auth, Client, Codec, Freesound, License, Sound, TextSearch}
-import de.sciss.lucre.artifact.{Artifact, ArtifactLocation}
-import de.sciss.lucre.expr.{CellView, DoubleObj, LongObj}
-import de.sciss.lucre.stm
-import de.sciss.lucre.stm.{Folder, Obj, TxnLike}
+import de.sciss.lucre.expr.CellView
 import de.sciss.lucre.swing.LucreSwing.{defer, deferTx, requireEDT}
 import de.sciss.lucre.swing.{View, Window}
-import de.sciss.lucre.synth.Sys
+import de.sciss.lucre.synth.Txn
+import de.sciss.lucre.{Artifact, ArtifactLocation, DoubleObj, Folder, LongObj, Obj, Source, TxnLike, Txn => LTxn}
 import de.sciss.mellite.edit.EditFolderInsertObj
 import de.sciss.mellite.impl.objview.ObjListViewImpl.NonEditable
 import de.sciss.mellite.impl.objview.ObjViewImpl.PrimitiveConfig
@@ -40,7 +38,7 @@ import de.sciss.processor.Processor
 import de.sciss.swingplus.GroupPanel
 import de.sciss.synth.io.AudioFile
 import de.sciss.synth.proc.Implicits._
-import de.sciss.synth.proc.{AudioCue, Ensemble, Markdown, Timeline, Universe}
+import de.sciss.synth.proc.{AudioCue, Markdown, Timeline, Universe}
 import de.sciss.{desktop, freesound}
 import javax.swing.undo.UndoableEdit
 import javax.swing.{Icon, KeyStroke}
@@ -62,7 +60,7 @@ object RetrievalObjView extends ObjListView.Factory {
   //
   //  def init(): Unit = _init
 
-  type E[~ <: stm.Sys[~]] = Retrieval[~]
+  type E[~ <: LTxn[~]] = Retrieval[~]
   val icon: Icon        = ObjViewImpl.raphaelIcon(freesound.swing.Shapes.Retrieval)
   val prefix            = "Freesound"
   def humanName: String = s"$prefix Retrieval"
@@ -76,18 +74,18 @@ object RetrievalObjView extends ObjListView.Factory {
   //
   //  def init(): Unit = _init
 
-  def mkListView[S <: Sys[S]](obj: Retrieval[S])(implicit tx: S#Tx): RetrievalObjView[S] with ObjListView[S] =
+  def mkListView[T <: Txn[T]](obj: Retrieval[T])(implicit tx: T): RetrievalObjView[T] with ObjListView[T] =
     new Impl(tx.newHandle(obj)).initAttrs(obj)
 
-  type Config[S <: stm.Sys[S]] = ObjViewImpl.PrimitiveConfig[File]
+  type Config[T <: LTxn[T]] = ObjViewImpl.PrimitiveConfig[File]
 
-  def initMakeDialog[S <: Sys[S]](window: Option[desktop.Window])
-                                 (done: MakeResult[S] => Unit)
-                                 (implicit universe: Universe[S]): Unit = {
+  def initMakeDialog[T <: Txn[T]](window: Option[desktop.Window])
+                                 (done: MakeResult[T] => Unit)
+                                 (implicit universe: Universe[T]): Unit = {
     val ggValue   = new PathField
     ggValue.mode  = FileDialog.Folder
     ggValue.title = "Select Download Folder"
-    val res = ObjViewImpl.primitiveConfig[S, File](window, tpe = humanName, ggValue = ggValue,
+    val res = ObjViewImpl.primitiveConfig[T, File](window, tpe = humanName, ggValue = ggValue,
       prepare = ggValue.valueOption match {
         case Some(value)  => Success(value)
         case None         => Failure(MessageException("No download directory was specified"))
@@ -95,8 +93,8 @@ object RetrievalObjView extends ObjListView.Factory {
     done(res)
   }
 
-  override def initMakeCmdLine[S <: Sys[S]](args: List[String])(implicit universe: Universe[S]): MakeResult[S] = {
-    object p extends ObjViewCmdLineParser[Config[S]](this, args) {
+  override def initMakeCmdLine[T <: Txn[T]](args: List[String])(implicit universe: Universe[T]): MakeResult[T] = {
+    object p extends ObjViewCmdLineParser[Config[T]](this, args) {
       val download: Opt[File] = opt(descr = "Download directory (required)", required = true,
         validate = { dir: File => dir.isDirectory } // s"Not a directory: $dir"
       )
@@ -105,11 +103,11 @@ object RetrievalObjView extends ObjListView.Factory {
     p.parse(PrimitiveConfig(p.name(), p.download()))
   }
 
-  def makeObj[S <: Sys[S]](c: Config[S])(implicit tx: S#Tx): List[Obj[S]] = {
+  def makeObj[T <: Txn[T]](c: Config[T])(implicit tx: T): List[Obj[T]] = {
     import c._
-    val search  = TextSearchObj    .newConst[S](TextSearch(""))
-    val loc     = ArtifactLocation .newConst[S](value)
-    val obj     = Retrieval[S](search, loc)
+    val search  = TextSearchObj    .newConst[T](TextSearch(""))
+    val loc     = ArtifactLocation .newConst[T](value)
+    val obj     = Retrieval[T](search, loc)
     if (!name.isEmpty) obj.name = name
     obj :: Nil
   }
@@ -131,7 +129,7 @@ object RetrievalObjView extends ObjListView.Factory {
   }
 
   private implicit def previewCache(implicit tx: TxnLike): PreviewsCache = {
-    import TxnLike.peer
+    import LTxn.peer
     _previewsCache().getOrElse {
       val res = PreviewsCache(dir = Application.cacheDir)
       _previewsCache() = Some(res)
@@ -146,11 +144,11 @@ object RetrievalObjView extends ObjListView.Factory {
     * @return a map from license to a map from user-names to sounds, published
     *         under that license
     */
-  def collectLegal[S <: Sys[S]](root: Obj[S])(implicit tx: S#Tx): Map[License, Map[String, Set[Sound]]] = {
-    val seen  = mutable.Set.empty[Obj[S]]
+  def collectLegal[T <: Txn[T]](root: Obj[T])(implicit tx: T): Map[License, Map[String, Set[Sound]]] = {
+    val seen  = mutable.Set.empty[Obj[T]]
     var res   = Map.empty[License, Map[String, Set[Sound]]]
 
-    def loop(obj: Obj[S]): Unit = if (seen.add(obj)) {
+    def loop(obj: Obj[T]): Unit = if (seen.add(obj)) {
       obj.attr.$[SoundObj](Retrieval.attrFreesound).foreach { sound =>
         val soundV    = sound.value
         import soundV.{license, userName}
@@ -162,9 +160,9 @@ object RetrievalObjView extends ObjListView.Factory {
       }
 
       obj match {
-        case f: Folder  [S] => f       .iterator.foreach(loop)
-        case e: Ensemble[S] => e.folder.iterator.foreach(loop)
-        case t: Timeline[S] => t.iterator.foreach { case (_, xs) => xs.foreach(e => loop(e.value)) }
+        case f: Folder  [T] => f       .iterator.foreach(loop)
+//        case e: Ensemble[T] => e.folder.iterator.foreach(loop)
+        case t: Timeline[T] => t.iterator.foreach { case (_, xs) => xs.foreach(e => loop(e.value)) }
         case _ =>
       }
       obj.attr.iterator.foreach { case (_, value) => loop(value) }
@@ -185,8 +183,8 @@ object RetrievalObjView extends ObjListView.Factory {
     uri.toASCIIString
   }
 
-  def formatLegal[S <: Sys[S]](rootName: String,
-                               map: Map[License, Map[String, Set[Sound]]])(implicit tx: S#Tx): Markdown.Var[S] = {
+  def formatLegal[T <: Txn[T]](rootName: String,
+                               map: Map[License, Map[String, Set[Sound]]])(implicit tx: T): Markdown.Var[T] = {
     val sb = new StringBuilder
     val title = s"License Report for $rootName"
     sb.append(s"# $title\n")
@@ -209,20 +207,20 @@ object RetrievalObjView extends ObjListView.Factory {
       }
     }
     val mdVal   = sb.result()
-    val mdConst = Markdown.newConst[S](mdVal)
-    val mdVar   = Markdown.newVar  [S](mdConst)
+    val mdConst = Markdown.newConst[T](mdVal)
+    val mdVar   = Markdown.newVar  [T](mdConst)
     mdVar.name  = title
     mdVar
   }
 
-  private final class Impl[S <: Sys[S]](val objH: stm.Source[S#Tx, E[S]])
-    extends RetrievalObjView            [S]
-      with ObjListView                  [S]
-      with ObjViewImpl.Impl             [S]
-      with ObjListViewImpl.EmptyRenderer[S]
-      with NonEditable                  [S] {
+  private final class Impl[T <: Txn[T]](val objH: Source[T, E[T]])
+    extends RetrievalObjView            [T]
+      with ObjListView                  [T]
+      with ObjViewImpl.Impl             [T]
+      with ObjListViewImpl.EmptyRenderer[T]
+      with NonEditable                  [T] {
 
-    override def obj(implicit tx: S#Tx): E[S] = objH()
+    override def obj(implicit tx: T): E[T] = objH()
 
     def factory: ObjView.Factory = RetrievalObjView
 
@@ -230,13 +228,13 @@ object RetrievalObjView extends ObjListView.Factory {
 
     // currently this just opens a code editor. in the future we should
     // add a scans map editor, and a convenience button for the attributes
-    def openView(parent: Option[Window[S]])
-                (implicit tx: S#Tx, universe: Universe[S]): Option[Window[S]] = {
+    def openView(parent: Option[Window[T]])
+                (implicit tx: T, universe: Universe[T]): Option[Window[T]] = {
       val r             = obj
       val tsInit        = r.textSearch.value
-      val rv            = RetrievalView[S](searchInit = tsInit, soundInit = Nil)
+      val rv            = RetrievalView[T](searchInit = tsInit, soundInit = Nil)
       implicit val undo: UndoManager = UndoManager()
-      val downloadsView = FolderEditorView[S](r.downloads)
+      val downloadsView = FolderEditorView[T](r.downloads)
       val fv = downloadsView.peer
 
       def viewInfo(): Unit = {
@@ -255,14 +253,14 @@ object RetrievalObjView extends ObjListView.Factory {
         }
       }
 
-      val name    = CellView.name[S](r)
+      val name    = CellView.name[T](r)
       val locH    = tx.newHandle(r.downloadLocation)  // IntelliJ highlight bug
       val folderH = tx.newHandle(r.downloads)
 
-      def mkLegalFor(f: Folder[S], root: Obj[S])(implicit tx: S#Tx): UndoableEdit = {
+      def mkLegalFor(f: Folder[T], root: Obj[T])(implicit tx: T): UndoableEdit = {
         val map   = collectLegal(root)
         val title = "Freesound Sounds" // "used in ${root.name}"
-        val md    = formatLegal[S](title, map)
+        val md    = formatLegal[T](title, map)
         MarkdownFrame.render(md)
         import universe.cursor
         EditFolderInsertObj(md.name, parent = f, index = f.size, child = md)
@@ -288,8 +286,8 @@ object RetrievalObjView extends ObjListView.Factory {
         cont.insertAll(0, ggInfo :: ggLegal :: Swing.HStrut(4) :: Nil)
       }
 
-      val w:  WindowImpl[S] = new WindowImpl[S](name) {
-        val view: View[S] = new EditorImpl[S](rv, downloadsView, locH, folderH).init()
+      val w:  WindowImpl[T] = new WindowImpl[T](name) {
+        val view: View[T] = new EditorImpl[T](rv, downloadsView, locH, folderH).init()
       }
       w.init()
       Some(w)
@@ -412,22 +410,22 @@ object RetrievalObjView extends ObjListView.Factory {
     }
   }
 
-  private final class EditorImpl[S <: Sys[S]](peer: RetrievalView[S], downloadsView: View[S],
-                                              locH: stm.Source[S#Tx, ArtifactLocation[S]],
-                                              folderH: stm.Source[S#Tx, Folder[S]])
+  private final class EditorImpl[T <: Txn[T]](peer: RetrievalView[T], downloadsView: View[T],
+                                              locH: Source[T, ArtifactLocation[T]],
+                                              folderH: Source[T, Folder[T]])
                                              (implicit val undoManager: UndoManager)
-    extends UniverseView[S] with View.Editable[S] {
+    extends UniverseView[T] with View.Editable[T] {
 
     private[this] var ggProgressDL: ProgressBar = _
     private[this] var actionDL    : Action      = _
 
-    implicit val universe: Universe[S] = peer.universe
+    implicit val universe: Universe[T] = peer.universe
 
     type C = Component
 
     def component: Component = peer.component
 
-    def init()(implicit tx: S#Tx): this.type = {
+    def init()(implicit tx: T): this.type = {
       deferTx(guiInit())
       this
     }
@@ -507,8 +505,8 @@ object RetrievalObjView extends ObjListView.Factory {
                     val f     = dl0.mode.out
                     val spec  = AudioFile.readSpec(f)
                     val art   = Artifact.apply(loc, f)
-                    val cue   = AudioCue.Obj[S](art, spec, offset = LongObj.newVar(0L), gain = DoubleObj.newVar(1.0))
-                    val snd   = SoundObj.newConst[S](dl0.sound)
+                    val cue   = AudioCue.Obj[T](art, spec, offset = LongObj.newVar(0L), gain = DoubleObj.newVar(1.0))
+                    val snd   = SoundObj.newConst[T](dl0.sound)
                     cue.attr.put(Retrieval.attrFreesound, snd)
                     cue.name  = f.base
                     folder.addLast(cue)
@@ -568,13 +566,13 @@ object RetrievalObjView extends ObjListView.Factory {
       }
     }
 
-    def dispose()(implicit tx: S#Tx): Unit = peer.dispose()
+    def dispose()(implicit tx: T): Unit = peer.dispose()
   }
 
   private[this] final val ak = Array(
     2455899147606491166L, 2677468186055286084L, 3764232225906169915L, 4834682473675565318L, 5060424300801244677L
   )
 }
-trait RetrievalObjView[S <: stm.Sys[S]] extends ObjView[S] {
-  type Repr = Retrieval[S]
+trait RetrievalObjView[T <: LTxn[T]] extends ObjView[T] {
+  type Repr = Retrieval[T]
 }

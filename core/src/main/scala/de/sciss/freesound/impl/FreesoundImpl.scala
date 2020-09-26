@@ -37,12 +37,12 @@ object FreesoundImpl {
 
   private final case class ResultPage(count: Int, next: Option[String], results: Vector[Sound])
 
-  private trait Deserializer[A] extends Serializer[A] {
+  private trait Deformat[A] extends Serializer[A] {
     final def serialize(implicit format: Formats): PartialFunction[Any, JValue] =
       throw new UnsupportedOperationException
   }
 
-  private final object URISerializer extends Deserializer[URI] {
+  private final object URIFormat extends Deformat[URI] {
     private[this] val Clazz = classOf[URI]
 
     def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), URI] = {
@@ -50,7 +50,7 @@ object FreesoundImpl {
     }
   }
 
-  private final object LicenseSerializer extends Deserializer[License] {
+  private final object LicenseFormat extends Deformat[License] {
     private[this] val Clazz = classOf[License]
 
     def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), License] = {
@@ -58,7 +58,7 @@ object FreesoundImpl {
     }
   }
 
-  private final object FileTypeSerializer extends Deserializer[FileType] {
+  private final object FileTypeFormat extends Deformat[FileType] {
     private[this] val Clazz = classOf[FileType]
 
     def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), FileType] = {
@@ -66,7 +66,7 @@ object FreesoundImpl {
     }
   }
 
-  private final object GeoTagSerializer extends Deserializer[GeoTag] {
+  private final object GeoTagFormat extends Deformat[GeoTag] {
     private[this] val Clazz = classOf[GeoTag]
 
     def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), GeoTag] = {
@@ -89,11 +89,11 @@ object FreesoundImpl {
     }
 
     implicit val page: Formats =
-      MyDefault ++ (URISerializer :: LicenseSerializer :: FileTypeSerializer :: GeoTagSerializer :: Nil)
+      MyDefault ++ (URIFormat :: LicenseFormat :: FileTypeFormat :: GeoTagFormat :: Nil)
   }
 
 //  private final implicit val jsonFormats: Formats =
-//    DefaultFormats ++ (URISerializer :: LicenseSerializer :: FileTypeSerializer :: GeoTagSerializer :: Nil)
+//    DefaultFormats ++ (URIFormat :: LicenseFormat :: FileTypeFormat :: GeoTagFormat :: Nil)
 
   // default `json4.Json` uses `as.String` which in turn takes charset
   // from content-type, and if not provided (which I guess is the case?),

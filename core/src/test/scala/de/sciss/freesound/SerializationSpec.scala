@@ -2,7 +2,7 @@ package de.sciss.freesound
 
 import java.util.Date
 
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 import org.scalatest.funspec.AnyFunSpec
 
 /* To run only this test:
@@ -11,11 +11,11 @@ import org.scalatest.funspec.AnyFunSpec
 
   */
 class SerializationSpec extends AnyFunSpec {
-  def trip[A](x: A)(implicit serializer: ImmutableSerializer[A]): A = {
+  def trip[A](x: A)(implicit format: ConstFormat[A]): A = {
     val out = DataOutput()
-    serializer.write(x, out)
+    format.write(x, out)
     val in  = DataInput(out.toByteArray)
-    val res = serializer.read(in)
+    val res = format.read(in)
     res
   }
 

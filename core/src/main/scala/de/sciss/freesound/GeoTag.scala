@@ -13,7 +13,7 @@
 
 package de.sciss.freesound
 
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 import scala.annotation.switch
 import scala.language.implicitConversions
@@ -26,7 +26,7 @@ object GeoTag {
     def compare(x: GeoTag, y: GeoTag): Int = peer.compare(x.toTuple, y.toTuple)
   }
 
-  implicit object serializer extends ImmutableSerializer[GeoTag] {
+  implicit object format extends ConstFormat[GeoTag] {
     def write(v: GeoTag, out: DataOutput): Unit = {
       out.writeDouble(v.lat)
       out.writeDouble(v.lon)
@@ -44,8 +44,8 @@ object GeoTag {
   object Expr {
     implicit def fromBoolean(b: Boolean): Expr = Defined(b)
 
-    implicit object serializer extends ImmutableSerializer[Expr] {
-      import GeoTag.{serializer => GeoS}
+    implicit object format extends ConstFormat[Expr] {
+      import GeoTag.{format => GeoS}
 
       def write(v: Expr, out: DataOutput): Unit = v match {
         case Ignore                 => out.writeByte(0)

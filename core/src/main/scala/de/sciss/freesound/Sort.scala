@@ -13,12 +13,12 @@
 
 package de.sciss.freesound
 
-import de.sciss.serial.{DataInput, DataOutput, ImmutableSerializer}
+import de.sciss.serial.{DataInput, DataOutput, ConstFormat}
 
 import scala.annotation.switch
 
 object Sort {
-  implicit object serializer extends ImmutableSerializer[Sort] {
+  implicit object format extends ConstFormat[Sort] {
     def read(in: DataInput): Sort = {
       val id = in.readByte()
       (id: @switch) match {
