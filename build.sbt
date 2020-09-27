@@ -33,7 +33,7 @@ lazy val deps = new {
     val fileUtil        = "1.1.5"
     val optional        = "1.0.1"
     val processor       = "0.4.3"
-    val serial          = "2.0.0-SNAPSHOT"
+    val serial          = "2.0.0"
   }
   val swing = new {
     val raphael         = "1.0.6"
@@ -48,7 +48,7 @@ lazy val deps = new {
     def soundProcesses: String = lucre.soundProcesses
   }
   val compression = new {
-    val audioFile       = "2.0.0-SNAPSHOT"   // PCM support
+    val audioFile       = "2.0.0"   // PCM support
     val jFLAC           = "1.5.2"   // FLAC support
     val jOrbis          = "0.0.17"  // Ogg Vorbis support
     val jump3r          = "1.0.5"   // mp3 support
