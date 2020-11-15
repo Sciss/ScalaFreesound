@@ -27,7 +27,7 @@ import de.sciss.lucre.Txn.peer
 import de.sciss.lucre.swing.LucreSwing.{deferTx, requireEDT}
 import de.sciss.lucre.swing.impl.ComponentHolder
 import de.sciss.lucre.synth.{Buffer, Server, Synth, Txn}
-import de.sciss.synth.proc.{SoundProcesses, Universe}
+import de.sciss.proc.{SoundProcesses, Universe}
 import de.sciss.synth.{ControlSet, SynthGraph}
 import javax.swing.{Icon, JComponent, KeyStroke, Timer}
 

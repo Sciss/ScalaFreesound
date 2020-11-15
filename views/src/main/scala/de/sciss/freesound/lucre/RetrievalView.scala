@@ -18,7 +18,7 @@ import de.sciss.freesound.{Client, Sound, TextSearch}
 import de.sciss.lucre.{Txn => LTxn}
 import de.sciss.lucre.synth.Txn
 import de.sciss.mellite.UniverseView
-import de.sciss.synth.proc.Universe
+import de.sciss.proc.Universe
 
 import scala.collection.immutable.{Seq => ISeq}
 import scala.swing.{Component, SequentialContainer, TabbedPane}

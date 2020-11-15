@@ -37,8 +37,8 @@ import de.sciss.mellite.{Application, FolderEditorView, GUI, MarkdownFrame, Mess
 import de.sciss.processor.Processor
 import de.sciss.swingplus.GroupPanel
 import de.sciss.audiofile.AudioFile
-import de.sciss.synth.proc.Implicits._
-import de.sciss.synth.proc.{AudioCue, Markdown, Timeline, Universe}
+import de.sciss.proc.Implicits._
+import de.sciss.proc.{AudioCue, Markdown, Timeline, Universe}
 import de.sciss.{desktop, freesound}
 import javax.swing.undo.UndoableEdit
 import javax.swing.{Icon, KeyStroke}

@@ -7,7 +7,7 @@ import de.sciss.freesound.impl.FreesoundImpl
 import de.sciss.lucre.swing.LucreSwing.deferTx
 import de.sciss.lucre.synth.InMemory
 import de.sciss.submin.Submin
-import de.sciss.synth.proc.Universe
+import de.sciss.proc.Universe
 
 import scala.swing.MainFrame
 
