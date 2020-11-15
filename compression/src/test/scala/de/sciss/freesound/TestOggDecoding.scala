@@ -3,7 +3,7 @@ package de.sciss.freesound
 import java.io.FileInputStream
 
 import de.sciss.file._
-import de.sciss.synth.io.{AudioFileType, SampleFormat}
+import de.sciss.audiofile.{AudioFileType, SampleFormat}
 
 object TestOggDecoding {
   def main(args: Array[String]): Unit = run()

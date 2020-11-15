@@ -36,7 +36,7 @@ import de.sciss.mellite.impl.{ObjViewCmdLineParser, WindowImpl}
 import de.sciss.mellite.{Application, FolderEditorView, GUI, MarkdownFrame, MessageException, ObjListView, ObjView, UniverseView}
 import de.sciss.processor.Processor
 import de.sciss.swingplus.GroupPanel
-import de.sciss.synth.io.AudioFile
+import de.sciss.audiofile.AudioFile
 import de.sciss.synth.proc.Implicits._
 import de.sciss.synth.proc.{AudioCue, Markdown, Timeline, Universe}
 import de.sciss.{desktop, freesound}
@@ -77,7 +77,7 @@ object RetrievalObjView extends ObjListView.Factory {
   def mkListView[T <: Txn[T]](obj: Retrieval[T])(implicit tx: T): RetrievalObjView[T] with ObjListView[T] =
     new Impl(tx.newHandle(obj)).initAttrs(obj)
 
-  type Config[T <: LTxn[T]] = ObjViewImpl.PrimitiveConfig[File]
+  type Config[T <: LTxn[T]] = ObjViewImpl.PrimitiveConfig[URI]
 
   def initMakeDialog[T <: Txn[T]](window: Option[desktop.Window])
                                  (done: MakeResult[T] => Unit)
@@ -85,9 +85,9 @@ object RetrievalObjView extends ObjListView.Factory {
     val ggValue   = new PathField
     ggValue.mode  = FileDialog.Folder
     ggValue.title = "Select Download Folder"
-    val res = ObjViewImpl.primitiveConfig[T, File](window, tpe = humanName, ggValue = ggValue,
+    val res = ObjViewImpl.primitiveConfig[T, URI](window, tpe = humanName, ggValue = ggValue,
       prepare = ggValue.valueOption match {
-        case Some(value)  => Success(value)
+        case Some(value)  => Success(value.toURI)
         case None         => Failure(MessageException("No download directory was specified"))
       })
     done(res)
@@ -100,7 +100,7 @@ object RetrievalObjView extends ObjListView.Factory {
       )
       mainOptions = List(download)
     }
-    p.parse(PrimitiveConfig(p.name(), p.download()))
+    p.parse(PrimitiveConfig(p.name(), p.download().toURI))
   }
 
   def makeObj[T <: Txn[T]](c: Config[T])(implicit tx: T): List[Obj[T]] = {
@@ -456,7 +456,7 @@ object RetrievalObjView extends ObjListView.Factory {
       requireEDT()
 
       val sel = selectedSounds
-      val dir = cursor.step { implicit tx => locH().value }
+      val dirU = cursor.step { implicit tx => locH().value }
       val dl: List[Download] = sel.iterator.flatMap { s =>
         val n0 = file(s.fileName).base
         val n1: String = n0.iterator.collect {
@@ -469,12 +469,15 @@ object RetrievalObjView extends ObjListView.Factory {
         val needsConversion = s.fileType.isCompressed
         val ext = if (needsConversion) "wav" else s.fileType.toProperty
         val n   = s"${s.id}_$n2.$ext"
-        val f   = dir / n
-        val m: DownloadMode = if (needsConversion) {
-          val temp = File.createTemp(suffix = s".${s.fileType.toProperty}")
-          Convert(temp, f)
-        } else Direct(f)
-        if (f.exists()) None else Some(Download(s, m))
+        val dirOpt = Try(new File(dirU)).toOption
+        dirOpt.flatMap { dir =>
+          val f = new File(dir, n)
+          val m: DownloadMode = if (needsConversion) {
+            val temp = File.createTemp(suffix = s".${s.fileType.toProperty}")
+            Convert(temp, f)
+          } else Direct(f)
+          if (f.exists()) None else Some(Download(s, m))
+        }
       } .toList
 
       if (sel.nonEmpty && dl.isEmpty)
@@ -504,7 +507,7 @@ object RetrievalObjView extends ObjListView.Factory {
                   try {
                     val f     = dl0.mode.out
                     val spec  = AudioFile.readSpec(f)
-                    val art   = Artifact.apply(loc, f)
+                    val art   = Artifact(loc, f.toURI)
                     val cue   = AudioCue.Obj[T](art, spec, offset = LongObj.newVar(0L), gain = DoubleObj.newVar(1.0))
                     val snd   = SoundObj.newConst[T](dl0.sound)
                     cue.attr.put(Retrieval.attrFreesound, snd)

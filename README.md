@@ -9,19 +9,19 @@
 ScalaFreesound is a library to query the [Freesound audio database](https://freesound.org). It is
 (C)opyright 2010&ndash;2020 by Hanns Holger Rutz. All rights reserved. It is released under the
 [GNU Affero General Public License](https://git.iem.at/sciss/ScalaFreesound/blob/main/LICENSE) and comes with 
-absolutely no warranties. To contact the author, send an email to `contact@sciss.de`
+absolutely no warranties. To contact the author, send an e-mail to `contact@sciss.de`.
 
 Please consider supporting this project through Liberapay (see badge above) – thank you!
 
 ## requirements / installation
 
-This project currently builds against Scala 2.13, 2.12 using sbt (the last version to support Scala 2.11 was 1.19.0).
+This project builds with sbt against Scala 2.13, 2.12. The last version to support Scala 2.11 was 1.19.0.
 
 To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"2.0.0"`
+The current version `v` is `"2.1.0"`
 
 Or to link to an individual module
 

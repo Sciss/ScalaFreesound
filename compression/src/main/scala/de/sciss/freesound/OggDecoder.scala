@@ -17,8 +17,9 @@ import java.io.{IOException, InputStream}
 
 import com.jcraft.jogg.{Packet, Page, StreamState, SyncState}
 import com.jcraft.jorbis.{Block, Comment, DspState, Info}
+import de.sciss.audiofile.AudioFile.Frames
 import de.sciss.file.File
-import de.sciss.synth.io.{AudioFile, AudioFileSpec, AudioFileType, SampleFormat}
+import de.sciss.audiofile.{AudioFile, AudioFileSpec, AudioFileType, SampleFormat}
 
 /** This is essentially the `DecodeExample.java` from JOrbis, translated to Scala
   * and adapted to work with ScalaAudioFile.
@@ -48,7 +49,8 @@ object OggDecoder {
     sync.init()
 
     var afOut: AudioFile = null
-    val _pcm    = new Array[Array[Array[Float]]](1)
+    val _pcm  = new Array[Array[Array[Float]]](1)
+    var bufAf: Frames = null
 
     try {
       while ({ // we repeat if the bit stream is chained
@@ -215,9 +217,23 @@ object OggDecoder {
                     avail = dsp.synthesis_pcmout(_pcm, _index)
                     if (avail > 0) {
                       val chunk = math.min(avail, convSize)
-                      val off   = _index(0)
-                      val buf   = _pcm(0)
-                      afOut.write(buf, off, chunk)
+                      val off     = _index(0)
+                      val bufOgg  = _pcm(0)
+                      if (bufAf == null || bufAf(0).length < bufOgg(0).length) {
+                        bufAf = Array.ofDim[Double](_pcm(0).length, _pcm(0)(0).length)
+                      }
+                      var ch = 0
+                      while (ch < bufAf.length) {
+                        val bufAfCh   = bufAf(ch)
+                        val bufOggCh  = bufOgg(ch)
+                        var i = 0
+                        while (i < chunk) {
+                          bufAfCh(i) = bufOggCh(i).toDouble
+                          i += 1
+                        }
+                        ch += 1
+                      }
+                      afOut.write(bufAf, off, chunk)
 
                       // tell libvorbis how
                       // many samples we

@@ -17,7 +17,7 @@ import java.io.{FileInputStream, FileOutputStream}
 
 import de.sciss.file._
 import de.sciss.jump3r
-import de.sciss.synth.io.{AudioFileType, SampleFormat}
+import de.sciss.audiofile.{AudioFileType, SampleFormat}
 import org.jflac.metadata.StreamInfo
 import org.jflac.util.{ByteData, WavWriter}
 import org.jflac.{FLACDecoder, PCMProcessor}

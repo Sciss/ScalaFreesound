@@ -3,8 +3,8 @@ lazy val baseNameL  = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "2.0.0"
-lazy val mimaVersion    = "2.0.0" // used for migration-manager
+lazy val projectVersion = "2.1.0-SNAPSHOT"
+lazy val mimaVersion    = "2.1.0" // used for migration-manager
 
 lazy val commonSettings = Seq(
   version               := projectVersion,
@@ -32,29 +32,29 @@ lazy val deps = new {
     val dispatch        = "0.1.1"  // de.sciss version
     val fileUtil        = "1.1.5"
     val optional        = "1.0.1"
-    val processor       = "0.4.3"
+    val processor       = "0.5.0"
     val serial          = "2.0.0"
   }
   val swing = new {
-    val raphael         = "1.0.6"
-    val swingPlus       = "0.4.2"
+    val raphael         = "1.0.7"
+    val swingPlus       = "0.5.0"
   }
   val lucre = new {
-    val fileCache       = "1.0.0"
-    val soundProcesses  = "4.0.0"
+    val fileCache       = "1.1.0"
+    val soundProcesses  = "4.3.0-SNAPSHOT"
   }
   val views = new {
-    val mellite         = "3.0.0"
+    val mellite         = "3.1.0-SNAPSHOT"
     def soundProcesses: String = lucre.soundProcesses
   }
   val compression = new {
-    val audioFile       = "2.0.0"   // PCM support
+    val audioFile       = "2.3.1"   // PCM support
     val jFLAC           = "1.5.2"   // FLAC support
     val jOrbis          = "0.0.17"  // Ogg Vorbis support
     val jump3r          = "1.0.5"   // mp3 support
   }
   val test = new {
-    val scalaTest      = "3.2.2"
+    val scalaTest      = "3.2.3"
     val slf4j          = "1.7.30"
     val submin         = "0.3.4"
   }
