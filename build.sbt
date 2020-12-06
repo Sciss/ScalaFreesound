@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
 //  version               := projectVersion,
 //  organization          := "de.sciss",
   scalaVersion          := "2.13.4",
-  crossScalaVersions    := Seq("3.0.0-M2", "2.13.4", "2.12.12"),
+  crossScalaVersions    := Seq(/* "3.0.0-M2", */ "2.13.4", "2.12.12"),
   homepage              := Some(url(s"https://git.iem.at/sciss/$baseName")),
   licenses              := Seq("AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")),
   scalacOptions        ++= Seq(
@@ -52,7 +52,7 @@ lazy val deps = new {
     def soundProcesses: String = lucre.soundProcesses
   }
   val compression = new {
-    val audioFile       = "2.3.1"   // PCM support
+    val audioFile       = "2.3.2"   // PCM support
     val jFLAC           = "1.5.2"   // FLAC support
     val jOrbis          = "0.0.17"  // Ogg Vorbis support
     val jump3r          = "1.0.5"   // mp3 support
