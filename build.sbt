@@ -3,14 +3,18 @@ lazy val baseNameL  = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "2.2.0"
-lazy val mimaVersion    = "2.2.0" // used for migration-manager
+lazy val projectVersion = "2.3.0-SNAPSHOT"
+lazy val mimaVersion    = "2.3.0" // used for migration-manager
+
+// sonatype plugin requires that these are in global
+ThisBuild / version      := projectVersion
+ThisBuild / organization := "de.sciss"
 
 lazy val commonSettings = Seq(
-  version               := projectVersion,
-  organization          := "de.sciss",
+//  version               := projectVersion,
+//  organization          := "de.sciss",
   scalaVersion          := "2.13.4",
-  crossScalaVersions    := Seq("2.13.4", "2.12.12"),
+  crossScalaVersions    := Seq("3.0.0-M2", "2.13.4", "2.12.12"),
   homepage              := Some(url(s"https://git.iem.at/sciss/$baseName")),
   licenses              := Seq("AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")),
   scalacOptions        ++= Seq(
@@ -40,11 +44,11 @@ lazy val deps = new {
     val swingPlus       = "0.5.0"
   }
   val lucre = new {
-    val fileCache       = "1.1.0"
-    val soundProcesses  = "4.4.0"
+    val fileCache       = "1.1.1"
+    val soundProcesses  = "4.5.0-SNAPSHOT"
   }
   val views = new {
-    val mellite         = "3.2.0"
+    val mellite         = "3.3.0-SNAPSHOT"
     def soundProcesses: String = lucre.soundProcesses
   }
   val compression = new {
@@ -188,26 +192,20 @@ def initialCmd(): String = {
 
 lazy val publishSettings = Seq(
   publishMavenStyle := true,
-  publishTo := {
-    Some(if (isSnapshot.value)
-      "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-    else
-      "Sonatype Releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-    )
-  },
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false },
-  pomExtra := { val n = baseName
-<scm>
-  <url>git@git.iem.at:sciss/{n}.git</url>
-  <connection>scm:git:git@git.iem.at:sciss/{n}.git</connection>
-</scm>
-  <developers>
-    <developer>
-      <id>sciss</id>
-      <name>Hanns Holger Rutz</name>
-      <url>http://www.sciss.de</url>
-    </developer>
-  </developers>
-  }
+  developers := List(
+    Developer(
+      id    = "sciss",
+      name  = "Hanns Holger Rutz",
+      email = "contact@sciss.de",
+      url   = url("https://www.sciss.de")
+    )
+  ),
+  scmInfo := {
+    val h = "git.iem.at"
+    val a = s"sciss/$baseName"
+    Some(ScmInfo(url(s"https://$h/$a"), s"scm:git@$h:$a.git"))
+  },
 )
+

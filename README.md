@@ -1,6 +1,6 @@
 # ScalaFreesound
 
-[![Build Status](https://travis-ci.org/Sciss/ScalaFreesound.svg?branch=main)](https://travis-ci.org/Sciss/ScalaFreesound)
+[![Build Status](https://github.com/Sciss/ScalaFreesound/workflows/Scala%20CI/badge.svg?branch=main)](https://github.com/Sciss/ScalaFreesound/actions?query=workflow%3A%22Scala+CI%22)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/de.sciss/scalafreesound-core_2.13)
 <a href="https://liberapay.com/sciss"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" height="24"></a>
 
@@ -15,13 +15,13 @@ Please consider supporting this project through Liberapay (see badge above) – 
 
 ## requirements / installation
 
-This project builds with sbt against Scala 2.13, 2.12. The last version to support Scala 2.11 was 1.19.0.
+This project builds with sbt against Scala 2.12, 2.13, Dotty. The last version to support Scala 2.11 was 1.19.0.
 
 To link to it:
 
     libraryDependencies += "de.sciss" %% "scalafreesound"  % v
     
-The current version `v` is `"2.2.0"`
+The current version `v` is `"2.3.0"`
 
 Or to link to an individual module
 
