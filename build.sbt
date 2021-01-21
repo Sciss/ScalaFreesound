@@ -3,8 +3,8 @@ lazy val baseNameL  = baseName.toLowerCase
 
 val baseDescr = "A library for accessing freesound.org from Scala."
 
-lazy val projectVersion = "2.3.0"
-lazy val mimaVersion    = "2.3.0" // used for migration-manager
+lazy val projectVersion = "2.4.0-SNAPSHOT"
+lazy val mimaVersion    = "2.4.0" // used for migration-manager
 
 // sonatype plugin requires that these are in global
 ThisBuild / version      := projectVersion
@@ -37,7 +37,7 @@ lazy val deps = new {
     val fileUtil        = "1.1.5"
     val optional        = "1.0.1"
     val processor       = "0.5.0"
-    val serial          = "2.0.0"
+    val serial          = "2.0.1"
   }
   val swing = new {
     val raphael         = "1.0.7"
@@ -45,10 +45,10 @@ lazy val deps = new {
   }
   val lucre = new {
     val fileCache       = "1.1.1"
-    val soundProcesses  = "4.5.0"
+    val soundProcesses  = "4.7.0-SNAPSHOT"
   }
   val views = new {
-    val mellite         = "3.3.0"
+    val mellite         = "3.4.0-SNAPSHOT"
     def soundProcesses: String = lucre.soundProcesses
   }
   val compression = new {
