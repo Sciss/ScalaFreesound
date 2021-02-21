@@ -45,7 +45,7 @@ lazy val deps = new {
   }
   val lucre = new {
     val fileCache       = "1.1.1"
-    val soundProcesses  = "4.7.0"
+    val soundProcesses  = "4.7.1"
   }
   val views = new {
     val mellite         = "3.4.0-SNAPSHOT"
@@ -58,7 +58,7 @@ lazy val deps = new {
     val jump3r          = "1.0.5"   // mp3 support
   }
   val test = new {
-    val scalaTest      = "3.2.3"
+    val scalaTest      = "3.2.5"
     val slf4j          = "1.7.30"
     val submin         = "0.3.4"
   }
